@@ -1,0 +1,222 @@
+{
+ "/gallery/hero-festival.jpg": [
+  [
+   480,
+   "/opt/hero-festival-480.webp"
+  ],
+  [
+   960,
+   "/opt/hero-festival-960.webp"
+  ],
+  [
+   1600,
+   "/opt/hero-festival-1600.webp"
+  ]
+ ],
+ "/gallery/hero-temple.jpg": [
+  [
+   480,
+   "/opt/hero-temple-480.webp"
+  ],
+  [
+   960,
+   "/opt/hero-temple-960.webp"
+  ],
+  [
+   1600,
+   "/opt/hero-temple-1600.webp"
+  ]
+ ],
+ "/gallery/village/procession-01.jpg": [
+  [
+   480,
+   "/opt/procession-01-480.webp"
+  ],
+  [
+   867,
+   "/opt/procession-01-867.webp"
+  ]
+ ],
+ "/gallery/village/procession-02.jpg": [
+  [
+   480,
+   "/opt/procession-02-480.webp"
+  ],
+  [
+   867,
+   "/opt/procession-02-867.webp"
+  ]
+ ],
+ "/gallery/village/procession-03.jpg": [
+  [
+   480,
+   "/opt/procession-03-480.webp"
+  ],
+  [
+   867,
+   "/opt/procession-03-867.webp"
+  ]
+ ],
+ "/gallery/village/procession-04.jpg": [
+  [
+   480,
+   "/opt/procession-04-480.webp"
+  ],
+  [
+   867,
+   "/opt/procession-04-867.webp"
+  ]
+ ],
+ "/gallery/village/procession-05.jpg": [
+  [
+   480,
+   "/opt/procession-05-480.webp"
+  ],
+  [
+   867,
+   "/opt/procession-05-867.webp"
+  ]
+ ],
+ "/gallery/village/procession-06.jpg": [
+  [
+   480,
+   "/opt/procession-06-480.webp"
+  ],
+  [
+   867,
+   "/opt/procession-06-867.webp"
+  ]
+ ],
+ "/gallery/village/procession-07.jpg": [
+  [
+   480,
+   "/opt/procession-07-480.webp"
+  ],
+  [
+   867,
+   "/opt/procession-07-867.webp"
+  ]
+ ],
+ "/gallery/village/procession-08.jpg": [
+  [
+   480,
+   "/opt/procession-08-480.webp"
+  ],
+  [
+   867,
+   "/opt/procession-08-867.webp"
+  ]
+ ],
+ "/gallery/village/procession-09.jpg": [
+  [
+   480,
+   "/opt/procession-09-480.webp"
+  ],
+  [
+   867,
+   "/opt/procession-09-867.webp"
+  ]
+ ],
+ "/gallery/village/procession-10.jpg": [
+  [
+   480,
+   "/opt/procession-10-480.webp"
+  ],
+  [
+   867,
+   "/opt/procession-10-867.webp"
+  ]
+ ],
+ "/gallery/village/procession-11.jpg": [
+  [
+   480,
+   "/opt/procession-11-480.webp"
+  ],
+  [
+   867,
+   "/opt/procession-11-867.webp"
+  ]
+ ],
+ "/gallery/village/temple-carvings.jpg": [
+  [
+   480,
+   "/opt/temple-carvings-480.webp"
+  ],
+  [
+   960,
+   "/opt/temple-carvings-960.webp"
+  ],
+  [
+   1280,
+   "/opt/temple-carvings-1280.webp"
+  ]
+ ],
+ "/gallery/village/temple-facade.jpg": [
+  [
+   480,
+   "/opt/temple-facade-480.webp"
+  ],
+  [
+   768,
+   "/opt/temple-facade-768.webp"
+  ]
+ ],
+ "/gallery/village/temple-front.jpg": [
+  [
+   480,
+   "/opt/temple-front-480.webp"
+  ],
+  [
+   768,
+   "/opt/temple-front-768.webp"
+  ]
+ ],
+ "/gallery/village/temple-street.jpg": [
+  [
+   480,
+   "/opt/temple-street-480.webp"
+  ],
+  [
+   866,
+   "/opt/temple-street-866.webp"
+  ]
+ ],
+ "/gallery/village/temple-wide.jpg": [
+  [
+   480,
+   "/opt/temple-wide-480.webp"
+  ],
+  [
+   960,
+   "/opt/temple-wide-960.webp"
+  ],
+  [
+   1280,
+   "/opt/temple-wide-1280.webp"
+  ]
+ ],
+ "/gallery/village/village-lane.jpg": [
+  [
+   480,
+   "/opt/village-lane-480.webp"
+  ],
+  [
+   960,
+   "/opt/village-lane-960.webp"
+  ]
+ ],
+ "/gallery/village/village-pond.jpg": [
+  [
+   480,
+   "/opt/village-pond-480.webp"
+  ],
+  [
+   960,
+   "/opt/village-pond-960.webp"
+  ],
+  [
+   1280,
+   "/opt/village-pond-1280.webp"
+  ]
+ ]
+}
