@@ -57,7 +57,7 @@ export default function Story({ visits = null }) {
       el.style.setProperty('--py', Math.max(-1, Math.min(1, p)).toFixed(3));
     };
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
-    update();
+    onScroll(); // first measure on the next frame, not during startup
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => { cancelAnimationFrame(raf); window.removeEventListener('scroll', onScroll); };
   }, []);

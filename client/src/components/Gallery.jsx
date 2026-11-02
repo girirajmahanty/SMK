@@ -155,7 +155,7 @@ function Tile({ item, index, place, onOpen }) {
   const onLeave = () => { ref.current.style.setProperty('--rx', '0deg'); ref.current.style.setProperty('--ry', '0deg'); };
 
   return (
-    <figure
+    <div
       ref={ref}
       className={`gal-item gal-item--${sizeOf(item, index)} ${item.video ? 'gal-item--video' : ''}`}
       style={{ '--i': index, gridColumn: `${place.c + 1} / span ${place.w}`, gridRow: `${place.r + 1} / span ${place.h}` }}
@@ -180,11 +180,11 @@ function Tile({ item, index, place, onOpen }) {
         </>
       )}
       {!item.video && <span className="gal-item__zoom" aria-hidden="true"><Maximize2 /></span>}
-      <figcaption>
+      <div className="gal-item__caption">
         <span className="gal-item__cat">{t(`gallery.${item.cat}`)}</span>
         {pick(item.caption)}
-      </figcaption>
-    </figure>
+      </div>
+    </div>
   );
 }
 

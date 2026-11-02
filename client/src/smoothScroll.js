@@ -4,7 +4,9 @@ const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
 const NAV_OFFSET = 72;
 let frame = 0;
 
-export function smoothScrollTo(target, offset = NAV_OFFSET) {
+// Sections far below the screen are drawn at an estimated height until they are reached
+// (content-visibility), so after gliding we check where the target really is and settle there.
+export function smoothScrollTo(target, offset = NAV_OFFSET, retries = 4) {
   const to = typeof target === 'number' ? target : target.getBoundingClientRect().top + window.scrollY - offset;
   const from = window.scrollY;
   const dist = to - from;
@@ -22,6 +24,9 @@ export function smoothScrollTo(target, offset = NAV_OFFSET) {
     const p = Math.min(1, (now - t0) / duration);
     window.scrollTo({ top: from + dist * ease(p), behavior: 'instant' });
     if (p < 1) frame = requestAnimationFrame(step);
+    else if (typeof target !== 'number' && retries > 0 && Math.abs(target.getBoundingClientRect().top - offset) > 3) {
+      smoothScrollTo(target, offset, retries - 1);
+    }
   };
   frame = requestAnimationFrame(step);
 }

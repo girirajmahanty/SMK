@@ -48,7 +48,7 @@ export default function Navbar({ theme, onToggleTheme }) {
       setSection(pathname === '/' ? currentSection() : null);
     };
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
-    update();
+    onScroll(); // first measure on the next frame, not during startup
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll);
     return () => { cancelAnimationFrame(raf); window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll); };

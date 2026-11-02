@@ -134,7 +134,7 @@ export default function Hero({ visits }) {
     el.addEventListener('mousemove', onMove);
     el.addEventListener('mouseleave', onLeave);
     window.addEventListener('scroll', queue, { passive: true });
-    paint();
+    queue(); // first paint on the next frame, not during startup
     return () => {
       cancelAnimationFrame(raf);
       el.removeEventListener('mousemove', onMove);
@@ -157,7 +157,8 @@ export default function Hero({ visits }) {
       {/* Village badge: centred at the top of the hero, above everything */}
       <div className="hero-badge-wrap hero-badge-wrap--top">
         <span className="hero-badge__line hero-badge__line--l" aria-hidden="true" />
-        <p className="hero-badge" aria-label={t('hero.eyebrow')}>
+        <p className="hero-badge">
+          <span className="sr-only">{t('hero.eyebrow')}</span>
           <span className="hero-badge__ping" aria-hidden="true"><MapPin /></span>
           <span className="hero-badge__text" aria-hidden="true">
             <span className="hero-badge__word hero-badge__word--name">{t('siteName')}</span>

@@ -51,7 +51,7 @@ export default function RichHead({ eyebrow, title, text, Icon = Sparkles, stats,
       el.style.setProperty('--hp', Math.max(0, Math.min(1, (window.innerHeight - top) / (window.innerHeight * 0.55))).toFixed(3));
     };
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
-    update();
+    onScroll(); // first measure on the next frame, not during startup
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll);
     return () => { cancelAnimationFrame(raf); window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll); };
@@ -64,12 +64,14 @@ export default function RichHead({ eyebrow, title, text, Icon = Sparkles, stats,
         <span>{eyebrow}</span>
         <span className="rhead__diya" aria-hidden="true" />
       </p>
-      <h2 className="head__title rhead__title" aria-label={title}>
+      <h2 className="head__title rhead__title">
+        <span className="sr-only">{title}</span>
         <Words text={title} className="rhead__word" />
       </h2>
       <span className="rhead__ornament" aria-hidden="true"><span /><Icon /><span /></span>
       {text && (
-        <p className="head__text rhead__text" aria-label={text}>
+        <p className="head__text rhead__text">
+          <span className="sr-only">{text}</span>
           <Words text={text} className="rhead__tword" start={4} />
         </p>
       )}
