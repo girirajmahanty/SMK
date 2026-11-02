@@ -66,13 +66,6 @@ export default function Home() {
       {built >= 2 && (
         <section id="gallery" className="band band--ivory gal-sec">
           <Wave fill="var(--band-dark-bottom)" />
-          {/* Soft drifting lights behind the gallery */}
-          <span className="gal-sec__light gal-sec__light--a" aria-hidden="true" />
-          <span className="gal-sec__light gal-sec__light--b" aria-hidden="true" />
-          <span className="gal-sec__light gal-sec__light--c" aria-hidden="true" />
-          <span className="gal-sec__dust" aria-hidden="true" />
-          <span className="gal-sec__spot gal-sec__spot--l" aria-hidden="true" />
-          <span className="gal-sec__spot gal-sec__spot--r" aria-hidden="true" />
           <RichHead eyebrow={t('gallery.eyebrow')} title={t('gallery.title')} text={t('gallery.text')} Icon={Images} />
           <Gallery items={village.gallery} />
         </section>

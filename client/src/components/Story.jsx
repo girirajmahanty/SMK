@@ -43,24 +43,6 @@ function SinceRing({ year, label }) {
 
 export default function Story({ visits = null }) {
   const { t, pick } = useLang();
-  const ref = useRef(null);
-
-  // Gentle parallax: --py goes from -1 (section below centre) to 1 (above centre).
-  useEffect(() => {
-    const el = ref.current;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    let raf = 0;
-    const update = () => {
-      raf = 0;
-      const r = el.getBoundingClientRect();
-      const p = (window.innerHeight / 2 - (r.top + r.height / 2)) / window.innerHeight;
-      el.style.setProperty('--py', Math.max(-1, Math.min(1, p)).toFixed(3));
-    };
-    const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
-    onScroll(); // first measure on the next frame, not during startup
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => { cancelAnimationFrame(raf); window.removeEventListener('scroll', onScroll); };
-  }, []);
 
   const est = village.established;
   const stats = [
@@ -73,7 +55,7 @@ export default function Story({ visits = null }) {
   const { main, side } = village.storyImages;
 
   return (
-    <section id="story" ref={ref} className="band band--ivory story-sec">
+    <section id="story" className="band band--ivory story-sec">
       <div className="story2">
         {/* Photo collage */}
         <div className="story2__media">
@@ -81,14 +63,12 @@ export default function Story({ visits = null }) {
           <Reveal className="story2__frame story2__frame--main">
             <figure>
               <img {...pic(main.src)} sizes="(max-width: 900px) 80vw, 480px" alt={pick(main.caption)} loading="lazy" style={{ objectPosition: main.position }} />
-              <span className="story2__beam" aria-hidden="true" />
               <figcaption>{pick(main.caption)}</figcaption>
             </figure>
           </Reveal>
           <Reveal delay={250} className="story2__frame story2__frame--side">
             <figure>
               <img {...pic(side.src)} sizes="(max-width: 900px) 45vw, 300px" alt={pick(side.caption)} loading="lazy" style={{ objectPosition: side.position }} />
-              <span className="story2__beam story2__beam--late" aria-hidden="true" />
               <figcaption>{pick(side.caption)}</figcaption>
             </figure>
           </Reveal>
@@ -110,7 +90,6 @@ export default function Story({ visits = null }) {
 
           {village.storyQuote && (
             <Reveal as="blockquote" className="story2__quote">
-              <span className="light-ring" aria-hidden="true" />
               <Quote className="story2__quote-icon" />
               <p>{pick(village.storyQuote)}</p>
             </Reveal>

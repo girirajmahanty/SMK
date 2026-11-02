@@ -72,7 +72,6 @@ function Journey() {
   const max = Math.max(...village.routes.map(km));
   return (
     <Reveal className="visit3__journey">
-      <span className="light-ring light-ring--slow" aria-hidden="true" />
       <div className="visit3__journey-head">
         <span className="visit3__journey-icon"><Route /></span>
         <div>
@@ -81,7 +80,7 @@ function Journey() {
         </div>
       </div>
       <ol className="visit3__stops">
-        <span className="visit3__road" aria-hidden="true"><span className="visit3__road-fill" /><span className="visit3__bus"><Bus /></span></span>
+        <span className="visit3__road" aria-hidden="true"><span className="visit3__road-fill" /></span>
         {village.routes.map((r, i) => {
           const Icon = r.by === 'train' ? TrainFront : Bus;
           const share = Math.log(km(r)) / Math.log(max);
@@ -125,18 +124,12 @@ export default function Visit() {
       <Wave fill="var(--ivory-2)" />
       <span className="visit-sec__contours" aria-hidden="true" />
       <span className="visit-sec__glow" aria-hidden="true" />
-      {/* a dotted travel path drawn across the background, with a light moving along it */}
-      <svg className="visit-sec__path" viewBox="0 0 1200 600" preserveAspectRatio="none" aria-hidden="true">
-        <path d="M-20,520 C180,420 260,560 420,430 S700,180 860,260 S1100,120 1240,60" />
-        <path className="visit-sec__path-light" d="M-20,520 C180,420 260,560 420,430 S700,180 860,260 S1100,120 1240,60" />
-      </svg>
 
       <RichHead eyebrow={t('visit.eyebrow')} title={t('visit.title')} text={t('visit.text')} Icon={MapPin} light />
 
       <div className="visit3">
         <div className="visit3__top">
           <Reveal className="visit3__mapcard">
-            <span className="light-ring light-ring--slow" aria-hidden="true" />
             <VillageMap label={t('visit.youAreHere')} lang={lang} />
             <span className="visit3__compass" aria-hidden="true"><Compass /></span>
             <AddressPanel />
@@ -147,7 +140,6 @@ export default function Visit() {
         <div className="visit3__cards">
           {info.map((c, i) => (
             <Reveal key={c.label} delay={i * 120} className="visit3__card">
-              <span className="light-ring" aria-hidden="true" style={{ '--ring-delay': `${i * -1.2}s` }} />
               <span className="visit3__card-medal"><c.Icon /></span>
               <p className="visit2__label">{c.label}</p>
               <p className="visit3__card-value">{c.value}</p>

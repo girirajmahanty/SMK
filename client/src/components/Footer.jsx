@@ -11,10 +11,6 @@ import { useFestivalDates, festivalStatus, formatRange } from '../festivalDates.
 
 const { designer } = site;
 
-// Fireflies: position (%), drift speed, start offset.
-const FLIES = [[8, 40, 9, 0], [18, 75, 11, 3], [27, 30, 8, 6], [36, 62, 12, 1], [48, 45, 10, 4], [57, 80, 9, 7],
-  [66, 35, 11, 2], [74, 66, 8, 5], [83, 40, 12, 8], [92, 70, 10, 3], [42, 20, 9, 9], [70, 18, 11, 6]];
-
 const LINKS = [
   { to: '/#story', key: 'nav.story', Icon: ScrollText },
   { to: '/#life', key: 'nav.life', Icon: Wheat },
@@ -35,11 +31,6 @@ export default function Footer() {
       <Wave fill="var(--band-dark-bottom)" />
       <span className="footer2__beam" aria-hidden="true" />
       <span className="footer2__glow" aria-hidden="true" />
-      <span className="footer2__flies" aria-hidden="true">
-        {FLIES.map(([x, y, d, delay], i) => (
-          <span key={i} style={{ '--x': `${x}%`, '--y': `${y}%`, '--d': `${d}s`, '--delay': `-${delay}s` }} />
-        ))}
-      </span>
 
       <div className="footer2__grid">
         {/* Brand */}
@@ -64,7 +55,7 @@ export default function Footer() {
 
         {/* Festival happening now / next */}
         {fest && (
-          <Link to="/#festivals" className={`footer2__season fest2--${fest.tone || 'sun'}`}>
+          <Link to="/#festivals" className={`footer2__season fest3--${fest.tone || 'sun'}`}>
             <p className="footer2__heading">{t(status.kind === 'now' ? 'footer.season' : 'footer.next')}</p>
             <div className="footer2__season-row">
               <span className="footer2__season-icon">{fest.Icon ? <fest.Icon /> : <Sparkles />}</span>

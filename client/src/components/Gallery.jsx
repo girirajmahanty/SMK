@@ -108,7 +108,6 @@ function Showcase({ slides, onOpen }) {
   return (
     <div ref={ref} className={`gal-show ${running ? 'is-running' : ''}`} style={{ '--slide-ms': `${SLIDE_MS}ms` }}
       onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
-      <span className="light-ring light-ring--slow" aria-hidden="true" />
       <div className="gal-show__stage" onClick={() => onOpen(s)}>
         {slides.map((g, k) => (
           <div key={g.src} className={`gal-show__slide ${k === i ? 'is-active' : ''}`} aria-hidden={k !== i}>
@@ -116,7 +115,6 @@ function Showcase({ slides, onOpen }) {
             <img className="gal-show__img" {...pic(g.src)} sizes="(max-width: 760px) 90vw, 640px" alt={pick(g.caption)} loading={k === 0 ? 'eager' : 'lazy'} />
           </div>
         ))}
-        <span className="gal-show__beam" aria-hidden="true" />
         <div className="gal-show__text" key={i}>
           <span className="gal-item__cat">{t(`gallery.${s.cat}`)}</span>
           <p className="gal-show__caption">{pick(s.caption)}</p>
@@ -140,28 +138,15 @@ function Showcase({ slides, onOpen }) {
   );
 }
 
-// One tile: tilts toward the cursor, a soft light follows it, a shine sweeps across on hover.
+// One tile: lifts slightly and a shine sweeps across on hover.
 function Tile({ item, index, place, onOpen }) {
   const { t, pick } = useLang();
-  const ref = useRef(null);
-  const onMove = (e) => {
-    const el = ref.current, r = el.getBoundingClientRect();
-    const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
-    el.style.setProperty('--rx', `${(0.5 - y) * 7}deg`);
-    el.style.setProperty('--ry', `${(x - 0.5) * 9}deg`);
-    el.style.setProperty('--lx', `${x * 100}%`);
-    el.style.setProperty('--ly', `${y * 100}%`);
-  };
-  const onLeave = () => { ref.current.style.setProperty('--rx', '0deg'); ref.current.style.setProperty('--ry', '0deg'); };
 
   return (
     <div
-      ref={ref}
       className={`gal-item gal-item--${sizeOf(item, index)} ${item.video ? 'gal-item--video' : ''}`}
       style={{ '--i': index, gridColumn: `${place.c + 1} / span ${place.w}`, gridRow: `${place.r + 1} / span ${place.h}` }}
       onClick={onOpen}
-      onMouseMove={onMove}
-      onMouseLeave={onLeave}
       tabIndex={0}
       role="button"
       aria-label={pick(item.caption)}
@@ -170,7 +155,6 @@ function Tile({ item, index, place, onOpen }) {
       <div className="gal-item__media">
         {item.video ? <GridVideo item={item} /> : <img {...pic(item.src)} sizes="(max-width: 600px) 50vw, (max-width: 1200px) 30vw, 400px" alt={pick(item.caption)} loading="lazy" width={item.w} height={item.h} />}
       </div>
-      <span className="gal-item__light" aria-hidden="true" />
       <span className="gal-item__shine" aria-hidden="true" />
       <span className="gal-item__ring" aria-hidden="true" />
       {item.video && (

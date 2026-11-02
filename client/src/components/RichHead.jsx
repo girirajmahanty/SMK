@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useId, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import Reveal from './Reveal.jsx';
 
@@ -39,26 +39,9 @@ export function CountUp({ to, lang }) {
 
 // Section heading: eyebrow between two flickering diyas, title words rising with a gold shimmer,
 // an ornament that draws itself, subtitle words floating up, optional counting stats.
-// --hp (0 → 1 as it rises to mid-screen) lifts and grows the whole heading with the scroll.
 export default function RichHead({ eyebrow, title, text, Icon = Sparkles, stats, light = false, align = 'center', className = '', lang }) {
-  const id = useId();
-  useEffect(() => {
-    const el = document.getElementById(id);
-    let raf = 0;
-    const update = () => {
-      raf = 0;
-      const top = el.getBoundingClientRect().top;
-      el.style.setProperty('--hp', Math.max(0, Math.min(1, (window.innerHeight - top) / (window.innerHeight * 0.55))).toFixed(3));
-    };
-    const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
-    onScroll(); // first measure on the next frame, not during startup
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
-    return () => { cancelAnimationFrame(raf); window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll); };
-  }, [id]);
-
   return (
-    <Reveal className={`head rhead ${light ? 'rhead--light' : ''} ${align === 'left' ? 'rhead--left' : ''} ${className}`} id={id}>
+    <Reveal className={`head rhead ${light ? 'rhead--light' : ''} ${align === 'left' ? 'rhead--left' : ''} ${className}`}>
       <p className="rhead__eyebrow">
         <span className="rhead__diya" aria-hidden="true" />
         <span>{eyebrow}</span>

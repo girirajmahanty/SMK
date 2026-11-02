@@ -5,9 +5,7 @@ import { useLang } from '../i18n.jsx';
 import { village } from '../village.js';
 import { pic } from '../responsive.js';
 import Seal from './Seal.jsx';
-import HeroParticles from './HeroParticles.jsx';
 import RotatingWord from './RotatingWord.jsx';
-import HeroBokeh from './HeroBokeh.jsx';
 
 function CountUp({ value }) {
   const [n, setN] = useState(0);
@@ -109,50 +107,13 @@ function EmblemRings() {
 
 export default function Hero({ visits }) {
   const { t, pick } = useLang();
-  const ref = useRef(null);
-
-  // Mouse parallax (--mx/--my, -1…1) and scroll progress (--sp, 0…1) as CSS variables.
-  useEffect(() => {
-    const el = ref.current;
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let raf = 0, mx = 0, my = 0;
-    const paint = () => {
-      raf = 0;
-      el.style.setProperty('--mx', mx.toFixed(3));
-      el.style.setProperty('--my', my.toFixed(3));
-      el.style.setProperty('--sp', Math.min(window.scrollY / window.innerHeight, 1).toFixed(3));
-    };
-    const queue = () => { if (!raf) raf = requestAnimationFrame(paint); };
-    const onMove = (e) => {
-      if (reduce) return;
-      const r = el.getBoundingClientRect();
-      mx = ((e.clientX - r.left) / r.width) * 2 - 1;
-      my = ((e.clientY - r.top) / r.height) * 2 - 1;
-      queue();
-    };
-    const onLeave = () => { mx = 0; my = 0; queue(); };
-    el.addEventListener('mousemove', onMove);
-    el.addEventListener('mouseleave', onLeave);
-    window.addEventListener('scroll', queue, { passive: true });
-    queue(); // first paint on the next frame, not during startup
-    return () => {
-      cancelAnimationFrame(raf);
-      el.removeEventListener('mousemove', onMove);
-      el.removeEventListener('mouseleave', onLeave);
-      window.removeEventListener('scroll', queue);
-    };
-  }, []);
 
   return (
-    <section className="hero" ref={ref}>
+    <section className="hero">
       <div className="hero__layer hero__layer--bg" aria-hidden="true">
         {village.heroImage && <img className="hero__photo" {...pic(village.heroImage)} sizes="100vw" alt="" fetchpriority="high" decoding="async" />}
       </div>
       <div className="hero__overlay" aria-hidden="true" />
-      {/* Festive lights: drifting lamp-like bokeh, a warm glint that sweeps across the photo now and then */}
-      <HeroBokeh count={14} />
-      <div className="hero__sweep" aria-hidden="true" />
-      <HeroParticles />
 
       {/* Village badge: centred at the top of the hero, above everything */}
       <div className="hero-badge-wrap hero-badge-wrap--top">

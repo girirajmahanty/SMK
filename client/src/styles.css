@@ -497,8 +497,6 @@ main:focus { outline: none; }
 }
 
 /* ---------- Festival timeline ---------- */
-.timeline { list-style: none; max-width: 780px; margin: 0 auto; position: relative; }
-.timeline::before { content: ''; position: absolute; left: 130px; top: 0; bottom: 0; width: 1.5px; background: linear-gradient(var(--gold), transparent); }
 
 /* ---------- Visit ---------- */
 .visit { position: relative; max-width: 720px; margin: 0 auto; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1.4rem; }
@@ -577,7 +575,6 @@ main:focus { outline: none; }
 @media (max-width: 600px) {
   .brand__sub { display: none; }
   .life, .gallery { grid-template-columns: 1fr; }
-  .timeline::before { left: 6px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
@@ -817,7 +814,6 @@ main:focus { outline: none; }
   background: radial-gradient(ellipse at 50% 40%, rgba(138, 47, 54, 0.62) 0%, rgba(100, 31, 36, 0.87) 45%, rgba(38, 10, 13, 0.96) 100%);
 }
 :root[data-theme='dark'] .hero__overlay { background: radial-gradient(ellipse at 50% 40%, rgba(94, 30, 36, 0.72) 0%, rgba(58, 16, 20, 0.9) 45%, rgba(18, 6, 7, 0.97) 100%); }
-.hero__particles { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .hero__inner {
   z-index: 2; opacity: calc(1 - var(--sp, 0) * 1.4);
   transform: translateY(calc(var(--sp, 0) * 90px)) scale(calc(1 - var(--sp, 0) * 0.08));
@@ -1265,15 +1261,6 @@ main:focus { outline: none; }
    Hero with the festival photo: festive lights + frosted text panel
    ========================================================= */
 /* Lights */
-.hero__bokeh { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; mix-blend-mode: screen; z-index: 1; }
-.hero__sweep {
-  position: absolute; inset: 0; pointer-events: none; z-index: 1; mix-blend-mode: screen;
-  background: linear-gradient(115deg, transparent 40%, rgba(255, 214, 140, 0.22) 50%, transparent 60%) no-repeat;
-  background-size: 250% 100%; background-position: 130% 0;
-  animation: heroSweep 10s ease-in-out 2.5s infinite;
-}
-@keyframes heroSweep { 0% { background-position: 130% 0; } 40%, 100% { background-position: -30% 0; } }
-.hero__particles { z-index: 1; }
 
 /* Photo: full colour; only a light tint, darker at the very top (menu) and bottom (wave) */
 .hero__photo { filter: saturate(1.08) contrast(1.04); object-position: 58% center; }
@@ -1342,7 +1329,6 @@ main:focus { outline: none; }
 
 .hero__photo { object-position: 60% center; filter: saturate(1.1) contrast(1.05); }
 /* Golden-hour lights: fewer, softer bokeh */
-.hero__bokeh { opacity: 0.55; }
 
 /* Shading: dark warm on the left (behind the text) → clear over the temple; light top/bottom vignette */
 .hero__overlay {
@@ -1581,8 +1567,6 @@ main:focus { outline: none; }
 }
 .life2-card__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scale(1.04); filter: saturate(0.95); transition: transform 1.2s cubic-bezier(0.22, 1, 0.36, 1), filter 0.6s; }
 .life2-card__shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(20, 6, 8, 0.05) 25%, rgba(30, 8, 10, 0.55) 60%, rgba(30, 8, 10, 0.93) 100%); }
-.life2-card__light { position: absolute; inset: 0; opacity: 0; mix-blend-mode: screen; transition: opacity 0.4s;
-  background: radial-gradient(260px circle at var(--lx, 50%) var(--ly, 50%), rgba(255, 241, 201, 0.28), transparent 60%); }
 .life2-card::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 3;
   box-shadow: inset 0 0 0 1px rgba(240, 217, 168, 0.22); transition: box-shadow 0.4s; }
 .life2-card__num { position: absolute; top: 12px; right: 18px; z-index: 2; font-family: var(--display); font-size: 2.4rem; font-style: italic; line-height: 1; color: rgba(255, 241, 201, 0.5); transition: color 0.4s, transform 0.5s var(--ease); }
@@ -1603,7 +1587,6 @@ main:focus { outline: none; }
 /* hover / keyboard focus */
 .life2-card:hover, .life2-card:focus-visible { box-shadow: 0 34px 60px -26px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(240, 217, 168, 0.4); }
 .life2-card:hover .life2-card__img, .life2-card:focus-visible .life2-card__img { transform: scale(1.12); filter: saturate(1.12); }
-.life2-card:hover .life2-card__light { opacity: 1; }
 .life2-card:hover::after, .life2-card:focus-visible::after { box-shadow: inset 0 0 0 1.5px var(--gold-light), inset 0 0 30px rgba(240, 217, 168, 0.18); }
 .life2-card:hover .life2-card__num, .life2-card:focus-visible .life2-card__num { color: var(--gold-light); transform: translateY(-3px); }
 .life2-card:hover .life2-card__credit { opacity: 0.9; }
@@ -1721,19 +1704,6 @@ main:focus { outline: none; }
    ========================================================= */
 /* ---- Section lights ---- */
 .gal-sec { position: relative; overflow: hidden; isolation: isolate; }
-.gal-sec__light { position: absolute; z-index: -1; border-radius: 50%; filter: blur(60px); pointer-events: none; animation: galFloat 18s ease-in-out infinite; }
-.gal-sec__light--a { width: 440px; height: 440px; top: 4%; left: -8%; background: radial-gradient(circle, rgba(227, 183, 104, 0.55), transparent 70%); }
-.gal-sec__light--b { width: 540px; height: 540px; bottom: 2%; right: -10%; background: radial-gradient(circle, rgba(239, 93, 58, 0.28), transparent 70%); animation-delay: -6s; }
-.gal-sec__light--c { width: 380px; height: 380px; top: 38%; left: 38%; background: radial-gradient(circle, rgba(200, 16, 46, 0.14), transparent 70%); animation-delay: -12s; }
-@keyframes galFloat { 33% { transform: translate(40px, -30px) scale(1.08); } 66% { transform: translate(-30px, 25px) scale(0.95); } }
-.gal-sec__dust {
-  position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: 0.6;
-  background-image: radial-gradient(circle, rgba(198, 146, 58, 0.55) 1px, transparent 1.7px), radial-gradient(circle, rgba(198, 146, 58, 0.35) 1px, transparent 1.7px);
-  background-size: 90px 90px, 140px 140px; background-position: 0 0, 40px 70px;
-  -webkit-mask: radial-gradient(ellipse at center, #000 30%, transparent 75%); mask: radial-gradient(ellipse at center, #000 30%, transparent 75%);
-  animation: dustDrift 50s linear infinite;
-}
-@keyframes dustDrift { to { background-position: 0 -900px, 40px -1330px; } }
 
 /* ---- Tabs: glass bar with a glowing pill that slides to the active tab ---- */
 .gal-tabs {
@@ -1772,10 +1742,7 @@ main:focus { outline: none; }
 @keyframes galRise { from { opacity: 0; translate: 0 34px; scale: 0.95; clip-path: inset(40% 0 0 0 round 18px); } to { clip-path: inset(0 0 0 0 round 18px); } }
 .gal-item__media { position: absolute; inset: 0; }
 .gal-item:hover, .gal-item:focus-visible { box-shadow: 0 30px 50px -24px rgba(74, 22, 26, 0.65), 0 0 32px -6px rgba(227, 183, 104, 0.55); }
-.gal-item__light, .gal-item__shine, .gal-item__ring { position: absolute; inset: 0; pointer-events: none; border-radius: inherit; }
-.gal-item__light { z-index: 1; opacity: 0; mix-blend-mode: screen; transition: opacity 0.4s;
-  background: radial-gradient(230px circle at var(--lx, 50%) var(--ly, 50%), rgba(255, 241, 201, 0.4), transparent 60%); }
-.gal-item:hover .gal-item__light { opacity: 1; }
+.gal-item__shine, .gal-item__ring { position: absolute; inset: 0; pointer-events: none; border-radius: inherit; }
 .gal-item__shine { z-index: 2; transform: translateX(-120%); background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.42) 50%, transparent 65%); }
 .gal-item:hover .gal-item__shine { transition: transform 1.1s cubic-bezier(0.22, 1, 0.36, 1); transform: translateX(120%); }
 .gal-item__ring {
@@ -1845,7 +1812,6 @@ main:focus { outline: none; }
   .lightbox--rich .lightbox__nav--prev { left: 0.4rem; }
   .lightbox--rich .lightbox__nav--next { right: 0.4rem; left: auto; }
   .lightbox__thumb { width: 44px; height: 44px; }
-  .gal-sec__light { filter: blur(40px); }
 }
 
 /* =========================================================
@@ -1855,21 +1821,6 @@ main:focus { outline: none; }
 /* overflow: clip (not hidden) so the stacking cards can stay pinned while you scroll */
 .fest-sec { position: relative; overflow: clip; isolation: isolate; padding-block: clamp(4.5rem, 10vh, 7rem);
   background: radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--gold) 14%, transparent), transparent 60%), var(--ivory-2); }
-.fest-sec__sky { position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
-.fest-lantern {
-  position: absolute; bottom: -40px; left: var(--x); width: var(--s); height: calc(var(--s) * 1.3); border-radius: 42% 42% 46% 46%;
-  background: radial-gradient(circle at 50% 62%, #fff1c2 0%, #ffc15a 30%, #f08a24 62%, rgba(240, 138, 36, 0) 78%);
-  box-shadow: 0 0 calc(var(--s) * 1.2) calc(var(--s) * 0.35) rgba(255, 170, 60, 0.35);
-  opacity: 0; animation: lanternRise var(--d) linear var(--delay) infinite, lanternFlicker 1.6s ease-in-out infinite alternate;
-}
-@keyframes lanternRise {
-  0% { opacity: 0; transform: translate(0, 0); }
-  10% { opacity: 0.85; }
-  50% { transform: translate(var(--sway), -55vh); }
-  85% { opacity: 0.55; }
-  100% { opacity: 0; transform: translate(calc(var(--sway) * -0.5), -115vh); }
-}
-@keyframes lanternFlicker { to { filter: brightness(1.25); } }
 :root[data-theme='dark'] .fest-sec { background: radial-gradient(ellipse at 50% 0%, rgba(227, 183, 104, 0.1), transparent 60%), var(--ivory-2); }
 
 /* ---- Background: warm glows, then a stage that stays in view while you scroll the whole section ---- */
@@ -1885,64 +1836,19 @@ main:focus { outline: none; }
   radial-gradient(ellipse 55% 40% at 100% 85%, rgba(156, 28, 46, 0.2), transparent 70%),
   radial-gradient(circle at 1px 1px, rgba(227, 183, 104, 0.1) 1px, transparent 1.6px) 0 0 / 26px 26px,
   var(--ivory-2); }
-.fest-bg { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
-.fest-bg__stage { position: sticky; top: 0; height: 100vh; overflow: hidden; }
 
 /* glowing orbs that drift and move at different speeds as you scroll */
-.fest-bg__orb { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.5; animation: festOrb 14s ease-in-out infinite alternate; }
-.fest-bg__orb--1 { width: 38vmax; height: 38vmax; left: -12vmax; top: 10%; background: #f7a531;
-  translate: 0 calc(var(--sp, 0) * -30vh); }
-.fest-bg__orb--2 { width: 32vmax; height: 32vmax; right: -10vmax; top: 35%; background: #c8102e; opacity: 0.28; animation-delay: -5s;
-  translate: 0 calc(var(--sp, 0) * -55vh); }
-.fest-bg__orb--3 { width: 26vmax; height: 26vmax; left: 35%; bottom: -14vmax; background: #e3b768; opacity: 0.4; animation-delay: -9s;
-  translate: 0 calc(var(--sp, 0) * -20vh); }
 @keyframes festOrb { to { transform: translate(6vmax, -4vmax) scale(1.15); } }
 
 /* two soft spotlight beams sweeping up from the bottom corners */
-.fest-bg__beam { position: absolute; bottom: -8vh; width: 34vw; min-width: 260px; height: 120vh; transform-origin: 50% 100%; filter: blur(10px);
-  background: linear-gradient(to top, rgba(255, 205, 120, 0.42), rgba(255, 205, 120, 0.12) 45%, transparent 80%);
-  clip-path: polygon(46% 100%, 54% 100%, 100% 0, 0 0); animation: festBeam 9s ease-in-out infinite alternate; }
-.fest-bg__beam--l { left: -6vw; --a: -28deg; --b: 8deg; }
-.fest-bg__beam--r { right: -6vw; --a: 28deg; --b: -8deg; animation-delay: -4.5s; }
-@keyframes festBeam { from { transform: rotate(var(--a)); opacity: 0.55; } to { transform: rotate(var(--b)); opacity: 1; } }
 
 /* rangoli mandala: rings turn in opposite directions; the whole thing rotates and rises with the scroll */
-.fest-bg__mandala { position: absolute; left: 50%; top: 50%; width: min(115vmin, 960px); opacity: 0.16;
-  translate: -50% calc(-50% + (0.5 - var(--sp, 0.5)) * 180px); rotate: calc(var(--sp, 0) * 220deg);
-  filter: drop-shadow(0 0 18px rgba(227, 183, 104, 0.6)); }
-.fest-bg__ring { transform-origin: 0 0; animation: festSpin 90s linear infinite; }
-.fest-bg__ring--b { animation-direction: reverse; animation-duration: 70s; }
-.fest-bg__ring path { fill: color-mix(in srgb, var(--gold) 22%, transparent); stroke: #c6923a; stroke-width: 1; }
-.fest-bg__ring circle { stroke: #c6923a; stroke-width: 0.8; stroke-dasharray: 2 5; }
-.fest-bg__core { fill: #e3b768; animation: festCore 3s ease-in-out infinite; transform-origin: 0 0; }
 @keyframes festSpin { to { transform: rotate(360deg); } }
 @keyframes festCore { 50% { transform: scale(1.25); fill: #fff1c9; } }
-:root[data-theme='dark'] .fest-bg__mandala { opacity: 0.22; }
 
 /* string lights: bulbs twinkle in a wave, each with its own colour */
-.fest-bg__lights { position: absolute; left: -2%; width: 104%; height: 80px; translate: 0 calc(var(--sp, 0) * -40px); }
-.fest-bg__lights--1 { top: 64px; }
-.fest-bg__lights svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.fest-bg__lights path { fill: none; stroke: rgba(90, 50, 20, 0.45); stroke-width: 1.4; vector-effect: non-scaling-stroke; }
-.fest-bg__lights span { position: absolute; width: 10px; height: 13px; margin: 2px 0 0 -5px; border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
-  --c: #ffcf5a; background: radial-gradient(circle at 50% 35%, #fff, var(--c) 55%); box-shadow: 0 0 10px 3px var(--c);
-  animation: festBulb 2.4s ease-in-out infinite; animation-delay: calc(var(--b) * -0.27s); }
-.fest-bg__lights span:nth-child(4n + 2) { --c: #ff8a3d; }
-.fest-bg__lights span:nth-child(4n + 3) { --c: #ff4d6d; }
-.fest-bg__lights span:nth-child(4n + 4) { --c: #7ee787; }
-.fest-bg__lights span::before { content: ''; position: absolute; left: 50%; top: -4px; width: 4px; height: 5px; margin-left: -2px; border-radius: 1px; background: #6b4a2a; }
-@keyframes festBulb { 0%, 100% { opacity: 1; box-shadow: 0 0 12px 4px var(--c); } 50% { opacity: 0.35; box-shadow: 0 0 2px 0 var(--c); } }
 
 /* marigold petals drifting down */
-.fest-bg__petal { position: absolute; top: -6vh; left: var(--x); width: var(--s); height: calc(var(--s) * 0.62); border-radius: 60% 40% 60% 40% / 70% 30% 70% 30%;
-  background: radial-gradient(circle at 30% 30%, #ffd166, #f59e0b 55%, #ea580c); opacity: 0.85;
-  animation: festPetal var(--d) linear var(--delay) infinite; }
-@keyframes festPetal {
-  0% { transform: translate(0, 0) rotate(0); opacity: 0; }
-  8% { opacity: 0.85; }
-  50% { transform: translate(var(--sway), 55vh) rotate(220deg); }
-  100% { transform: translate(calc(var(--sway) * -0.4), 112vh) rotate(440deg); opacity: 0.6; }
-}
 
 /* ---- Heading: rises with the scroll, words float up one by one, gold shimmer on the title ---- */
 .rhead { translate: 0 calc((1 - var(--hp, 1)) * 70px); scale: calc(0.92 + var(--hp, 1) * 0.08); margin-bottom: 3.4rem; }
@@ -1990,308 +1896,73 @@ main:focus { outline: none; }
 .rhead__stat small { font-size: 0.82rem; color: var(--muted); }
 
 @media (prefers-reduced-motion: reduce) {
-  .fest-bg__orb, .fest-bg__beam, .fest-bg__ring, .fest-bg__core, .fest-bg__lights span, .fest-bg__petal, .rhead::before, .rhead__word, .rhead__diya::after { animation: none; }
-  .fest-bg__petal { display: none; }
-  .rhead, .fest-bg__mandala, .fest-bg__lights, .fest-bg__orb { translate: none; rotate: none; }
-  .fest-bg__mandala { translate: -50% -50%; }
+  .rhead::before, .rhead__word, .rhead__diya::after { animation: none; }
+  .rhead { translate: none; rotate: none; }
 }
 @media (max-width: 760px) {
-  .fest-bg__lights--1 { top: 58px; height: 56px; }
-  .fest-bg__lights span:nth-child(odd) { display: none; }
-  .fest-bg__beam { opacity: 0.6; }
   .rhead__ornament span { width: 50px; }
 }
 
 /* ---- The timeline: cards pin under the navbar and stack up as you scroll ---- */
-.fest2 { position: relative; max-width: 860px; margin: 0 auto; --stack-top: 92px; --stack-step: 18px; }
 /* the gap is the scroll distance before the next card arrives; padding keeps the full stack in view a moment */
-.fest2__list { list-style: none; display: grid; gap: clamp(1.5rem, 9vh, 5rem); padding: 0.5rem 0 clamp(2rem, 14vh, 8rem); }
 /* ---- Connector line ---- */
 /* track: a dotted rangoli-style line with a faint rail on each side */
-.fest2__line { position: absolute; left: 38px; top: 0; bottom: 0; width: 14px; translate: -50% 0; pointer-events: none;
-  background:
-    radial-gradient(circle, color-mix(in srgb, var(--gold) 55%, transparent) 1.6px, transparent 2.2px) 50% 0 / 14px 14px repeat-y,
-    linear-gradient(90deg, transparent 2px, color-mix(in srgb, var(--gold) 18%, transparent) 2px 3px, transparent 3px 11px, color-mix(in srgb, var(--gold) 18%, transparent) 11px 12px, transparent 12px); }
 /* fill: revealed with the scroll (clip, so the pulses inside are not stretched); stripes flow downward */
-.fest2__line-fill { position: absolute; left: 50%; top: 0; bottom: 0; width: 5px; translate: -50% 0; border-radius: 5px; overflow: hidden;
-  clip-path: inset(0 -20px calc((1 - var(--fp, 0)) * 100%) -20px);
-  background:
-    repeating-linear-gradient(180deg, rgba(255, 246, 214, 0.75) 0 6px, transparent 6px 22px),
-    linear-gradient(180deg, #ffd27a, #f59e0b 30%, #e2683c 60%, #c8102e 85%, #e3b768);
-  background-size: 100% 22px, 100% 100%;
-  box-shadow: 0 0 10px 2px rgba(245, 158, 11, 0.75), 0 0 26px 6px rgba(227, 104, 60, 0.35);
-  animation: festFlow 0.9s linear infinite; }
-@keyframes festFlow { to { background-position: 0 22px, 0 0; } }
 /* bright pulses that race down the lit part of the line, one after another */
-.fest2__pulse { position: absolute; left: 50%; top: 0; width: 12px; height: 70px; translate: -50% -100%; border-radius: 50%;
-  background: radial-gradient(closest-side, #fff, rgba(255, 220, 140, 0.9) 35%, transparent);
-  animation: festPulse 3.6s cubic-bezier(0.45, 0, 0.55, 1) infinite; animation-delay: calc(var(--k) * -1.2s); }
-@keyframes festPulse { from { top: 0; } to { top: calc(100% + 70px); } }
 /* comet head at the tip: flickering core, a fiery tail and sparks circling it */
-.fest2__spark { position: absolute; left: 50%; top: calc(var(--fp, 0) * 100%); width: 0; height: 0; }
-.fest2__spark-core { position: absolute; left: -9px; top: -9px; width: 18px; height: 18px; border-radius: 50%;
-  background: radial-gradient(circle, #fff 0 30%, #ffe08a 50%, #f59e0b 75%, transparent 76%);
-  box-shadow: 0 0 14px 6px rgba(255, 210, 120, 0.9), 0 0 40px 14px rgba(245, 158, 11, 0.45);
-  animation: festCore2 0.7s ease-in-out infinite alternate; }
-@keyframes festCore2 { to { transform: scale(1.25); box-shadow: 0 0 20px 8px rgba(255, 230, 160, 1), 0 0 56px 18px rgba(245, 158, 11, 0.55); } }
-.fest2__spark-trail { position: absolute; left: -4px; bottom: 0; width: 8px; height: 90px; border-radius: 50% 50% 4px 4px; filter: blur(2px);
-  background: linear-gradient(to top, rgba(255, 236, 180, 0.95), rgba(245, 158, 11, 0.6) 40%, transparent); }
-.fest2__spark-bit { position: absolute; left: -2px; top: -2px; width: 4px; height: 4px; border-radius: 50%; background: #fff3c4; box-shadow: 0 0 6px 2px #ffb703;
-  animation: festOrbit 1.6s linear infinite; animation-delay: calc(var(--k) * -0.53s); }
-@keyframes festOrbit { from { transform: rotate(0) translateX(17px) scale(1); } 50% { opacity: 0.4; } to { transform: rotate(360deg) translateX(17px) scale(0.6); } }
-@media (prefers-reduced-motion: reduce) {
-  .fest2__line-fill, .fest2__pulse, .fest2__spark-core, .fest2__spark-bit { animation: none; }
-  .fest2__pulse { display: none; }
-}
 
 /* colour themes */
-.fest2--sun { --t1: #f7a531; --t2: #e2683c; }
-.fest2--colour { --t1: #ec4899; --t2: #8b5cf6; }
-.fest2--rain { --t1: #38bdf8; --t2: #1d5f8a; }
-.fest2--serpent { --t1: #4ade80; --t2: #166534; }
-.fest2--moon { --t1: #a78bfa; --t2: #3b2a7a; }
-.fest2--dawn { --t1: #fb923c; --t2: #be185d; }
-.fest2--harvest { --t1: #d4a72c; --t2: #6b7a1e; }
-.fest2--learn { --t1: #facc15; --t2: #c2851a; }
-.fest2--kirtan { --t1: #f97316; --t2: #b91c1c; }
-.fest2--durga { --t1: #e2683c; --t2: #9c1c2e; }
-.fest2--kali { --t1: #e3b768; --t2: #6b1d26; }
+.fest3--sun { --t1: #f7a531; --t2: #e2683c; }
+.fest3--colour { --t1: #ec4899; --t2: #8b5cf6; }
+.fest3--rain { --t1: #38bdf8; --t2: #1d5f8a; }
+.fest3--serpent { --t1: #4ade80; --t2: #166534; }
+.fest3--moon { --t1: #a78bfa; --t2: #3b2a7a; }
+.fest3--dawn { --t1: #fb923c; --t2: #be185d; }
+.fest3--harvest { --t1: #d4a72c; --t2: #6b7a1e; }
+.fest3--learn { --t1: #facc15; --t2: #c2851a; }
+.fest3--kirtan { --t1: #f97316; --t2: #b91c1c; }
+.fest3--durga { --t1: #e2683c; --t2: #9c1c2e; }
+.fest3--kali { --t1: #e3b768; --t2: #6b1d26; }
 
 /* Each card sticks a little lower than the one before, so the earlier cards' top edges peek out.
    --cover (set while scrolling) = how many cards lie on top: the card shrinks, tilts back and dims. */
-.fest2__item {
-  /* past the 6th card the pile stops growing downward, so long lists still fit on screen */
-  position: sticky; top: calc(var(--stack-top) + min(var(--i), 6) * var(--stack-step)); z-index: calc(var(--i) + 1);
-  display: grid; grid-template-columns: 76px minmax(0, 1fr); align-items: start;
-  /* shrink toward the connector line, so every icon stays on it */
-  transform-origin: 38px 0; will-change: scale, filter;
-  scale: calc(1 - min(var(--cover, 0), 3) * 0.045);
-  filter: brightness(calc(1 - min(var(--cover, 0), 3) * 0.13)) saturate(calc(1 - min(var(--cover, 0), 3) * 0.12));
-}
-.fest2__item .fest2__card { grid-column: 2; grid-row: 1; transition: box-shadow 0.45s; }
-.fest2__node { grid-column: 1; grid-row: 1; justify-self: center; margin-top: 1.2rem; z-index: 1; }
 /* a soft shadow on the card that is being covered */
-.fest2__item .fest2__card::after { content: ''; position: absolute; inset: 0; z-index: 4; pointer-events: none; border-radius: inherit;
-  background: linear-gradient(rgba(28, 7, 9, 0.35), transparent 40%); opacity: min(var(--cover, 0), 1); }
 
 /* reveal: cards rise in, the node pops */
-.fest2__item.reveal { transform: none; opacity: 1; }
-.fest2__item.reveal .fest2__card { opacity: 0; transform: translateY(70px) scale(0.94); filter: blur(4px);
-  transition: opacity 0.9s var(--ease), transform 0.9s var(--ease), box-shadow 0.45s, filter 0.9s; }
-.fest2__item.reveal.is-visible .fest2__card { opacity: 1; transform: none; filter: none;
-  transition: opacity 0.9s var(--ease), transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.45s, filter 0.9s; }
-
-.fest2__node {
-  display: grid; place-items: center; width: 60px; height: 60px; border-radius: 50%; color: var(--t2);
-  background: var(--card); box-shadow: 0 0 0 2px color-mix(in srgb, var(--t1) 60%, transparent), 0 8px 20px -10px var(--t2);
-  transform: scale(0) rotate(-120deg); transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s, background 0.5s 0.4s, color 0.5s 0.4s;
-}
-.fest2__node .lucide { position: relative; z-index: 1; width: 1.5rem; height: 1.5rem; transition: transform 0.5s cubic-bezier(0.34, 1.6, 0.64, 1); }
 /* visible but not reached yet: a dim outline waiting for the light */
-.fest2__item.is-visible .fest2__node { transform: none; }
-.fest2__node { position: relative; }
-.fest2__item:not(.is-lit) .fest2__node { color: color-mix(in srgb, var(--t2) 70%, #888); filter: saturate(0.4); }
 /* colour fill that floods in when the line arrives */
-.fest2__node::before { content: ''; position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 35% 30%, var(--t1), var(--t2));
-  transform: scale(0); transition: transform 0.6s cubic-bezier(0.34, 1.4, 0.64, 1); }
 /* burst ring that flashes out once, then a slow ripple */
-.fest2__node::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--t1); opacity: 0; pointer-events: none; }
-.fest2__item.is-lit .fest2__node { color: #fff8ea; animation: nodeGlow 2.8s ease-in-out 0.6s infinite; }
-.fest2__item.is-lit .fest2__node::before { transform: scale(1); }
-.fest2__item.is-lit .fest2__node::after { animation: festBurst 0.9s ease-out, festRipple 2.8s ease-out 1s infinite; }
-.fest2__item.is-lit .fest2__node .lucide { transform: scale(1.12); }
-@keyframes festBurst { from { transform: scale(0.8); opacity: 1; border-width: 4px; } to { transform: scale(2.1); opacity: 0; border-width: 1px; } }
 @keyframes festRipple { from { transform: scale(1); opacity: 0.6; } to { transform: scale(1.7); opacity: 0; } }
 /* glowing branch from the icon to its card, with a light running along it */
-.fest2__branch { position: absolute; left: 100%; top: 50%; width: 9px; height: 2px; margin-top: -1px; overflow: hidden; border-radius: 2px;
-  background: color-mix(in srgb, var(--t1) 25%, transparent); transform: scaleX(0); transform-origin: left; transition: transform 0.5s var(--ease) 0.2s; }
-.fest2__branch::after { content: ''; position: absolute; top: 0; left: -60%; width: 60%; height: 100%;
-  background: linear-gradient(90deg, transparent, #fff3c4, transparent); animation: festBranch 1.6s linear infinite; }
-.fest2__item.is-lit .fest2__branch { transform: scaleX(1); background: linear-gradient(90deg, var(--t1), color-mix(in srgb, var(--t1) 40%, transparent));
-  box-shadow: 0 0 8px 1px var(--t1); }
-@keyframes festBranch { to { left: 100%; } }
 /* the card's colour bar glows once its festival is reached */
-.fest2__item.is-lit .fest2__card::before { box-shadow: 0 0 14px 2px var(--t1); }
-@media (prefers-reduced-motion: reduce) { .fest2__item.is-lit .fest2__node::after, .fest2__branch::after { animation: none; } }
 @keyframes nodeGlow { 50% { box-shadow: 0 0 0 2px var(--t1), 0 0 0 10px color-mix(in srgb, var(--t1) 18%, transparent), 0 0 26px 2px color-mix(in srgb, var(--t1) 55%, transparent); } }
 
 /* ---- Card ---- */
-.fest2__card {
-  position: relative; isolation: isolate; border-radius: 22px; overflow: hidden; outline: none;
-  background: var(--card); border: 1px solid var(--line); box-shadow: 0 20px 40px -26px rgba(74, 22, 26, 0.55);
-}
-.fest2__card::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 4px; z-index: 2; background: linear-gradient(90deg, var(--t1), var(--t2)); }
-.fest2__item.is-visible .fest2__card:hover, .fest2__card:focus-visible { transform: translateY(-6px); box-shadow: 0 30px 50px -24px rgba(74, 22, 26, 0.6), 0 0 30px -8px color-mix(in srgb, var(--t1) 70%, transparent); }
-.fest2__ring {
-  position: absolute; inset: 0; border-radius: inherit; padding: 2px; pointer-events: none; opacity: 0; transition: opacity 0.4s; z-index: 3;
-  background: conic-gradient(from var(--ring-angle), transparent 0deg, var(--t1) 60deg, #fff1c9 90deg, var(--t2) 130deg, transparent 180deg 360deg);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
-  animation: ringSpin 3.5s linear infinite;
-}
-.fest2__card:hover .fest2__ring, .fest2__card:focus-visible .fest2__ring { opacity: 1; }
-.fest2__body { padding: 1.4rem 1.5rem 1.5rem; }
-.fest2__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
-.fest2__date {
-  display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.22rem 0.75rem; border-radius: 999px; font-size: 0.8rem; font-weight: 700;
-  color: #fff; background: linear-gradient(135deg, var(--t1), var(--t2)); box-shadow: 0 6px 14px -8px var(--t2);
-}
-.fest2__date .lucide { width: 0.9rem; height: 0.9rem; }
 /* exact date from Google: pops in with a shine */
-.fest2__date.is-exact { position: relative; overflow: hidden; animation: festDateIn 0.6s cubic-bezier(0.34, 1.5, 0.64, 1); }
-.fest2__date.is-exact::after { content: ''; position: absolute; inset: 0; transform: translateX(-120%);
-  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.55) 50%, transparent 70%); animation: festDateShine 4s ease-in-out 0.6s infinite; }
-@keyframes festDateIn { from { transform: scale(0.6); opacity: 0; } }
-@keyframes festDateShine { 0%, 60% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
-.fest2__countdown { display: inline-flex; align-items: center; gap: 0.35rem; margin: -0.15rem 0 0.4rem; font-size: 0.85rem; font-weight: 700; color: var(--t2); }
-.fest2__countdown .lucide { width: 0.9rem; height: 0.9rem; animation: festHourglass 3s ease-in-out infinite; }
-@keyframes festHourglass { 0%, 40% { transform: rotate(0); } 50%, 90% { transform: rotate(180deg); } 100% { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .fest2__date.is-exact, .fest2__date.is-exact::after, .fest2__countdown .lucide { animation: none; } }
-.fest2__status { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.2rem 0.7rem; border-radius: 999px; font-size: 0.76rem; font-weight: 700;
-  color: var(--leaf); background: color-mix(in srgb, var(--leaf) 14%, transparent); border: 1px solid color-mix(in srgb, var(--leaf) 35%, transparent); }
-.fest2__status--next { color: var(--accent); background: color-mix(in srgb, var(--gold) 14%, transparent); border-color: color-mix(in srgb, var(--gold) 40%, transparent); }
-.fest2__status-dot { position: relative; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-.fest2__status-dot::after { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 1.5px solid currentColor; animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite; }
-.fest2__card h3 { margin-top: 0.7rem; font-size: clamp(1.6rem, 2.6vw, 2rem); }
-.fest2__card p { margin-top: 0.35rem; color: var(--muted); line-height: 1.7; }
 
 /* Featured (Kali Puja): dark card with the photo */
-.fest2__item.is-featured .fest2__card { background: linear-gradient(160deg, #3a1015, #1c0709); border-color: rgba(227, 183, 104, 0.35); }
-.fest2__item.is-featured .fest2__card h3 { color: #f0d9a8; }
-.fest2__item.is-featured .fest2__card p { color: rgba(245, 233, 208, 0.82); }
 
 /* ---- Photo on every card: slow zoom, a light sweep, the festival's icon and the photo credit ---- */
-.fest2__img { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: color-mix(in srgb, var(--t2) 40%, #1c0709); }
-.fest2__img img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; transition: filter 0.5s; }
-.fest2__item.is-visible .fest2__img img { animation: festKen 16s ease-in-out infinite alternate; }
-@keyframes festKen { from { transform: scale(1.02); } to { transform: scale(1.14) translate(-1.5%, -1.5%); } }
-.fest2__card:hover .fest2__img img { filter: saturate(1.2) brightness(1.06); }
 /* tone-coloured wash at the bottom of the photo */
-.fest2__img::after { content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(transparent 50%, color-mix(in srgb, var(--t2) 55%, transparent)), linear-gradient(120deg, color-mix(in srgb, var(--t1) 22%, transparent), transparent 45%); }
-.fest2__item.is-featured .fest2__img::after { background: linear-gradient(transparent 45%, #2a0c10); }
 /* a band of light that sweeps across now and then (each card at a different moment) */
-.fest2__img::before { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; transform: translateX(-130%);
-  background: linear-gradient(105deg, transparent 35%, rgba(255, 245, 220, 0.4) 50%, transparent 65%);
-  animation: festSweep 7s ease-in-out infinite; animation-delay: calc(var(--i, 0) * -0.8s); }
-@keyframes festSweep { 0%, 70% { transform: translateX(-130%); } 100% { transform: translateX(130%); } }
-.fest2__img-badge { position: absolute; top: 12px; left: 12px; z-index: 2; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px;
-  color: #fff; background: linear-gradient(135deg, var(--t1), var(--t2)); border: 1.5px solid rgba(255, 255, 255, 0.55);
-  box-shadow: 0 8px 20px -6px var(--t2), 0 0 0 4px color-mix(in srgb, var(--t1) 25%, transparent); animation: festBob 3.2s ease-in-out infinite; }
-.fest2__img-badge .lucide { width: 1.3rem; height: 1.3rem; }
-@keyframes festBob { 50% { transform: translateY(-4px) rotate(-4deg); } }
-.fest2__credit { position: absolute; right: 8px; bottom: 8px; z-index: 2; display: inline-flex; align-items: center; gap: 0.3rem; max-width: 70%;
-  padding: 0.15rem 0.5rem; border-radius: 999px; font-size: 0.68rem; color: rgba(255, 255, 255, 0.92); background: rgba(10, 4, 5, 0.45);
-  backdrop-filter: blur(4px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.75; transition: opacity 0.3s; }
-.fest2__credit .lucide { width: 0.75rem; height: 0.75rem; flex-shrink: 0; }
-.fest2__credit:hover, .fest2__card:hover .fest2__credit { opacity: 1; }
 
 /* ---- Border: a light keeps running around every card in its festival colours ---- */
-.fest2__item.is-visible .fest2__ring { opacity: 0.65; }
-.fest2__card:hover .fest2__ring { opacity: 1; animation-duration: 2s; }
-.fest2__item.is-visible .fest2__card { box-shadow: 0 22px 44px -26px rgba(74, 22, 26, 0.6), 0 0 0 1px color-mix(in srgb, var(--t1) 28%, transparent); }
-@media (prefers-reduced-motion: reduce) {
-  .fest2__item.is-visible .fest2__img img, .fest2__img::before, .fest2__img-badge, .fest2__ring { animation: none; }
-}
-.fest2__item.is-featured .fest2__node { width: 70px; height: 70px; }
-.fest2__item.is-featured .fest2__node .lucide { width: 1.8rem; height: 1.8rem; }
-.fest2__item.is-featured.is-visible .fest2__node .lucide { animation: flameFlicker 1.4s ease-in-out infinite alternate; }
 @keyframes flameFlicker { 0% { transform: scale(1) rotate(-3deg); } 100% { transform: scale(1.12) rotate(3deg); filter: drop-shadow(0 0 6px #ffd27a); } }
 
 /* ---- Every card in the dark Kali Puja style, tinted with its own festival colours ---- */
-.fest2__item .fest2__card {
-  color: rgba(245, 233, 208, 0.86); border-color: color-mix(in srgb, var(--t1) 40%, transparent);
-  background:
-    radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--t1) 22%, transparent), transparent 60%),
-    linear-gradient(160deg, color-mix(in srgb, var(--t2) 45%, #2a0c10), #140507 85%);
-  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
-  transition: transform 0.25s ease-out, box-shadow 0.45s;
-}
-.fest2__item .fest2__card h3 { color: #f6e3b4; text-shadow: 0 2px 14px color-mix(in srgb, var(--t1) 45%, transparent); }
-.fest2__item .fest2__card .fest2__text { color: rgba(245, 233, 208, 0.82); }
-.fest2__item .fest2__img::after { background: linear-gradient(transparent 45%, rgba(20, 5, 7, 0.85)), linear-gradient(120deg, color-mix(in srgb, var(--t1) 25%, transparent), transparent 45%); }
-.fest2__status--next { color: #f0d9a8; background: rgba(227, 183, 104, 0.14); border-color: rgba(227, 183, 104, 0.4); }
-.fest2__status--now { color: #86efac; background: rgba(74, 222, 128, 0.12); border-color: rgba(74, 222, 128, 0.4); }
-.fest2__item.is-featured .fest2__card { border-color: rgba(227, 183, 104, 0.55); }
 
 /* countdown + Bengali-calendar date */
-.fest2__when { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.9rem; margin: 0.2rem 0 0.15rem; }
-.fest2__when:empty { display: none; }
-.fest2__countdown { margin: 0; color: color-mix(in srgb, var(--t1) 75%, #fff); }
-.fest2__bdate { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.8rem; color: rgba(245, 233, 208, 0.65); }
-.fest2__bdate .lucide { width: 0.8rem; height: 0.8rem; color: var(--t1); }
 
 /* detail chips: pop in one after another */
-.fest2__details { list-style: none; display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.8rem 0 0; padding: 0; }
-.fest2__details li {
-  display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.25rem 0.65rem; border-radius: 999px; font-size: 0.78rem; font-weight: 600;
-  color: #fbeed0; background: color-mix(in srgb, var(--t1) 16%, rgba(255, 255, 255, 0.04)); border: 1px solid color-mix(in srgb, var(--t1) 40%, transparent);
-  opacity: 0; transform: translateY(8px) scale(0.9); transition: opacity 0.5s, transform 0.5s cubic-bezier(0.34, 1.5, 0.64, 1), background 0.3s, border-color 0.3s;
-  transition-delay: calc(0.5s + var(--k) * 0.1s);
-}
-.fest2__details li .lucide { width: 0.75rem; height: 0.75rem; color: var(--t1); }
-.fest2__item.is-visible .fest2__details li { opacity: 1; transform: none; }
-.fest2__card:hover .fest2__details li { background: color-mix(in srgb, var(--t1) 28%, transparent); border-color: var(--t1); transition-delay: calc(var(--k) * 0.05s); }
 
 /* ---- Border: two lights chase each other round the card, plus a breathing glow ---- */
-.fest2__ring--2 { animation-direction: reverse; animation-duration: 5s;
-  background: conic-gradient(from var(--ring-angle), transparent 0deg 200deg, color-mix(in srgb, var(--t2) 80%, #fff) 250deg, var(--t1) 290deg, transparent 330deg 360deg); }
-.fest2__item.is-visible .fest2__ring--2 { opacity: 0.55; }
-.fest2__item.is-visible .fest2__card { animation: festGlow 3.6s ease-in-out infinite; animation-delay: calc(var(--i) * -0.4s); }
-@keyframes festGlow {
-  0%, 100% { box-shadow: 0 22px 44px -26px rgba(20, 5, 7, 0.8), 0 0 0 1px color-mix(in srgb, var(--t1) 30%, transparent), 0 0 18px -10px var(--t1); }
-  50% { box-shadow: 0 22px 44px -26px rgba(20, 5, 7, 0.8), 0 0 0 1px color-mix(in srgb, var(--t1) 55%, transparent), 0 0 34px -8px var(--t1); }
-}
 
 /* ---- Hover: lift and tilt toward the pointer, spotlight, faster borders, brighter photo ---- */
-.fest2__spot { position: absolute; inset: 0; z-index: 3; pointer-events: none; border-radius: inherit; opacity: 0; transition: opacity 0.35s;
-  background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--t1) 28%, transparent), transparent 70%); }
-.fest2__item.is-visible .fest2__card:hover, .fest2__card:focus-visible {
-  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(-6px);
-  animation: none;
-  box-shadow: 0 34px 60px -26px rgba(20, 5, 7, 0.9), 0 0 0 1px var(--t1), 0 0 46px -6px var(--t1);
-}
-.fest2__card:hover .fest2__spot { opacity: 1; }
-.fest2__card:hover .fest2__ring { opacity: 1; animation-duration: 1.6s; }
-.fest2__card:hover .fest2__ring--2 { opacity: 0.9; animation-duration: 2.2s; }
-.fest2__card:hover .fest2__img-badge { animation: festBadgeSpin 0.8s cubic-bezier(0.34, 1.5, 0.64, 1); }
-@keyframes festBadgeSpin { from { transform: rotate(-200deg) scale(0.6); } }
-.fest2__card:hover h3 { letter-spacing: 0.01em; }
-.fest2__card h3 { transition: letter-spacing 0.4s; }
-:lang(bn) .fest2__card:hover h3 { letter-spacing: normal; }
-@media (prefers-reduced-motion: reduce) {
-  .fest2__item.is-visible .fest2__card, .fest2__ring--2 { animation: none; }
-  .fest2__item .fest2__card { transform: none; }
-}
 
 /* Wide screens: photo beside the text (alternating sides), so every card fits under the navbar */
-@media (min-width: 761px) {
-  .fest2__card:has(.fest2__img) { display: grid; grid-template-columns: 0.9fr 1fr; }
-  .fest2__img { aspect-ratio: auto; min-height: 250px; }
-  .fest2__item:nth-child(even) .fest2__img { order: 2; }
-  .fest2__item:nth-child(even) .fest2__img-badge { left: auto; right: 12px; }
-  .fest2__card:has(.fest2__img) .fest2__body { align-self: center; }
-  .fest2__item.is-featured .fest2__img::after { background: linear-gradient(90deg, transparent 55%, #2a0c10); }
-}
 
 /* Phones */
-@media (max-width: 760px) {
-  .fest2 { --stack-top: 76px; --stack-step: 12px; }
-  .fest2__line { left: 24px; }
-  .fest2__item { transform-origin: 24px 0; }
-  .fest2__branch { width: 8px; }
-  .fest2__item { grid-template-columns: 48px minmax(0, 1fr); column-gap: 0.4rem; }
-  .fest2__node { width: 44px; height: 44px; margin-top: 0.9rem; }
-  .fest2__node .lucide { width: 1.25rem; height: 1.25rem; }
-  .fest2__item.is-featured .fest2__node { width: 50px; height: 50px; }
-  .fest2__list { gap: clamp(1.25rem, 7vh, 3.5rem); }
-  .fest2__body { padding: 1.1rem 1.1rem 1.2rem; }
-  .fest2__img-badge { width: 38px; height: 38px; border-radius: 12px; }
-}
 /* Short screens: tall cards would not fit pinned, so let them scroll normally */
-@media (max-height: 560px) {
-  .fest2__item { position: relative; top: auto; scale: none; filter: none; }
-  .fest2__list { gap: 2rem; }
-}
 
 /* =========================================================
    Visit: live map with address, journey timeline, info cards, closing banner
@@ -2308,10 +1979,6 @@ main:focus { outline: none; }
   background: radial-gradient(circle, rgba(227, 183, 104, 0.18), transparent 65%); animation: breathe 7s ease-in-out infinite; }
 
 /* travel path across the background, with a light running along it */
-.visit-sec__path { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; opacity: 0.6; }
-.visit-sec__path path { fill: none; stroke: rgba(240, 217, 168, 0.28); stroke-width: 2; stroke-dasharray: 2 12; stroke-linecap: round; vector-effect: non-scaling-stroke; }
-.visit-sec__path .visit-sec__path-light { stroke: #fff1c9; stroke-width: 3; stroke-dasharray: 90 2600; filter: drop-shadow(0 0 6px #f5c46a); animation: visitPath 9s linear infinite; }
-@keyframes visitPath { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -2690; } }
 
 /* ---- Live map (shared) ---- */
 .vmap2 { position: relative; aspect-ratio: 4 / 3; border-radius: 18px; overflow: hidden; background: linear-gradient(135deg, #fbf3e2, #f0e0bd); isolation: isolate; }
@@ -2343,7 +2010,6 @@ main:focus { outline: none; }
 .visit3__mapcard.reveal { transform: translateY(50px) rotate(-1.2deg) scale(0.96); }
 .visit3__mapcard.reveal.is-visible { transform: none; transition: opacity 1s var(--ease), transform 1.2s cubic-bezier(0.34, 1.3, 0.64, 1); }
 .visit3__mapcard .vmap2 { flex: 1; aspect-ratio: auto; min-height: 300px; }
-.visit3__mapcard > .light-ring { padding: 2px; opacity: 1; }
 .visit3__compass { position: absolute; top: 58px; right: 22px; z-index: 3; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; pointer-events: none;
   color: #f0d9a8; background: rgba(42, 12, 16, 0.75); border: 1.5px solid rgba(227, 183, 104, 0.7); backdrop-filter: blur(6px); box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.7); }
 .visit3__compass .lucide { width: 1.4rem; height: 1.4rem; animation: compassLook 7s ease-in-out infinite; }
@@ -2401,11 +2067,6 @@ main:focus { outline: none; }
   background: linear-gradient(180deg, #fff1c9, var(--gold) 50%, #f97316); box-shadow: 0 0 12px 1px rgba(245, 196, 106, 0.75);
   transition: transform 1.8s cubic-bezier(0.65, 0, 0.35, 1) 0.3s; }
 .visit3__journey.is-visible .visit3__road-fill { transform: scaleY(1); }
-.visit3__bus { position: absolute; left: 50%; top: 0; z-index: 2; display: grid; place-items: center; width: 26px; height: 26px; translate: -50% -50%; border-radius: 50%;
-  color: var(--maroon-deep); background: #fff1c9; box-shadow: 0 0 0 3px rgba(227, 183, 104, 0.45), 0 0 16px 4px rgba(255, 214, 102, 0.7); opacity: 0; }
-.visit3__bus .lucide { width: 0.9rem; height: 0.9rem; }
-.visit3__journey.is-visible .visit3__bus { opacity: 1; animation: busRide 8s cubic-bezier(0.45, 0, 0.55, 1) 2.2s infinite; }
-@keyframes busRide { 0% { top: 0; } 85%, 100% { top: 100%; } 92% { opacity: 1; } 100% { opacity: 0; } }
 .visit3__stop { position: relative; display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 0.85rem; align-items: center;
   opacity: 0; transform: translateX(-14px); transition: opacity 0.6s, transform 0.7s var(--ease); transition-delay: calc(0.4s + var(--i) * 0.22s); }
 .visit3__journey.is-visible .visit3__stop { opacity: 1; transform: none; }
@@ -2445,10 +2106,8 @@ main:focus { outline: none; }
   background: linear-gradient(170deg, rgba(255, 248, 234, 0.09), rgba(255, 248, 234, 0.02)); border: 1px solid rgba(240, 217, 168, 0.18); }
 .visit3__card.reveal { transform: translateY(40px) scale(0.95); }
 .visit3__card.reveal.is-visible { transform: none; transition: opacity 0.9s, transform 0.8s cubic-bezier(0.34, 1.4, 0.64, 1), background 0.35s, box-shadow 0.45s; }
-.visit3__card .light-ring { opacity: 0.5; }
 .visit3__card.reveal.is-visible:hover { transform: translateY(-7px); transition-delay: 0s; background: linear-gradient(170deg, rgba(255, 248, 234, 0.14), rgba(255, 248, 234, 0.04));
   box-shadow: 0 26px 44px -24px rgba(0, 0, 0, 0.85), 0 0 30px -10px rgba(227, 183, 104, 0.6); }
-.visit3__card:hover .light-ring { opacity: 1; animation-duration: 2s; }
 .visit3__card-medal { position: relative; display: grid; place-items: center; width: 60px; height: 60px; margin: 0 auto 0.85rem; border-radius: 50%;
   color: var(--maroon-deep); background: radial-gradient(circle at 35% 30%, #fff1c9, var(--gold)); box-shadow: 0 10px 24px -10px rgba(227, 183, 104, 0.9);
   transition: transform 0.7s cubic-bezier(0.34, 1.5, 0.64, 1); }
@@ -2473,9 +2132,7 @@ main:focus { outline: none; }
 .visit3__cta-actions { display: flex; flex-wrap: wrap; gap: 0.8rem; }
 
 @media (prefers-reduced-motion: reduce) {
-  .vmap2__loader .lucide, .vmap2__chip-dot, .visit-sec__path-light, .visit3__compass .lucide, .visit3__address::before, .visit3__directions, .visit3__directions::after, .visit3__address-pin .lucide,
-  .visit3__address-pin::after, .visit3__journey.is-visible .visit3__bus, .visit3__stop-bar span::after, .visit3__card-medal::after,
-  .visit3__cta-glow, .visit3__cta-icon, .visit3__stop-node--end::after { animation: none; }
+  .vmap2__loader .lucide, .vmap2__chip-dot, .visit3__compass .lucide, .visit3__address::before, .visit3__directions, .visit3__directions::after, .visit3__address-pin .lucide, .visit3__address-pin::after, .visit3__stop-bar span::after, .visit3__card-medal::after, .visit3__cta-glow, .visit3__cta-icon, .visit3__stop-node--end::after { animation: none; }
 }
 @media (max-width: 960px) {
   .visit3__top { grid-template-columns: minmax(0, 1fr); }
@@ -2601,19 +2258,11 @@ main .band:not(.band-in) > .wave { transform: scaleY(0.25); }
 .wave__layer path { fill: var(--wave-fill); }
 .wave__layer--back { height: 135%; opacity: 0.45; animation-duration: 24s; animation-direction: reverse; }
 .wave__edge { fill: none !important; stroke: color-mix(in srgb, var(--gold) 55%, transparent); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
-.wave__edge--light { stroke: #fff1c9; stroke-width: 3; stroke-dasharray: 160 1100; stroke-linecap: round;
-  filter: drop-shadow(0 0 4px #f5c46a); animation: waveLight 5s linear infinite; }
 @keyframes waveDrift { to { transform: translateX(-50%); } }
-@keyframes waveLight { to { stroke-dashoffset: -1260; } }
 /* keep the first heading clear of the wave */
 .band:has(> .wave) { padding-top: calc(6rem + 1.5vw); }
 
 /* ---- Reusable running light border: <span class="light-ring"> inside any rounded, positioned box ---- */
-.light-ring { position: absolute; inset: 0; z-index: 4; border-radius: inherit; padding: 1.5px; pointer-events: none;
-  background: conic-gradient(from var(--ring-angle), transparent 0deg 220deg, color-mix(in srgb, var(--gold) 70%, transparent) 270deg, #fff1c9 310deg, var(--gold) 335deg, transparent 360deg);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
-  animation: ringSpin 5s linear infinite; animation-delay: var(--ring-delay, 0s); opacity: 0.85; transition: opacity 0.3s; }
-.light-ring--slow { animation-duration: 9s; }
 
 /* ---- Rich heading: dark-section and left-aligned versions ---- */
 .rhead--light .rhead__eyebrow { color: var(--gold-light); }
@@ -2627,18 +2276,11 @@ main .band:not(.band-in) > .wave { transform: scaleY(0.25); }
 .rhead--left::before { left: 30%; }
 
 /* ---- Our Story: light beams across the photos, glowing quote ---- */
-.story2__beam { position: absolute; inset: 0; z-index: 1; pointer-events: none; transform: translateX(-130%);
-  background: linear-gradient(105deg, transparent 35%, rgba(255, 241, 201, 0.45) 50%, transparent 65%); animation: storyBeam 7s ease-in-out 1.5s infinite; }
-.story2__beam--late { animation-delay: 4.5s; }
-@keyframes storyBeam { 0%, 70% { transform: translateX(-130%); } 100% { transform: translateX(130%); } }
 .story2__frame--main figure { box-shadow: 0 30px 60px -28px rgba(74, 22, 26, 0.6), 0 0 0 1px rgba(227, 183, 104, 0.35); animation: storyGlow 4s ease-in-out infinite; }
 @keyframes storyGlow { 50% { box-shadow: 0 30px 60px -28px rgba(74, 22, 26, 0.6), 0 0 0 1px rgba(227, 183, 104, 0.6), 0 0 34px -6px rgba(227, 183, 104, 0.55); } }
 .story2__quote { position: relative; border-radius: 18px; }
-.story2__quote .light-ring { opacity: 0.9; }
 
 /* ---- Village Life cards: running gold border + breathing glow ---- */
-.life2-card .light-ring { z-index: 5; opacity: 0.55; }
-.life2-card:hover .light-ring, .life2-card:focus-visible .light-ring { opacity: 1; animation-duration: 2s; }
 .life2__cell.is-visible .life2-card { animation: lifeGlow 4.5s ease-in-out infinite; }
 .life2__cell.is-visible:nth-child(2n) .life2-card { animation-delay: -2.2s; }
 .life2-card:hover, .life2-card:focus-visible { animation: none; }
@@ -2648,41 +2290,22 @@ main .band:not(.band-in) > .wave { transform: scaleY(0.25); }
 /* ---- Footer: wave top, fireflies, light sweep on links ---- */
 .footer2 { padding-top: calc(3.6rem + clamp(34px, 5vw, 72px)); }
 .footer2__beam { display: none; }
-.footer2__flies { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
-.footer2__flies span { position: absolute; left: var(--x); top: var(--y); width: 5px; height: 5px; border-radius: 50%;
-  background: #fff3b0; box-shadow: 0 0 8px 3px rgba(255, 214, 102, 0.75); opacity: 0;
-  animation: firefly var(--d) ease-in-out var(--delay) infinite; }
-@keyframes firefly {
-  0%, 100% { opacity: 0; transform: translate(0, 0); }
-  20% { opacity: 1; }
-  45% { opacity: 0.3; transform: translate(26px, -22px); }
-  70% { opacity: 1; transform: translate(-14px, -40px); }
-}
 .footer2__link { position: relative; overflow: hidden; isolation: isolate; }
 .footer2__link::after { content: ''; position: absolute; inset: 0; z-index: -1; transform: translateX(-120%);
   background: linear-gradient(110deg, transparent 30%, rgba(240, 217, 168, 0.22) 50%, transparent 70%); }
 .footer2__link:hover::after { transition: transform 0.8s var(--ease); transform: translateX(120%); }
 
 @media (prefers-reduced-motion: reduce) {
-  .wave__layer, .wave__edge--light, .light-ring, .story2__beam, .story2__frame--main figure, .life2__cell.is-visible .life2-card, .footer2__flies span { animation: none; }
-  .story2__beam, .footer2__flies { display: none; }
+  .wave__layer, .story2__frame--main figure, .life2__cell.is-visible .life2-card { animation: none; }
 }
 /* =========================================================
    Gallery v4: featured showcase + spotlights
    ========================================================= */
 /* two stage spotlights shining down from the top of the section */
-.gal-sec__spot { position: absolute; top: -10%; z-index: -1; width: 38vw; min-width: 280px; height: 95%; pointer-events: none; transform-origin: 50% 0; filter: blur(14px);
-  background: linear-gradient(to bottom, rgba(255, 214, 140, 0.4), rgba(255, 214, 140, 0.1) 55%, transparent 85%);
-  clip-path: polygon(44% 0, 56% 0, 100% 100%, 0 100%); animation: galSpot 10s ease-in-out infinite alternate; }
-.gal-sec__spot--l { left: 4%; --a: -16deg; --b: 10deg; }
-.gal-sec__spot--r { right: 4%; --a: 16deg; --b: -10deg; animation-delay: -5s; }
-@keyframes galSpot { from { transform: rotate(var(--a)); opacity: 0.6; } to { transform: rotate(var(--b)); opacity: 1; } }
-:root[data-theme='dark'] .gal-sec__spot { background: linear-gradient(to bottom, rgba(255, 214, 140, 0.22), rgba(255, 214, 140, 0.05) 55%, transparent 85%); }
 
 /* ---- Showcase ---- */
 .gal-show { position: relative; max-width: 1180px; margin: 0 auto 2.6rem; padding: 10px; border-radius: 28px;
   background: linear-gradient(145deg, rgba(227, 183, 104, 0.45), rgba(100, 31, 36, 0.35)); box-shadow: 0 40px 80px -40px rgba(74, 22, 26, 0.75); }
-.gal-show > .light-ring { padding: 2px; opacity: 1; }
 .gal-show__stage { position: relative; aspect-ratio: 16 / 8; max-height: 64vh; width: 100%; border-radius: 20px; overflow: hidden; cursor: zoom-in; background: #1c0709; isolation: isolate; }
 .gal-show__slide { position: absolute; inset: 0; opacity: 0; transition: opacity 1.1s ease; }
 .gal-show__slide.is-active { opacity: 1; z-index: 1; }
@@ -2696,10 +2319,6 @@ main .band:not(.band-in) > .wave { transform: scaleY(0.25); }
 @keyframes showKen { from { transform: scale(0.94) translateX(18px); opacity: 0.4; } 18% { opacity: 1; } to { transform: scale(1.02) translateX(0); } }
 @keyframes showBlur { from { transform: scale(1.25); } to { transform: scale(1.1); } }
 /* a band of light sweeps across each new slide */
-.gal-show__beam { position: absolute; inset: 0; z-index: 2; pointer-events: none; transform: translateX(-120%);
-  background: linear-gradient(105deg, transparent 38%, rgba(255, 241, 201, 0.28) 50%, transparent 62%); }
-.gal-show.is-running .gal-show__beam { animation: showBeam var(--slide-ms) ease-in-out infinite; }
-@keyframes showBeam { 0%, 10% { transform: translateX(-120%); } 40%, 100% { transform: translateX(120%); } }
 /* text on the left, rising in for each slide */
 .gal-show__text { position: absolute; z-index: 3; left: clamp(1.2rem, 4vw, 3rem); top: 50%; translate: 0 -50%; max-width: 38%; color: #fff8ea; }
 .gal-show__text > * { animation: showText 0.9s var(--ease) both; }
@@ -2743,7 +2362,7 @@ main .band:not(.band-in) > .wave { transform: scaleY(0.25); }
 @keyframes galFlash { from { transform: translateX(-120%); } to { transform: translateX(120%); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .gal-sec__spot, .gal-show__slide.is-active .gal-show__img, .gal-show__slide.is-active .gal-show__blur, .gal-show__text > *, .gal-grid.is-seen .gal-item__shine { animation: none; }
+  .gal-show__slide.is-active .gal-show__img, .gal-show__slide.is-active .gal-show__blur, .gal-show__text > *, .gal-grid.is-seen .gal-item__shine { animation: none; }
 }
 @media (max-width: 760px) {
   .gal-show { padding: 6px; border-radius: 20px; margin-bottom: 1.8rem; }
@@ -2761,39 +2380,22 @@ main .band:not(.band-in) > .wave { transform: scaleY(0.25); }
    Redesign pass: calmer motion, performance
    ========================================================= */
 /* festival cards hidden deep in the stack stop animating */
-.fest2__item.is-covered, .fest2__item.is-covered * { animation-play-state: paused !important; }
 /* the second running border on festival cards only shows on hover, so cards are calmer at rest */
-.fest2__item.is-visible .fest2__ring--2 { opacity: 0; }
-.fest2__card:hover .fest2__ring--2 { opacity: 0.9; }
 /* ---- Performance: off-screen sections pause their animations (class set by Home.jsx) ---- */
 .is-off, .is-off *, .is-off *::before, .is-off *::after { animation-play-state: paused !important; }
 
 /* ---- Performance: the browser skips styling/painting sections far below the screen until you get near.
    The remembered size (auto) keeps the scrollbar steady once a section has been seen. ---- */
 main .band { content-visibility: auto; contain-intrinsic-size: auto 1100px; }
-/* the festival stack is much taller (11 pinned cards): a closer first guess keeps menu jumps accurate */
-main #festivals { contain-intrinsic-size: auto 6200px; }
-@media (max-width: 760px) { main #festivals { contain-intrinsic-size: auto 7400px; } }
+/* the festival grid is taller than other sections: a closer first guess keeps menu jumps accurate */
+main #festivals { contain-intrinsic-size: auto 3600px; }
+@media (max-width: 760px) { main #festivals { contain-intrinsic-size: auto 7000px; } }
 
 /* screen-reader-only text */
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 /* ---- Art panels: shown where a card has no photo yet ---- */
 /* festival cards: the festival's own colours, a turning rangoli ring, its icon and name */
-.fest2__art { display: grid; place-items: center; align-content: center; gap: 0.7rem; overflow: hidden;
-  background:
-    radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--t1) 55%, transparent), transparent 62%),
-    repeating-conic-gradient(from 0deg at 50% 42%, color-mix(in srgb, var(--t1) 16%, transparent) 0deg 6deg, transparent 6deg 18deg),
-    linear-gradient(160deg, color-mix(in srgb, var(--t2) 70%, #2a0c10), #14050799); }
-.fest2__art::before { animation: none; }
-.fest2__art-ring { position: absolute; left: 50%; top: 42%; width: 150px; height: 150px; translate: -50% -50%; border-radius: 50%;
-  border: 1.5px dashed color-mix(in srgb, var(--t1) 70%, #fff); opacity: 0.7; animation: festSpin 28s linear infinite; }
-.fest2__art-ring::after { content: ''; position: absolute; inset: 14px; border-radius: 50%; border: 1px solid color-mix(in srgb, var(--t1) 45%, transparent); }
-.fest2__art-icon { position: relative; display: grid; place-items: center; width: 84px; height: 84px; border-radius: 50%; color: #fff;
-  background: radial-gradient(circle at 35% 30%, var(--t1), var(--t2)); box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.12), 0 0 40px -4px var(--t1); }
-.fest2__art-icon .lucide { width: 2.4rem; height: 2.4rem; }
-.fest2__art-name { position: relative; font-family: var(--display); font-size: 1.35rem; font-weight: 700; color: #fff4d2; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5); }
-@media (max-width: 760px) { .fest2__art { aspect-ratio: 16 / 7; } .fest2__art-icon { width: 64px; height: 64px; } .fest2__art-icon .lucide { width: 1.8rem; height: 1.8rem; } .fest2__art-ring { width: 116px; height: 116px; } .fest2__art-name { font-size: 1.1rem; } }
 
 /* village life cards: warm gradient with a large faint icon */
 .life2-card__art { display: grid; place-items: center; color: rgba(240, 217, 168, 0.32);
@@ -2802,4 +2404,121 @@ main #festivals { contain-intrinsic-size: auto 6200px; }
     repeating-conic-gradient(from 0deg at 70% 25%, rgba(227, 183, 104, 0.08) 0deg 6deg, transparent 6deg 18deg),
     linear-gradient(160deg, #6b1d26, #2a0c10); }
 .life2-card__art .lucide { width: 38%; height: auto; max-width: 150px; stroke-width: 1.2; transform: translateY(-12%); }
-@media (prefers-reduced-motion: reduce) { .fest2__art-ring { animation: none; } }
+
+/* =========================================================
+   Festivals: clean card grid (calendar order, featured festival full width)
+   ========================================================= */
+.fest3 { list-style: none; max-width: 1080px; margin: 0 auto; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1rem, 2.4vw, 1.75rem); }
+.fest3__card { position: relative; display: flex; flex-direction: column; overflow: hidden; border-radius: 20px;
+  background: var(--card); border: 1px solid var(--line); box-shadow: 0 10px 30px -22px rgba(74, 22, 26, 0.45);
+  transition: opacity 0.7s var(--ease), transform 0.5s var(--ease), box-shadow 0.35s var(--ease), border-color 0.35s; }
+.fest3__card.reveal { transform: translateY(24px); }
+.fest3__card.reveal.is-visible { transform: none; }
+@media (hover: hover) {
+  .fest3__card:hover { transform: translateY(-4px); border-color: color-mix(in srgb, var(--t1) 55%, transparent);
+    box-shadow: 0 22px 40px -24px rgba(74, 22, 26, 0.55); }
+  .fest3__card:hover .fest3__media img { transform: scale(1.04); }
+}
+/* the next (or current) festival gets a gold outline */
+.fest3__card.is-next { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 18px 36px -24px rgba(198, 146, 58, 0.6); }
+
+/* media: photo, or an art panel in the festival's colours */
+.fest3__media { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: color-mix(in srgb, var(--t2) 30%, var(--ivory-2)); }
+.fest3__media img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; transition: transform 0.6s var(--ease); }
+.fest3__art { position: absolute; inset: 0; display: grid; place-items: center; align-content: center; gap: 0.6rem;
+  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--t1) 50%, transparent), transparent 65%),
+    linear-gradient(150deg, color-mix(in srgb, var(--t2) 80%, #2a0c10), color-mix(in srgb, var(--t2) 45%, #14050a)); }
+.fest3__art-icon { display: grid; place-items: center; width: 68px; height: 68px; border-radius: 50%; color: #fff;
+  background: radial-gradient(circle at 35% 30%, var(--t1), var(--t2)); box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.1); }
+.fest3__art-icon .lucide { width: 1.9rem; height: 1.9rem; }
+.fest3__art-name { font-family: var(--display); font-size: 1.25rem; font-weight: 700; color: #fff4d2; }
+/* small icon badge in the photo's corner */
+.fest3__icon { position: absolute; left: 12px; top: 12px; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px;
+  color: #fff; background: linear-gradient(135deg, var(--t1), var(--t2)); box-shadow: 0 6px 16px -6px var(--t2); }
+.fest3__icon .lucide { width: 1.1rem; height: 1.1rem; }
+.fest3__art + .fest3__icon { display: none; }
+
+/* body */
+.fest3__body { display: flex; flex-direction: column; flex: 1; padding: 1.15rem 1.3rem 1.35rem; }
+.fest3__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; }
+.fest3__date { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.22rem 0.7rem; border-radius: 999px; font-size: 0.8rem; font-weight: 700;
+  color: #fff; background: linear-gradient(135deg, var(--t1), var(--t2)); }
+.fest3__date .lucide { width: 0.9rem; height: 0.9rem; }
+.fest3__status { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.2rem 0.65rem; border-radius: 999px; font-size: 0.76rem; font-weight: 700;
+  color: var(--accent); background: color-mix(in srgb, var(--gold) 14%, transparent); border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); }
+.fest3__status--now { color: var(--leaf); background: color-mix(in srgb, var(--leaf) 12%, transparent); border-color: color-mix(in srgb, var(--leaf) 40%, transparent); }
+.fest3__status-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.fest3__card h3 { margin-top: 0.7rem; font-size: var(--fs-h3); }
+.fest3__when { display: flex; flex-wrap: wrap; gap: 0.2rem 1rem; margin-top: 0.25rem; font-size: 0.85rem; color: var(--muted); }
+.fest3__when span { display: inline-flex; align-items: center; gap: 0.3rem; }
+.fest3__when span:first-child { font-weight: 700; color: color-mix(in srgb, var(--t2) 80%, var(--text)); }
+.fest3__when .lucide { width: 0.85rem; height: 0.85rem; color: var(--t1); }
+.fest3__text { margin-top: 0.55rem; color: var(--muted); line-height: 1.7; }
+.fest3__details { list-style: none; display: flex; flex-wrap: wrap; gap: 0.4rem; margin: auto 0 0; padding: 0.9rem 0 0; }
+.fest3__details li { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.22rem 0.6rem; border-radius: 999px; font-size: 0.78rem; font-weight: 600;
+  color: var(--text); background: color-mix(in srgb, var(--t1) 12%, transparent); border: 1px solid color-mix(in srgb, var(--t1) 30%, transparent); }
+.fest3__details .lucide { width: 0.7rem; height: 0.7rem; color: var(--t2); }
+:root[data-theme='dark'] .fest3__when span:first-child { color: color-mix(in srgb, var(--t1) 80%, #fff); }
+:root[data-theme='dark'] .fest3__details .lucide { color: var(--t1); }
+
+/* featured festival (Kali Puja): full width, photo beside the text */
+.fest3__card.is-featured { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
+.fest3__card.is-featured .fest3__media { aspect-ratio: auto; min-height: 380px; }
+/* the photo fills the frame without stretching the card (it is portrait) */
+.fest3__card.is-featured .fest3__media img { position: absolute; inset: 0; object-position: 50% 22%; }
+.fest3__card.is-featured .fest3__details { margin-top: 1rem; padding-top: 0; }
+.fest3__card.is-featured .fest3__body { justify-content: center; padding: clamp(1.4rem, 3vw, 2.4rem); }
+.fest3__card.is-featured h3 { font-size: var(--fs-h2); }
+
+@media (max-width: 760px) {
+  .fest3 { grid-template-columns: minmax(0, 1fr); }
+  .fest3__card.is-featured { display: flex; }
+  .fest3__card.is-featured .fest3__media { aspect-ratio: 4 / 3; min-height: 0; }
+  .fest3__card.is-featured h3 { font-size: var(--fs-h3); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fest3__card, .fest3__media img { transition: none; }
+  .fest3__card.reveal { transform: none; }
+}
+
+/* =========================================================
+   Calm motion: no decorative animations running all the time.
+   Kept: entrances (play once), hover feedback, and useful signals
+   (live dots, scroll cue, map loading pin, video play pulse, spinners, intro splash).
+   ========================================================= */
+/* entrance + loop: the entrance plays, the loop runs once and stops */
+.anim-name__ch, .brand:hover .anim-name__ch, .anim-name--whole,
+.hero__seal, .hero-badge__word, .hero-badge__sep, .hero__flourish-gem, .hero__btn--1, .cta.hero__btn--1 { animation-iteration-count: 1; }
+
+/* decorative loops: off */
+.brand__logo::before, .brand__logo::after, .nav__links::before, .nav__pill::after, .lang-switch::before, .lang-switch__thumb::after, .login-btn::after,
+.hero__photo, .hero__emblem::before, .hero__emblem::after, .hero__emblem .hero__seal, .ring--a, .ring--b, .ring--c, .ring--petals,
+.orbit circle, .orbit--1, .orbit--2, .orbit--3, .hero__title::after, .hero-badge::before, .hero-badge__ping .lucide, .hero-badge__ping::after,
+.cta--gold::before, .cta--glass .cta__ring, .cta--glass .cta__end .lucide, .hero__inner::before, .seal__sheen,
+.story2__ring, .story2__frame--main figure, .life2__cell.is-visible .life2-card,
+.gal-tabs::before, .gal-tabs__indicator::after, .gal-item__ring, .gal-more__btn::after,
+.auth__card::before, .auth__seal, .theme-toggle[data-mode='dark'] .theme-toggle__star, .icon-heart,
+.rhead::before, .rhead__diya::after, .rhead__word, .rhead.is-visible .rhead__ornament .lucide,
+.visit-sec__contours, .visit-sec__glow, .visit3__compass .lucide, .visit3__address::before, .visit3__directions, .visit3__directions::after,
+.visit3__address-pin .lucide, .visit3__address-pin::after, .visit3__stop-node--end::after, .visit3__stop-bar span::after,
+.visit3__card-medal::after, .visit3__cta-glow, .visit3__cta-icon,
+.footer2__glow, .footer2__logo, .footer2__season-icon, .footer2__season-icon .lucide, .footer2__rule .lucide, .footer2__designer,
+.wave__layer { animation: none; }
+
+/* running gold borders only while you point at them */
+.gal-item:hover .gal-item__ring, .gal-item:focus-visible .gal-item__ring { animation: ringSpin 3s linear infinite; }
+/* the heading title keeps its gold colour, without the moving shimmer */
+.rhead__word { background-position: 0 0; }
+/* gallery focus: other tiles dim, without the costly blur */
+@media (hover: hover) { .gal-grid:has(.gal-item:hover) .gal-item:not(:hover) { filter: brightness(0.7) saturate(0.8); } }
+
+/* lighter scrolling: background blur only on the navbar and the hero; elsewhere slightly more solid backgrounds */
+.story2__frame figcaption, .life2-card__credit, .life2-card__icon, .gal-item .gal-item__caption, .gal-tabs,
+.rhead__stat, .visit3__compass, .visit3__journey, .gal-show__nav { backdrop-filter: none; -webkit-backdrop-filter: none; }
+.gal-item .gal-item__caption { background: rgba(30, 8, 10, 0.78); }
+.gal-tabs { background: var(--card); }
+.rhead__stat { background: var(--card); }
+.rhead--light .rhead__stat { background: rgba(255, 248, 234, 0.08); }
+.gal-show__nav { background: rgba(30, 8, 10, 0.7); }
+/* the map's loading pin stops once the map has loaded */
+.vmap2.is-loaded .vmap2__loader .lucide { animation: none; }
