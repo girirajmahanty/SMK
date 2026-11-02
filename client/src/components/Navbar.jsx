@@ -1,9 +1,13 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { ScrollText, Wheat, Images, MapPin, Flame, LogIn, LogOut } from 'lucide-react';
+import { ScrollText, Wheat, Images, MapPin, Flame, LogIn, LogOut, X, Sparkles, CalendarDays, Landmark, Trees } from 'lucide-react';
 import { useLang } from '../i18n.jsx';
 import { useAuth } from '../auth.jsx';
 import { village } from '../village.js';
+import { useFestivalDates, festivalStatus, formatRange, daysUntil } from '../festivalDates.js';
+import { small } from '../responsive.js';
+import { countdown } from './Festivals.jsx';
+import { showGalleryCategory } from './Gallery.jsx';
 import Seal from './Seal.jsx';
 import AnimatedName from './AnimatedName.jsx';
 import UserMenu from './UserMenu.jsx';
@@ -17,6 +21,16 @@ const links = [
   { to: '/#visit', key: 'nav.visit', Icon: MapPin },
 ];
 const ids = links.map((l) => l.to.slice(2));
+
+// Photo categories shown in the Gallery link's menu, each with its first photo and how many there are.
+const CATS = [
+  { id: 'procession', Icon: Flame },
+  { id: 'temple', Icon: Landmark },
+  { id: 'village', Icon: Trees },
+].map((c) => {
+  const items = village.gallery.filter((g) => g.cat === c.id);
+  return { ...c, count: items.length, thumb: items.find((g) => g.src)?.src };
+}).filter((c) => c.count);
 
 // The section whose top has passed 40% of the screen height (null above the first one).
 function currentSection() {
@@ -36,15 +50,31 @@ export default function Navbar({ theme, onToggleTheme }) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [section, setSection] = useState(null);
+  const [hidden, setHidden] = useState(false);
+  const lastY = useRef(0);
   const linksRef = useRef(null);
   const [pill, setPill] = useState(null);
+  const dates = useFestivalDates(village.festivals);
+  const status = festivalStatus(village.festivals, dates);
+  const fest = status.index >= 0 ? village.festivals[status.index] : null;
+  const range = status.index >= 0 ? dates[status.index] : null;
+  const num = (n) => new Intl.NumberFormat(lang === 'bn' ? 'bn-IN' : 'en-IN').format(n);
+  // Small badge on the Festivals link: "Now" while a festival is on, or the days left when one is near.
+  const daysLeft = range ? daysUntil(range) : null;
+  const festBadge = status.kind === 'now' ? t('nav.festNow')
+    : daysLeft != null && daysLeft <= 30 ? t('nav.festDays').replace('{n}', num(daysLeft)) : null;
 
-  // Scrollspy: follow which section is on screen.
+  // Scrollspy: follow which section is on screen. The bar slides away while you scroll down
+  // (past the hero) and comes back as soon as you scroll up.
   useEffect(() => {
     let raf = 0;
     const update = () => {
       raf = 0;
-      setScrolled(window.scrollY > 20);
+      const y = window.scrollY;
+      if (y < 320 || y < lastY.current - 4) setHidden(false);
+      else if (y > lastY.current + 4) setHidden(true);
+      lastY.current = y;
+      setScrolled(y > 20);
       setSection(pathname === '/' ? currentSection() : null);
     };
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
@@ -70,11 +100,13 @@ export default function Navbar({ theme, onToggleTheme }) {
   // The glowing pill slides under the active link (desktop bar only; hidden in the phone menu by CSS).
   useLayoutEffect(() => {
     const a = section && linksRef.current?.querySelector(`a[href="/#${section}"]`);
-    setPill(a ? { left: a.offsetLeft, width: a.offsetWidth } : null);
-  }, [section, lang]);
+    // measured on screen, since the Gallery link sits inside its menu wrapper
+    const box = linksRef.current?.getBoundingClientRect();
+    setPill(a ? { left: a.getBoundingClientRect().left - box.left, width: a.offsetWidth } : null);
+  }, [section, lang, festBadge]);
 
   return (
-    <header className={`nav ${scrolled ? 'nav--scrolled' : ''} ${onHero ? 'nav--hero' : ''}`}>
+    <header className={`nav ${scrolled ? 'nav--scrolled' : ''} ${onHero ? 'nav--hero' : ''} ${hidden && !open ? 'nav--hidden' : ''}`}>
       <Link to="/" className="brand" onClick={() => setOpen(false)}>
         <span className="brand__logo">
           <Seal size={44} className="brand__seal" />
@@ -88,12 +120,37 @@ export default function Navbar({ theme, onToggleTheme }) {
       {open && <button className="nav__scrim" onClick={() => setOpen(false)} aria-label="Close menu" tabIndex={-1} />}
       <nav ref={linksRef} id="site-menu" className={`nav__links ${open ? 'is-open' : ''}`}>
         <span className={`nav__pill ${pill ? 'is-on' : ''}`} style={pill ? { '--pl': `${pill.left}px`, '--pw': `${pill.width}px` } : undefined} aria-hidden="true" />
-        {links.map((l) => (
-          <NavLink key={l.to} to={l.to} className={() => `nav__link ${isActive(l.to) ? 'active' : ''}`} onClick={() => setOpen(false)}>
-            <l.Icon className="nav__icon" />
-            <span>{t(l.key)}</span>
-          </NavLink>
-        ))}
+        {/* Menu-only header (phones/tablets): the seal and name, with a clear close button */}
+        <div className="nav__menu-head">
+          <Seal size={40} className="nav__menu-seal" />
+          <span className="nav__menu-name">{t('siteName')}</span>
+          <button type="button" className="nav__menu-close" onClick={() => setOpen(false)} aria-label="Close menu"><X /></button>
+        </div>
+        {links.map((l) => {
+          const link = (
+            <NavLink key={l.to} to={l.to} className={() => `nav__link ${isActive(l.to) ? 'active' : ''}`} onClick={() => setOpen(false)}>
+              <l.Icon className="nav__icon" />
+              <span>{t(l.key)}</span>
+              {l.key === 'nav.festivals' && festBadge && <span className="nav__badge">{festBadge}</span>}
+            </NavLink>
+          );
+          if (l.key !== 'nav.gallery' || !CATS.length) return link;
+          // Gallery: a menu of photo categories opens under the link (wider screens)
+          return (
+            <div key={l.to} className="nav__drop">
+              {link}
+              <div className="nav__drop-panel">
+                {CATS.map((c) => (
+                  <Link key={c.id} to="/#gallery" className="nav__drop-item" onClick={() => { showGalleryCategory(c.id); setOpen(false); }}>
+                    {c.thumb && <img src={small(c.thumb)} alt="" loading="lazy" />}
+                    <span><c.Icon /> {t(`gallery.${c.id}`)}</span>
+                    <small>{num(c.count)}</small>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          );
+        })}
         {/* Menu-only items (phones/tablets): account and theme. */}
         <div className="nav__menu-extra">
           {user ? (
@@ -105,7 +162,21 @@ export default function Navbar({ theme, onToggleTheme }) {
               <LogIn className="nav__icon" /><span>{t('nav.login')}</span>
             </Link>
           )}
-          <ThemeToggle theme={theme} onToggle={onToggleTheme} className="nav__theme--menu" />
+          <div className="nav__theme-row">
+            <ThemeToggle theme={theme} onToggle={onToggleTheme} className="nav__theme--menu" />
+            <span onClick={onToggleTheme} aria-hidden="true">{t(theme === 'dark' ? 'theme.toLight' : 'theme.toDark')}</span>
+          </div>
+          {/* The festival happening now or coming next */}
+          {fest && (
+            <Link to="/#festivals" className={`nav__fest fest3--${fest.tone || 'sun'}`} onClick={() => setOpen(false)}>
+              <span className="nav__fest-icon">{fest.Icon ? <fest.Icon /> : <Sparkles />}</span>
+              <span>
+                <small>{t(status.kind === 'now' ? 'footer.season' : 'footer.next')}</small>
+                <strong>{pick(fest.name)}</strong>
+                <em><CalendarDays /> {range ? `${formatRange(range, lang)} · ${countdown(range, t, lang)}` : pick(fest.date)}</em>
+              </span>
+            </Link>
+          )}
         </div>
       </nav>
 

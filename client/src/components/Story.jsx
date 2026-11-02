@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowRight, Quote, Landmark, Hourglass, Eye, Users, House, ScrollText } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ArrowRight, Quote, Landmark, Hourglass, Eye, Users, House, ScrollText, Images, ChevronDown, Flame, Hammer } from 'lucide-react';
+import { showGalleryCategory } from './Gallery.jsx';
 import { useLang } from '../i18n.jsx';
 import { village } from '../village.js';
 import Reveal from './Reveal.jsx';
@@ -41,8 +43,25 @@ function SinceRing({ year, label }) {
   );
 }
 
+// A story photo that opens the gallery on its own category; "See more photos" rises in under the mouse.
+function StoryPhoto({ img, cat, sizes, delay, side }) {
+  const { t, pick } = useLang();
+  return (
+    <Reveal delay={delay} className={`story2__frame story2__frame--${side ? 'side' : 'main'}`}>
+      <figure>
+        <img {...pic(img.src)} sizes={sizes} alt={pick(img.caption)} loading="lazy" style={{ objectPosition: img.position }} />
+        <figcaption>{pick(img.caption)}</figcaption>
+        <Link to="/#gallery" className="story2__open" onClick={() => showGalleryCategory(cat)} aria-label={`${t('story.morePhotos')}: ${t(`gallery.${cat}`)}`}>
+          <span className="story2__more"><Images /> {t('story.morePhotos')}</span>
+        </Link>
+      </figure>
+    </Reveal>
+  );
+}
+
 export default function Story({ visits = null }) {
   const { t, pick } = useLang();
+  const [more, setMore] = useState(false);
 
   const est = village.established;
   const stats = [
@@ -60,18 +79,8 @@ export default function Story({ visits = null }) {
         {/* Photo collage */}
         <div className="story2__media">
           <span className="story2__pattern" aria-hidden="true" />
-          <Reveal className="story2__frame story2__frame--main">
-            <figure>
-              <img {...pic(main.src)} sizes="(max-width: 900px) 80vw, 480px" alt={pick(main.caption)} loading="lazy" style={{ objectPosition: main.position }} />
-              <figcaption>{pick(main.caption)}</figcaption>
-            </figure>
-          </Reveal>
-          <Reveal delay={250} className="story2__frame story2__frame--side">
-            <figure>
-              <img {...pic(side.src)} sizes="(max-width: 900px) 45vw, 300px" alt={pick(side.caption)} loading="lazy" style={{ objectPosition: side.position }} />
-              <figcaption>{pick(side.caption)}</figcaption>
-            </figure>
-          </Reveal>
+          <StoryPhoto img={main} cat="procession" sizes="(max-width: 900px) 80vw, 480px" />
+          <StoryPhoto img={side} cat="temple" sizes="(max-width: 900px) 45vw, 300px" delay={250} side />
           {est && (
             <Reveal delay={450} className="story2__medallion">
               <SinceRing year={est} label={t('story.since')} />
@@ -81,17 +90,32 @@ export default function Story({ visits = null }) {
         </div>
 
         {/* Text */}
-        <div className="story2__content">
+        <div className={`story2__content ${more ? 'is-more' : ''}`}>
           <RichHead eyebrow={t('story.eyebrow')} title={t('story.title')} Icon={ScrollText} align="left" className="story2__head" />
 
           {village.story.map((p, i) => (
-            <Reveal key={i} delay={i * 110} as="p" className={`story2__p ${i === 0 ? 'dropcap' : ''}`}>{pick(p)}</Reveal>
+            <Reveal key={i} delay={i * 110} as="p" className={`story2__p ${i === 0 ? 'dropcap' : 'story2__p--extra'}`}>{pick(p)}</Reveal>
           ))}
+          {/* phones: the rest of the story opens on request */}
+          {village.story.length > 1 && (
+            <button type="button" className="story2__readmore" onClick={() => setMore(!more)} aria-expanded={more}>
+              {t(more ? 'story.readLess' : 'story.readMore')} <ChevronDown />
+            </button>
+          )}
 
           {village.storyQuote && (
             <Reveal as="blockquote" className="story2__quote">
               <Quote className="story2__quote-icon" />
               <p>{pick(village.storyQuote)}</p>
+            </Reveal>
+          )}
+
+          {/* Three steps taken from the story itself: the emblem, the yearly puja, the new temple */}
+          {est && (
+            <Reveal as="ol" className="story2__timeline">
+              <li style={{ '--k': 0 }}><span className="story2__tl-dot"><Landmark /></span><strong>{est}</strong><span>{t('story.tl1')}</span></li>
+              <li style={{ '--k': 1 }}><span className="story2__tl-dot"><Flame /></span><strong>{t('story.tl2Year')}</strong><span>{t('story.tl2')}</span></li>
+              <li style={{ '--k': 2 }}><span className="story2__tl-dot"><Hammer /></span><strong>{t('story.tl3Year')}</strong><span>{t('story.tl3')}</span></li>
             </Reveal>
           )}
 

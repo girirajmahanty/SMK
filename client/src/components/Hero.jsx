@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Eye, Compass, Camera, MapPin, Sparkle, Images } from 'lucide-react';
+import { ArrowRight, Eye, Compass, Camera, MapPin, Sparkle, Images, ChevronDown } from 'lucide-react';
 import { useLang } from '../i18n.jsx';
 import { village } from '../village.js';
 import { pic } from '../responsive.js';
@@ -164,20 +164,25 @@ export default function Hero({ visits }) {
         </div>
       </div>
 
-      {/* Visit counter: a small live chip in the hero's bottom corner, out of the main text */}
-      {visits && (
-        <p className="hero__visits hero__visits--corner">
-          <span className="live-dot" aria-hidden="true" />
-          <Eye /> <strong><CountUp value={visits} /></strong> {t('hero.visits')}
-        </p>
-      )}
+      {/* Bottom row: the live visit counter and a gold "scroll down" cue that takes you to the story */}
+      <div className="hero__foot">
+        {visits && (
+          <p className="hero__visits">
+            <span className="live-dot" aria-hidden="true" />
+            <Eye /> <strong><CountUp value={visits} /></strong> {t('hero.visits')}
+          </p>
+        )}
+        <a href="#story" className="hero__next">
+          <span>{t('hero.scroll')}</span>
+          <span className="hero__next-arrow" aria-hidden="true"><ChevronDown /></span>
+        </a>
+      </div>
 
       {village.heroCredit && (
         <a className="hero__credit" href={village.heroCredit.url} target="_blank" rel="noreferrer">
           <Camera /> {t('hero.photo')}: {village.heroCredit.name} · Unsplash
         </a>
       )}
-      <a href="#story" className="hero__scroll" aria-label="Scroll down"><span /></a>
       <svg className="hero__wave" viewBox="0 0 1440 90" preserveAspectRatio="none" aria-hidden="true">
         <path className="hero__wave-line" d="M0,48 C240,90 480,10 720,40 C960,70 1200,20 1440,52" />
         <path className="hero__wave-fill" d="M0,60 C240,100 480,22 720,52 C960,82 1200,32 1440,64 L1440,90 L0,90 Z" />

@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import {
-  User, Mail, Lock, Eye, EyeOff, Loader2, LogIn, UserPlus, ShieldCheck, CircleAlert, Users, Flame, Heart,
+  User, Mail, Lock, Eye, EyeOff, Loader2, LogIn, UserPlus, ShieldCheck, CircleAlert, Users, Flame, Heart, Check,
 } from 'lucide-react';
 import { useAuth } from '../auth.jsx';
 import { useLang } from '../i18n.jsx';
+import { village } from '../village.js';
+import { pic } from '../responsive.js';
 import Seal from '../components/Seal.jsx';
+
+const emailOk = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim());
 
 // 0 = too short, then 1–4 from weak to strong.
 function strength(pw) {
@@ -17,12 +21,17 @@ function strength(pw) {
   return Math.min(s, 4);
 }
 
-function Field({ icon: Icon, label, type = 'text', value, onChange, autoComplete, children, onKeyUp }) {
+// valid: true shows a green tick; false turns the edge red, but only once you have left the field.
+function Field({ icon: Icon, label, type = 'text', value, onChange, autoComplete, children, onKeyUp, valid = null }) {
+  const [left, setLeft] = useState(false);
+  const state = valid === true ? 'is-valid' : valid === false && left ? 'is-invalid' : '';
   return (
-    <label className="auth-field">
+    <label className={`auth-field ${state}`}>
       <Icon className="auth-field__icon" />
-      <input type={type} value={value} onChange={onChange} placeholder=" " autoComplete={autoComplete} onKeyUp={onKeyUp} required />
+      <input type={type} value={value} onChange={onChange} onBlur={() => setLeft(true)} placeholder=" " autoComplete={autoComplete} onKeyUp={onKeyUp}
+        aria-invalid={state === 'is-invalid' || undefined} required />
       <span>{label}</span>
+      {valid === true && <Check className="auth-field__ok" aria-hidden="true" />}
       {children}
     </label>
   );
@@ -41,6 +50,7 @@ export default function Login() {
   const [caps, setCaps] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [welcome, setWelcome] = useState(false);
 
   useEffect(() => setError(''), [mode]);
 
@@ -48,6 +58,7 @@ export default function Login() {
 
   const isRegister = mode === 'register';
   const score = strength(password);
+  const check = (v, ok) => (v.trim() ? ok : null);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -56,7 +67,10 @@ export default function Login() {
     try {
       if (isRegister) await register(name, email, password);
       else await login(email, password);
-      navigate(location.state?.from || '/', { replace: true });
+      // a moment of "Welcome, name!" before going back to where you came from
+      setWelcome(true);
+      const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      setTimeout(() => navigate(location.state?.from || '/', { replace: true }), calm ? 700 : 1600);
     } catch (err) {
       setError(t(`err.${err.code}`) !== `err.${err.code}` ? t(`err.${err.code}`) : t('err.generic'));
       setBusy(false);
@@ -66,8 +80,9 @@ export default function Login() {
   return (
     <section className="auth">
       <div className="auth__card">
-        {/* Left: heritage panel */}
+        {/* Left: heritage panel over the temple photo */}
         <aside className="auth__side">
+          {village.heroImage && <img className="auth__photo" {...pic(village.heroImage)} sizes="(max-width: 820px) 100vw, 440px" alt="" aria-hidden="true" />}
           <div className="rays rays--faint" aria-hidden="true" />
           <Seal size={120} className="auth__seal" shine />
           <h2>{t('siteName')}</h2>
@@ -99,11 +114,13 @@ export default function Login() {
             <div className={`auth-form__collapse ${isRegister ? 'is-open' : ''}`}>
               <div>
                 {isRegister && (
-                  <Field icon={User} label={t('auth.name')} value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
+                  <Field icon={User} label={t('auth.name')} value={name} onChange={(e) => setName(e.target.value)} autoComplete="name"
+                    valid={check(name, name.trim().length >= 2)} />
                 )}
               </div>
             </div>
-            <Field icon={Mail} type="email" label={t('auth.email')} value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+            <Field icon={Mail} type="email" label={t('auth.email')} value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email"
+              valid={check(email, emailOk(email))} />
             <Field
               icon={Lock}
               type={showPw ? 'text' : 'password'}
@@ -141,7 +158,21 @@ export default function Login() {
             </button>
           </p>
           <p className="auth__secure"><ShieldCheck /> {t('auth.secure')}</p>
+          {/* on phones the perks come after the form */}
+          <ul className="auth__perks auth__perks--below">
+            <li><Users /> {t('auth.perk1')}</li>
+            <li><Flame /> {t('auth.perk2')}</li>
+            <li><Heart /> {t('auth.perk3')}</li>
+          </ul>
         </div>
+
+        {welcome && (
+          <div className="auth-welcome" role="status">
+            <span className="auth-welcome__tick"><Check /></span>
+            <p className="auth-welcome__title">{t('auth.welcomeTitle').replace('{name}', (user?.name || name).split(' ')[0])}</p>
+            <p className="auth-welcome__sub">{t('auth.welcomeSub')}</p>
+          </div>
+        )}
       </div>
     </section>
   );

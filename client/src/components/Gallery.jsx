@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Camera, Maximize2, X, ChevronLeft, ChevronRight, Play, Landmark, Flame, Trees, LayoutGrid, ChevronDown } from 'lucide-react';
+import { Camera, Maximize2, X, ChevronLeft, ChevronRight, Play, Pause, Share2, Landmark, Flame, Trees, LayoutGrid, ChevronDown } from 'lucide-react';
 import { useLang } from '../i18n.jsx';
 import { pic, small } from '../responsive.js';
 
@@ -11,6 +11,13 @@ const FILTERS = [
   { id: 'village', Icon: Trees },
 ];
 const FIRST = 9; // shown before "Show all"
+
+// Lets the navbar open the gallery on one category (kept until the gallery is built, if it is not yet).
+let pendingFilter = null;
+export function showGalleryCategory(id) {
+  pendingFilter = id;
+  window.dispatchEvent(new CustomEvent('gallery:filter', { detail: id }));
+}
 
 // Video tile: plays silently while on screen, pauses when scrolled away.
 function GridVideo({ item }) {
@@ -81,15 +88,18 @@ function useCols() {
   return cols;
 }
 
-// Featured showcase: the photo sharp in a gold frame over a blurred, glowing copy of itself,
-// with caption, progress bars and thumbnails. Advances every few seconds; pauses on hover or off screen.
-const SLIDE_MS = 5500;
-function Showcase({ slides, onOpen }) {
+// 3D carousel: the centre photo is large and lit by a gold light running round its border; the photos either side
+// turn away and fall back. Arrows, swipe, arrow keys or a click on a side photo turn it; it advances every few
+// seconds, pausing on hover or off screen. Clicking the centre photo opens the viewer.
+const SLIDE_MS = 5000;
+function Carousel({ slides, onOpen }) {
   const { t, pick } = useLang();
   const [i, setI] = useState(0);
   const [paused, setPaused] = useState(false);
   const [onScreen, setOnScreen] = useState(false);
   const ref = useRef(null);
+  const touchX = useRef(null);
+  const n = slides.length;
 
   useEffect(() => {
     const io = new IntersectionObserver(([e]) => setOnScreen(e.isIntersecting), { threshold: 0.35 });
@@ -99,39 +109,47 @@ function Showcase({ slides, onOpen }) {
   const running = onScreen && !paused && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   useEffect(() => {
     if (!running) return;
-    const id = setTimeout(() => setI((n) => (n + 1) % slides.length), SLIDE_MS);
+    const id = setTimeout(() => setI((k) => (k + 1) % n), SLIDE_MS);
     return () => clearTimeout(id);
-  }, [i, running, slides.length]);
+  }, [i, running, n]);
 
-  const go = (d) => (e) => { e.stopPropagation(); setI((n) => (n + d + slides.length) % slides.length); };
+  const go = (d) => setI((k) => (k + d + n) % n);
+  // shortest signed distance from the centre, so the ring wraps round
+  const offsetOf = (k) => { let d = k - i; if (d > n / 2) d -= n; if (d < -n / 2) d += n; return d; };
   const s = slides[i];
   return (
-    <div ref={ref} className={`gal-show ${running ? 'is-running' : ''}`} style={{ '--slide-ms': `${SLIDE_MS}ms` }}
-      onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
-      <div className="gal-show__stage" onClick={() => onOpen(s)}>
-        {slides.map((g, k) => (
-          <div key={g.src} className={`gal-show__slide ${k === i ? 'is-active' : ''}`} aria-hidden={k !== i}>
-            <span className="gal-show__blur" style={{ backgroundImage: `url(${small(g.src)})` }} />
-            <img className="gal-show__img" {...pic(g.src)} sizes="(max-width: 760px) 90vw, 640px" alt={pick(g.caption)} loading={k === 0 ? 'eager' : 'lazy'} />
-          </div>
-        ))}
-        <div className="gal-show__text" key={i}>
-          <span className="gal-item__cat">{t(`gallery.${s.cat}`)}</span>
-          <p className="gal-show__caption">{pick(s.caption)}</p>
-          <span className="gal-show__count">{String(i + 1).padStart(2, '0')} <small>/ {String(slides.length).padStart(2, '0')}</small></span>
-          <button className="gal-show__view" onClick={(e) => { e.stopPropagation(); onOpen(s); }}>
-            <Maximize2 /> {t('gallery.view')}
-          </button>
-        </div>
-        <button className="gal-show__nav gal-show__nav--prev" onClick={go(-1)} aria-label="Previous"><ChevronLeft /></button>
-        <button className="gal-show__nav gal-show__nav--next" onClick={go(1)} aria-label="Next"><ChevronRight /></button>
+    <div ref={ref} className={`gal-3d ${running ? 'is-running' : ''}`} style={{ '--slide-ms': `${SLIDE_MS}ms` }}
+      onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}
+      onTouchStart={(e) => { touchX.current = e.touches[0].clientX; }}
+      onTouchEnd={(e) => { const dx = e.changedTouches[0].clientX - touchX.current; if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1); }}
+      onKeyDown={(e) => { if (e.key === 'ArrowRight') go(1); if (e.key === 'ArrowLeft') go(-1); }}>
+      <div className="gal-3d__stage">
+        {slides.map((g, k) => {
+          const d = offsetOf(k), ad = Math.abs(d);
+          return (
+            <button key={g.src} className={`gal-3d__card ${d === 0 ? 'is-active' : ''}`} data-ad={Math.min(ad, 4)}
+              style={{ '--d': d, '--ad': ad }} tabIndex={d === 0 ? 0 : -1} aria-hidden={d !== 0}
+              aria-label={d === 0 ? `${t('gallery.view')}: ${pick(g.caption)}` : undefined}
+              onClick={() => (d === 0 ? onOpen(g) : go(d))}>
+              <img {...pic(g.src)} sizes="(max-width: 760px) 72vw, 520px" alt="" loading={ad <= 1 ? 'eager' : 'lazy'} />
+              <span className="gal-3d__shine" aria-hidden="true" />
+              {d === 0 && <span className="gal-3d__zoom" aria-hidden="true"><Maximize2 /></span>}
+            </button>
+          );
+        })}
       </div>
-      <div className="gal-show__bar">
+      <button className="gal-3d__nav gal-3d__nav--prev" onClick={() => go(-1)} aria-label="Previous"><ChevronLeft /></button>
+      <button className="gal-3d__nav gal-3d__nav--next" onClick={() => go(1)} aria-label="Next"><ChevronRight /></button>
+
+      <div className="gal-3d__caption" key={i}>
+        <span className="gal-item__cat">{t(`gallery.${s.cat}`)}</span>
+        <p>{pick(s.caption)}</p>
+        <span className="gal-3d__count">{String(i + 1).padStart(2, '0')} <small>/ {String(n).padStart(2, '0')}</small></span>
+        <span className="gal-3d__progress" aria-hidden="true" />
+      </div>
+      <div className="gal-3d__dots">
         {slides.map((g, k) => (
-          <button key={g.src} className={`gal-show__thumb ${k === i ? 'is-active' : ''} ${k < i ? 'is-done' : ''}`} onClick={() => setI(k)} aria-label={pick(g.caption)}>
-            <img src={small(g.src)} alt="" loading="lazy" />
-            <span className="gal-show__progress" />
-          </button>
+          <button key={g.src} className={k === i ? 'is-active' : ''} onClick={() => setI(k)} aria-label={pick(g.caption)} />
         ))}
       </div>
     </div>
@@ -175,13 +193,26 @@ function Tile({ item, index, place, onOpen }) {
 // Masonry photo/video gallery with category tabs, "show all", and a full-screen viewer.
 export default function Gallery({ items }) {
   const { t, pick } = useLang();
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState(() => pendingFilter || 'all');
   const [expanded, setExpanded] = useState(false);
   const [open, setOpen] = useState(null);
   const [seen, setSeen] = useState(false);
   const gridRef = useRef(null);
   const tabsRef = useRef(null);
   const [indicator, setIndicator] = useState({ x: 0, w: 0 });
+  // viewer: zoom (double click / double tap, then move to look around), slideshow, and share
+  const [zoom, setZoom] = useState({ on: false, x: 50, y: 50 });
+  const [playing, setPlaying] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const touch = useRef({ x: 0, t: 0, lastTap: 0 });
+
+  // A category picked from the navbar's Gallery menu.
+  useEffect(() => {
+    pendingFilter = null;
+    const on = (e) => { setFilter(e.detail); setExpanded(false); pendingFilter = null; };
+    window.addEventListener('gallery:filter', on);
+    return () => window.removeEventListener('gallery:filter', on);
+  }, []);
 
   // Start the tile entrance animation the first time the gallery scrolls into view.
   useEffect(() => {
@@ -240,18 +271,58 @@ export default function Gallery({ items }) {
   }, [open]);
 
   const current = open !== null ? filtered[open] : null;
-  const step = (d) => (e) => { e.stopPropagation(); setOpen((i) => (i + d + filtered.length) % filtered.length); };
+  const move = (d) => setOpen((i) => (i + d + filtered.length) % filtered.length);
+  const step = (d) => (e) => { e.stopPropagation(); move(d); };
   const choose = (id) => { setFilter(id); setExpanded(false); };
   const poster = (g) => g.src || null;
 
-  const slides = items.filter((g) => g.src).slice(0, 6);
-  // Open the viewer on a showcase photo (switching back to "All" so it is in the list).
-  const openShowcase = (g) => { setFilter('all'); setOpen(items.indexOf(g)); };
+  // a new photo starts unzoomed; closing the viewer stops the slideshow
+  useEffect(() => setZoom((z) => ({ ...z, on: false })), [open]);
+  useEffect(() => { if (!isOpen) setPlaying(false); }, [isOpen]);
+  useEffect(() => {
+    if (!playing || open === null || zoom.on) return;
+    const id = setTimeout(() => move(1), 4000);
+    return () => clearTimeout(id);
+  }, [playing, open, zoom.on, filtered.length]);
+
+  const zoomAt = (clientX, clientY, el) => {
+    const r = el.getBoundingClientRect();
+    return { x: ((clientX - r.left) / r.width) * 100, y: ((clientY - r.top) / r.height) * 100 };
+  };
+  const toggleZoom = (e) => {
+    if (!current?.src) return;
+    const img = e.currentTarget.querySelector('img');
+    setZoom((z) => ({ on: !z.on, ...zoomAt(e.clientX, e.clientY, img) }));
+  };
+  const pan = (e) => { if (zoom.on) setZoom({ on: true, ...zoomAt(e.clientX, e.clientY, e.currentTarget.querySelector('img')) }); };
+  const onTouchStart = (e) => { touch.current.x = e.touches[0].clientX; touch.current.t = Date.now(); };
+  const onTouchEnd = (e) => {
+    const p = e.changedTouches[0], now = Date.now();
+    if (current?.src && now - touch.current.lastTap < 300) {
+      touch.current.lastTap = 0;
+      const img = e.currentTarget.querySelector('img');
+      setZoom((z) => ({ on: !z.on, ...zoomAt(p.clientX, p.clientY, img) }));
+      return;
+    }
+    touch.current.lastTap = now;
+    const dx = p.clientX - touch.current.x;
+    if (!zoom.on && Math.abs(dx) > 50) move(dx < 0 ? 1 : -1);
+  };
+  const share = async (e) => {
+    e.stopPropagation();
+    const url = new URL(current.src || current.video, window.location.origin).href;
+    try {
+      if (navigator.share) await navigator.share({ title: t('siteName'), text: pick(current.caption), url });
+      else { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1800); }
+    } catch { /* share cancelled or blocked */ }
+  };
+
+  // The tabs choose what both the carousel and the grid show (the carousel needs at least three photos).
+  const slides = filtered.filter((g) => g.src).slice(0, 9);
+  const openShowcase = (g) => setOpen(filtered.indexOf(g));
 
   return (
     <>
-      {slides.length > 1 && <Showcase slides={slides} onOpen={openShowcase} />}
-
       <div className="gal-tabs" role="tablist" ref={tabsRef}>
         <span className="gal-tabs__indicator" aria-hidden="true"
           style={{ transform: `translate(${indicator.x}px, ${indicator.y || 0}px)`, width: indicator.w, height: indicator.h }} />
@@ -262,7 +333,9 @@ export default function Gallery({ items }) {
         ))}
       </div>
 
-      <div key={filter} ref={gridRef} className={`gal-grid ${seen ? 'is-seen' : ''}`}>
+      {slides.length > 2 && <Carousel key={`carousel-${filter}`} slides={slides} onOpen={openShowcase} />}
+
+      <div key={`grid-${filter}`} ref={gridRef} className={`gal-grid ${seen ? 'is-seen' : ''}`}>
         {shown.map((g, i) => (
           <Tile key={g.src || g.video} item={g} index={i} place={places[i]} onOpen={() => setOpen(filtered.indexOf(g))} />
         ))}
@@ -283,11 +356,23 @@ export default function Gallery({ items }) {
           {/* the current photo, blurred and glowing, fills the background */}
           {poster(current) && <span key={`bg-${current.src}`} className="lightbox__bg" style={{ backgroundImage: `url(${small(current.src)})` }} aria-hidden="true" />}
           <button className="lightbox__close" aria-label="Close"><X /></button>
+          <div className="lightbox__tools" onClick={(e) => e.stopPropagation()}>
+            <button className={`lightbox__tool ${playing ? 'is-on' : ''}`} onClick={() => setPlaying(!playing)} aria-label={t(playing ? 'gallery.pause' : 'gallery.play')} title={t(playing ? 'gallery.pause' : 'gallery.play')}>
+              {playing ? <Pause /> : <Play />}
+            </button>
+            <button className="lightbox__tool" onClick={share} aria-label={t('gallery.share')} title={t('gallery.share')}><Share2 /></button>
+          </div>
+          {playing && <span key={`p-${open}`} className="lightbox__progress" aria-hidden="true" />}
+          {copied && <span className="lightbox__toast" role="status">{t('gallery.copied')}</span>}
           <button className="lightbox__nav lightbox__nav--prev" onClick={step(-1)} aria-label="Previous"><ChevronLeft /></button>
           <figure className="lightbox__figure" onClick={(e) => e.stopPropagation()}>
-            {current.video
-              ? <video key={current.video} src={current.video} controls autoPlay playsInline className="lightbox__media" />
-              : <img key={current.src} {...pic(current.src)} sizes="90vw" alt={pick(current.caption)} className="lightbox__media" />}
+            <div className={`lightbox__frame ${zoom.on ? 'is-zoomed' : ''}`} onDoubleClick={toggleZoom} onPointerMove={pan}
+              onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} title={current.src ? t('gallery.zoomHint') : undefined}>
+              {current.video
+                ? <video key={current.video} src={current.video} controls autoPlay playsInline className="lightbox__media" />
+                : <img key={current.src} {...pic(current.src)} sizes="90vw" alt={pick(current.caption)} className="lightbox__media" draggable="false"
+                  style={zoom.on ? { transformOrigin: `${zoom.x}% ${zoom.y}%` } : undefined} />}
+            </div>
             <figcaption>
               <span className="lightbox__cat">{t(`gallery.${current.cat}`)}</span>
               <span>{pick(current.caption)}</span>
