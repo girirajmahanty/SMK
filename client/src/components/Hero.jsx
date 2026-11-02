@@ -131,6 +131,8 @@ export default function Hero({ visits }) {
       </div>
 
       <div className="hero__inner">
+        {/* Warm light behind the crest and name: it breathes, and a sheen crosses it once on arrival */}
+        <span className="hero__light" aria-hidden="true" />
         {/* Seal sits beside the name like a crest */}
         <div className="hero__brand">
           {/* Wrapper fades in; the inner emblem moves with the mouse (both use transform). */}

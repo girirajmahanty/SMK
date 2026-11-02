@@ -2538,3 +2538,108 @@ main #festivals { contain-intrinsic-size: auto 3600px; }
 .gal-show__nav { background: rgba(30, 8, 10, 0.7); }
 /* the map's loading pin stops once the map has loaded */
 .vmap2.is-loaded .vmap2__loader .lucide { animation: none; }
+
+/* light and motion pass: a gold light sweep crosses each section title once; cards and buttons lift
+   with a soft gold glow under a mouse. Phones and reduced-motion users get none of the sweep or hover effects. */
+@media (min-width: 768px) {
+  .rhead.is-visible .rhead__title { position: relative; display: inline-block; }
+  .rhead.is-visible .rhead__title::after {
+    content: ''; position: absolute; inset: -0.1em -0.5em; pointer-events: none;
+    background: linear-gradient(105deg, transparent 38%, rgba(255, 240, 200, 0.85) 50%, transparent 62%) 120% 0 / 260% 100% no-repeat;
+    mix-blend-mode: overlay; animation: sheenSweepOnce 1.8s var(--ease) 0.9s 1 both;
+  }
+}
+@keyframes sheenSweepOnce { from { background-position: 120% 0; } to { background-position: -60% 0; } }
+
+/* hero light: a warm glow behind the crest and name. On wider screens it breathes and a single sheen
+   crosses it on arrival; phones keep only the still glow. */
+.hero__light {
+  position: absolute; left: 50%; top: 40%; width: min(760px, 130vw); aspect-ratio: 1; translate: -50% -50%;
+  border-radius: 50%; pointer-events: none; z-index: -1; overflow: hidden;
+  background: radial-gradient(closest-side, rgba(246, 223, 164, 0.24), rgba(246, 223, 164, 0) 72%);
+}
+@media (min-width: 768px) {
+  .hero__light { animation: heroGlow 7s ease-in-out 0.4s infinite alternate; }
+  .hero__light::before {
+    content: ''; position: absolute; inset: -20%;
+    background: linear-gradient(105deg, transparent 42%, rgba(255, 240, 200, 0.22) 50%, transparent 58%) 120% 0 / 260% 100% no-repeat;
+    animation: sheenSweepOnce 2.2s var(--ease) 0.8s 1 both;
+  }
+}
+@keyframes heroGlow { from { opacity: 0.55; scale: 0.94; } to { opacity: 1; scale: 1.05; } }
+@media (prefers-reduced-motion: reduce) {
+  .hero__light { animation: none; }
+  .hero__light::before { display: none; }
+}
+
+@media (hover: hover) {
+  .visit3__card:hover, .life2-card:hover {
+    translate: 0 -4px; transition: translate 0.5s var(--ease), box-shadow 0.5s var(--ease);
+    box-shadow: 0 0 0 1px rgba(240, 217, 168, 0.45), 0 18px 40px -16px rgba(240, 180, 80, 0.55);
+  }
+  .cta--gold:hover, .cta--glass:hover {
+    box-shadow: 0 0 0 1px rgba(240, 217, 168, 0.5), 0 14px 30px -12px rgba(240, 180, 80, 0.6);
+  }
+}
+@media (hover: hover) {
+  .gal-item:hover { box-shadow: 0 0 0 1px rgba(240, 217, 168, 0.5), 0 22px 44px -18px rgba(240, 180, 80, 0.6); }
+  .fest3__card:hover {
+    translate: 0 -4px; transition: opacity 0.7s var(--ease), translate 0.5s var(--ease), box-shadow 0.5s var(--ease);
+    box-shadow: 0 0 0 1px rgba(240, 217, 168, 0.45), 0 18px 40px -16px rgba(240, 180, 80, 0.55);
+  }
+  .gal-more__btn:hover { translate: 0 -2px; box-shadow: 0 0 0 1px rgba(240, 217, 168, 0.5), 0 14px 30px -12px rgba(240, 180, 80, 0.6); }
+}
+/* a gold light runs around the card border while you point at it (same ring as the gallery tiles) */
+@media (hover: hover) {
+  .visit3__card::before, .fest3__card::before, .life2-card::before {
+    content: ''; position: absolute; inset: 0; z-index: 4; padding: 2px; border-radius: inherit; pointer-events: none;
+    opacity: 0; transition: opacity 0.4s;
+    background: conic-gradient(from var(--ring-angle), transparent 0deg, #fff1c9 55deg, var(--gold) 95deg, transparent 150deg 360deg);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+  }
+  .visit3__card:hover::before, .fest3__card:hover::before, .life2-card:hover::before { opacity: 1; animation: ringSpin 3s linear infinite; }
+}
+/* hero border lights: the badge's gold ring turns slowly; each hero button runs a gold ring while you point at it */
+@media (min-width: 768px) {
+  .hero .hero-badge::before { animation: ringSpin 6s linear infinite; }
+}
+@media (hover: hover) {
+  .hero .cta--gold .cta__ring {
+    display: block; position: absolute; inset: 0; z-index: 2; padding: 2px; border-radius: inherit; pointer-events: none;
+    background: conic-gradient(from var(--ring-angle), transparent 0deg, #fff6dc 55deg, #8a2f36 95deg, transparent 150deg 360deg);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+    opacity: 0; transition: opacity 0.4s;
+  }
+  .hero .cta:hover .cta__ring { opacity: 1; animation: ringSpin 2.6s linear infinite; }
+}
+
+/* stronger hero light on wider screens: the button rings always run (faster under the mouse),
+   a glowing gold ring turns around the seal, and soft light beams fall across the photo from the top left */
+.hero .hero__brand .hero__emblem::after {
+  content: ''; position: absolute; inset: auto; left: 50%; top: 50%; z-index: 1; translate: -50% -50%;
+  width: calc(var(--emblem) * 0.97); height: calc(var(--emblem) * 0.97); padding: 3px; border-radius: 50%; pointer-events: none;
+  background: conic-gradient(from var(--ring-angle), transparent 0deg, #fff1c9 50deg, var(--gold) 100deg, transparent 160deg 200deg, #f6dfa4 250deg, transparent 300deg 360deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+  filter: drop-shadow(0 0 6px rgba(246, 223, 164, 0.75));
+}
+.hero .hero__overlay::after {
+  content: ''; position: absolute; inset: -20% -10%; pointer-events: none; transform-origin: 15% 0;
+  background: repeating-conic-gradient(from 100deg at 15% 0%, rgba(255, 236, 190, 0.1) 0deg 3deg, transparent 3deg 11deg);
+  -webkit-mask: radial-gradient(ellipse 85% 75% at 15% 0%, #000, transparent 75%);
+  mask: radial-gradient(ellipse 85% 75% at 15% 0%, #000, transparent 75%);
+  mix-blend-mode: screen;
+}
+@media (min-width: 768px) {
+  .hero .cta__ring { animation: ringSpin 4s linear infinite; }
+  .hero .cta--gold .cta__ring { opacity: 0.75; }
+  .hero .hero__brand .hero__emblem::after { animation: ringSpin 7s linear infinite; }
+  .hero .hero__overlay::after { animation: heroBeams 10s ease-in-out infinite alternate; }
+}
+@keyframes heroBeams { from { opacity: 0.45; rotate: -2deg; } to { opacity: 1; rotate: 2deg; } }
+@media (prefers-reduced-motion: reduce) {
+  .hero .hero-badge::before, .hero .cta__ring, .hero .cta:hover .cta__ring,
+  .hero .hero__brand .hero__emblem::after, .hero .hero__overlay::after { animation: none; }
+  .visit3__card::before, .fest3__card::before, .life2-card::before { display: none; }
+  .rhead.is-visible .rhead__title::after { animation: none; display: none; }
+  .visit3__card:hover, .life2-card:hover, .cta--gold:hover, .cta--glass:hover, .fest3__card:hover, .gal-more__btn:hover { translate: none; }
+}
