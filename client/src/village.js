@@ -147,7 +147,7 @@ export const village = {
       Icon: Sun, tone: 'sun', months: [1], img: '/gallery/village/village-pond.jpg', position: '50% 55%', match: /makar sankranti/i,
       date: { en: 'January (Poush)', bn: 'পৌষ / জানুয়ারি' }, name: { en: 'Makar Sankranti', bn: 'মকর সংক্রান্তি' },
       dates: [['2027-01-15']],
-      details: [{ en: 'Pithe-puli from new rice', bn: 'নতুন চালের পিঠে-পুলি' }, { en: 'Holy dip at dawn', bn: 'ভোরে পুণ্যস্নান' }, { en: 'Tusu songs and fair', bn: 'টুসু গান ও মেলা' }],
+      details: [{ en: 'Pithe-puli from new rice', bn: 'নতুন চালের পিঠে-পুলি' }, { en: 'Holy dip at dawn', bn: 'ভোরে পুণ্যস্নান' }],
       text: { en: 'Harvest thanks with pithe-puli — sweets made from new rice — and a holy dip at dawn.', bn: 'নতুন চালের পিঠে-পুলি আর ভোরের পুণ্যস্নানে নতুন ফসলের উৎসব।' },
     },
     {
