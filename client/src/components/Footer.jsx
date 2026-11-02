@@ -5,6 +5,7 @@ import { site } from '../config.js';
 import { village } from '../village.js';
 import Seal from './Seal.jsx';
 import Wave from './Wave.jsx';
+import Reveal from './Reveal.jsx';
 import { smoothScrollTo } from '../smoothScroll.js';
 import { countdown } from './Festivals.jsx';
 import { useFestivalDates, festivalStatus, formatRange } from '../festivalDates.js';
@@ -77,13 +78,18 @@ export default function Footer() {
           <ArrowUp /> {t('footer.top')}
         </button>
       </div>
-      {/* designer credit */}
-      <p className="footer2__credit">
-        {t('footer.creditBefore')} <Heart className="icon-heart" /> {t('footer.creditAfter')}{' '}
+      {/* designer credit: fades up when it scrolls into view */}
+      <Reveal as="p" className="footer2__credit">
+        <span className="footer2__credit-label">{t('footer.credit')}</span>{' '}
         {designer.url
-          ? <a href={designer.url} target="_blank" rel="noopener" className="footer2__designer">{designer.name} <ArrowUpRight /></a>
-          : <strong className="footer2__designer">{designer.name}</strong>}
-      </p>
+          ? (
+            <a href={designer.url} target="_blank" rel="noopener" className="footer2__designer">
+              <span className="footer2__designer-name">{designer.name}</span>
+              <ArrowUpRight className="footer2__designer-arrow" aria-hidden="true" />
+            </a>
+          )
+          : <strong className="footer2__designer"><span className="footer2__designer-name">{designer.name}</span></strong>}
+      </Reveal>
     </footer>
   );
 }
