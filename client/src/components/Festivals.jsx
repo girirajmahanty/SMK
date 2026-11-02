@@ -191,7 +191,7 @@ export default function Festivals() {
           >
             <span className="fest2__node">{f.Icon ? <f.Icon /> : <Sparkles />}<span className="fest2__branch" aria-hidden="true" /></span>
             <article className="fest2__card" tabIndex={0} onPointerMove={tilt} onPointerLeave={untilt}>
-              {f.img && (
+              {f.img ? (
                 <div className="fest2__img">
                   <img {...pic(f.img)} sizes="(max-width: 760px) 90vw, 420px" alt={pick(f.name)} loading="lazy" style={f.position ? { objectPosition: f.position } : undefined} />
                   <span className="fest2__img-badge" aria-hidden="true">{f.Icon ? <f.Icon /> : <Sparkles />}</span>
@@ -200,6 +200,13 @@ export default function Festivals() {
                       <Camera /> {f.credit.name}
                     </a>
                   )}
+                </div>
+              ) : (
+                // no photo yet: a panel in the festival's colours with its icon and name
+                <div className="fest2__img fest2__art" aria-hidden="true">
+                  <span className="fest2__art-ring" />
+                  <span className="fest2__art-icon">{f.Icon ? <f.Icon /> : <Sparkles />}</span>
+                  <span className="fest2__art-name">{pick(f.name)}</span>
                 </div>
               )}
               <div className="fest2__body">

@@ -2777,3 +2777,29 @@ main #festivals { contain-intrinsic-size: auto 6200px; }
 
 /* screen-reader-only text */
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ---- Art panels: shown where a card has no photo yet ---- */
+/* festival cards: the festival's own colours, a turning rangoli ring, its icon and name */
+.fest2__art { display: grid; place-items: center; align-content: center; gap: 0.7rem; overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--t1) 55%, transparent), transparent 62%),
+    repeating-conic-gradient(from 0deg at 50% 42%, color-mix(in srgb, var(--t1) 16%, transparent) 0deg 6deg, transparent 6deg 18deg),
+    linear-gradient(160deg, color-mix(in srgb, var(--t2) 70%, #2a0c10), #14050799); }
+.fest2__art::before { animation: none; }
+.fest2__art-ring { position: absolute; left: 50%; top: 42%; width: 150px; height: 150px; translate: -50% -50%; border-radius: 50%;
+  border: 1.5px dashed color-mix(in srgb, var(--t1) 70%, #fff); opacity: 0.7; animation: festSpin 28s linear infinite; }
+.fest2__art-ring::after { content: ''; position: absolute; inset: 14px; border-radius: 50%; border: 1px solid color-mix(in srgb, var(--t1) 45%, transparent); }
+.fest2__art-icon { position: relative; display: grid; place-items: center; width: 84px; height: 84px; border-radius: 50%; color: #fff;
+  background: radial-gradient(circle at 35% 30%, var(--t1), var(--t2)); box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.12), 0 0 40px -4px var(--t1); }
+.fest2__art-icon .lucide { width: 2.4rem; height: 2.4rem; }
+.fest2__art-name { position: relative; font-family: var(--display); font-size: 1.35rem; font-weight: 700; color: #fff4d2; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5); }
+@media (max-width: 760px) { .fest2__art { aspect-ratio: 16 / 7; } .fest2__art-icon { width: 64px; height: 64px; } .fest2__art-icon .lucide { width: 1.8rem; height: 1.8rem; } .fest2__art-ring { width: 116px; height: 116px; } .fest2__art-name { font-size: 1.1rem; } }
+
+/* village life cards: warm gradient with a large faint icon */
+.life2-card__art { display: grid; place-items: center; color: rgba(240, 217, 168, 0.32);
+  background:
+    radial-gradient(circle at 70% 25%, rgba(227, 183, 104, 0.35), transparent 55%),
+    repeating-conic-gradient(from 0deg at 70% 25%, rgba(227, 183, 104, 0.08) 0deg 6deg, transparent 6deg 18deg),
+    linear-gradient(160deg, #6b1d26, #2a0c10); }
+.life2-card__art .lucide { width: 38%; height: auto; max-width: 150px; stroke-width: 1.2; transform: translateY(-12%); }
+@media (prefers-reduced-motion: reduce) { .fest2__art-ring { animation: none; } }

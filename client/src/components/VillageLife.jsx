@@ -28,7 +28,9 @@ function LifeCard({ item, index }) {
   return (
     <Reveal delay={(index % 3) * 110} className={`life2__cell life2__cell--${item.area}`}>
       <article ref={ref} className="life2-card" onMouseMove={onMove} onMouseLeave={onLeave} tabIndex={0}>
-        <img className="life2-card__img" {...pic(item.img)} sizes="(max-width: 700px) 92vw, 45vw" alt="" loading="lazy" style={{ objectPosition: item.position || 'center' }} />
+        {item.img
+          ? <img className="life2-card__img" {...pic(item.img)} sizes="(max-width: 700px) 92vw, 45vw" alt="" loading="lazy" style={{ objectPosition: item.position || 'center' }} />
+          : <span className="life2-card__img life2-card__art" aria-hidden="true"><item.Icon /></span>}
         <span className="life2-card__shade" aria-hidden="true" />
         <span className="life2-card__light" aria-hidden="true" />
         <span className="light-ring" aria-hidden="true" style={{ '--ring-delay': `${index * -0.6}s` }} />
