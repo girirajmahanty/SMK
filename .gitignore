@@ -4,6 +4,7 @@ dist/
 .env.*
 !.env.example
 server/data/
+server/uploads/
 .claude/
 *.log
 .DS_Store

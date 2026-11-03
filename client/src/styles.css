@@ -1560,7 +1560,7 @@ main:focus { outline: none; }
 .gal-item:hover img, .gal-item:hover video, .gal-item:focus-visible img { transform: scale(1.08); filter: saturate(1.15) brightness(1.04); }
 .gal-item:hover::after, .gal-item:focus-visible::after { box-shadow: inset 0 0 0 2px var(--gold-light), inset 0 0 30px rgba(240, 217, 168, 0.25); }
 /* focus: when you point at one tile, the others dim and soften */
-@media (hover: hover) {
+@media all {
   .gal-grid:has(.gal-item:hover) .gal-item:not(:hover) { filter: brightness(0.62) saturate(0.7) blur(1px); }
   .gal-grid .gal-item { transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.5s, filter 0.5s; }
 }
@@ -2216,7 +2216,7 @@ main #festivals { contain-intrinsic-size: auto 6200px; }
 /* the heading title keeps its gold colour, without the moving shimmer */
 .rhead__word { background-position: 0 0; }
 /* gallery focus: other tiles dim, without the costly blur */
-@media (hover: hover) { .gal-grid:has(.gal-item:hover) .gal-item:not(:hover) { filter: brightness(0.7) saturate(0.8); } }
+@media all { .gal-grid:has(.gal-item:hover) .gal-item:not(:hover) { filter: brightness(0.7) saturate(0.8); } }
 
 /* lighter scrolling: background blur only on the navbar and the hero; elsewhere slightly more solid backgrounds */
 .story2__frame figcaption, .gal-item .gal-item__caption, .gal-tabs, .rhead__stat { backdrop-filter: none; -webkit-backdrop-filter: none; }
@@ -2229,8 +2229,8 @@ main #festivals { contain-intrinsic-size: auto 6200px; }
 
 /* light and motion pass: a gold light sweep crosses each section title once; cards and buttons lift
    with a soft gold glow under a mouse. Phones and reduced-motion users get none of the sweep or hover effects. */
-@media (min-width: 768px) {
-  .rhead.is-visible .rhead__title { position: relative; display: table; margin-inline: auto; }
+@media all {
+  .rhead.is-visible .rhead__title { position: relative; display: block; width: fit-content; margin-inline: auto; }
   .rhead--left.is-visible .rhead__title { margin-inline: 0; }
   .rhead.is-visible .rhead__title::after {
     content: ''; position: absolute; inset: -0.1em -0.5em; pointer-events: none;
@@ -2249,7 +2249,7 @@ main #festivals { contain-intrinsic-size: auto 6200px; }
   border-radius: 50%; pointer-events: none; z-index: -1; overflow: hidden;
   background: radial-gradient(closest-side, rgba(246, 223, 164, 0.24), rgba(246, 223, 164, 0) 72%);
 }
-@media (min-width: 768px) {
+@media all {
   .hero__light { animation: heroGlow 7s ease-in-out 0.4s infinite alternate; }
   .hero__light::before {
     content: ''; position: absolute; inset: -20%;
@@ -2263,7 +2263,7 @@ main #festivals { contain-intrinsic-size: auto 6200px; }
   .hero__light::before { display: none; }
 }
 
-@media (hover: hover) {
+@media all {
   .visit3__card:hover {
     translate: 0 -4px; transition: translate 0.5s var(--ease), box-shadow 0.5s var(--ease);
     box-shadow: 0 0 0 1px rgba(240, 217, 168, 0.45), 0 18px 40px -16px rgba(240, 180, 80, 0.55);
@@ -2272,12 +2272,12 @@ main #festivals { contain-intrinsic-size: auto 6200px; }
     box-shadow: 0 0 0 1px rgba(240, 217, 168, 0.5), 0 14px 30px -12px rgba(240, 180, 80, 0.6);
   }
 }
-@media (hover: hover) {
+@media all {
   .gal-item:hover { box-shadow: 0 0 0 1px rgba(240, 217, 168, 0.5), 0 22px 44px -18px rgba(240, 180, 80, 0.6); }
   .gal-more__btn:hover { translate: 0 -2px; box-shadow: 0 0 0 1px rgba(240, 217, 168, 0.5), 0 14px 30px -12px rgba(240, 180, 80, 0.6); }
 }
 /* a gold light runs around the card border while you point at it (same ring as the gallery tiles) */
-@media (hover: hover) {
+@media all {
   .visit3__card::before {
     content: ''; position: absolute; inset: 0; z-index: 4; padding: 2px; border-radius: inherit; pointer-events: none;
     opacity: 0; transition: opacity 0.4s;
@@ -2287,10 +2287,10 @@ main #festivals { contain-intrinsic-size: auto 6200px; }
   .visit3__card:hover::before { opacity: 1; animation: ringSpin 3s linear infinite; }
 }
 /* hero border lights: the badge's gold ring turns slowly; each hero button runs a gold ring while you point at it */
-@media (min-width: 768px) {
+@media all {
   .hero .hero-badge::before { animation: ringSpin 6s linear infinite; }
 }
-@media (hover: hover) {
+@media all {
   .hero .cta--gold .cta__ring {
     display: block; position: absolute; inset: 0; z-index: 2; padding: 2px; border-radius: inherit; pointer-events: none;
     background: conic-gradient(from var(--ring-angle), transparent 0deg, #fff6dc 55deg, #8a2f36 95deg, transparent 150deg 360deg);
@@ -2316,7 +2316,7 @@ main #festivals { contain-intrinsic-size: auto 6200px; }
   mask: radial-gradient(ellipse 85% 75% at 15% 0%, #000, transparent 75%);
   mix-blend-mode: screen;
 }
-@media (min-width: 768px) {
+@media all {
   .hero .cta__ring { animation: ringSpin 4s linear infinite; }
   .hero .cta--gold .cta__ring { opacity: 0.75; }
   .hero .hero__brand .hero__emblem::after { animation: ringSpin 7s linear infinite; }
@@ -2330,11 +2330,10 @@ main #festivals { contain-intrinsic-size: auto 6200px; }
   background: linear-gradient(90deg, transparent, rgba(255, 214, 150, 0.16) 35%, rgba(255, 240, 210, 0.3) 50%, rgba(255, 214, 150, 0.16) 65%, transparent);
   mix-blend-mode: screen; transform: translateX(-130%) skewX(-18deg); opacity: 0;
 }
-@media (min-width: 768px) {
+@media all {
   .hero .hero__photo { animation: heroPhoto 26s ease-in-out infinite alternate; }
   .hero__layer--bg::after { opacity: 1; animation: heroSunlight 11s ease-in-out 1.5s infinite; }
 }
-@keyframes heroPhoto { from { transform: scale(1.04); } to { transform: scale(1.12) translate(-1.5%, -1%); } }
 @keyframes heroSunlight {
   0% { transform: translateX(-130%) skewX(-18deg); }
   55%, 100% { transform: translateX(330%) skewX(-18deg); }
@@ -2360,13 +2359,13 @@ main #festivals { contain-intrinsic-size: auto 6200px; }
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
 }
 .story2__stat::after { opacity: 0; transition: opacity 0.4s; }
-@media (min-width: 768px) {
+@media all {
   .story-sec::before { animation: storyLight 14s ease-in-out infinite alternate; }
   .story2__frame figure::before { animation: ringSpin 6s linear infinite; }
   .story2__frame--side figure::before { animation-duration: 5s; animation-direction: reverse; }
   .story-sec .story2__ring { animation: ringRotate 28s linear infinite; }
 }
-@media (hover: hover) {
+@media all {
   .story2__stat:hover::after { opacity: 1; animation: ringSpin 3s linear infinite; }
 }
 @keyframes storyLight { from { transform: translate(-3%, -2%) scale(1); opacity: 0.75; } to { transform: translate(3%, 2%) scale(1.08); opacity: 1; } }
@@ -2577,7 +2576,7 @@ main #festivals { contain-intrinsic-size: auto 6200px; }
 .fest4__card-icon .lucide { width: 1.3rem; height: 1.3rem; }
 .fest4__card h3 { margin-top: 0.7rem; font-size: var(--fs-h3); }
 
-@media (min-width: 761px) {
+@media all {
   .fest4__beams { animation: heroBeams 10s ease-in-out infinite alternate; }
 }
 @media (max-width: 760px) {
@@ -2648,7 +2647,7 @@ main #festivals { contain-intrinsic-size: auto 6200px; }
 .visit4__meta { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.82rem; color: rgba(245, 233, 208, 0.72); }
 .visit4__meta .lucide { width: 0.85rem; height: 0.85rem; }
 
-@media (min-width: 761px) {
+@media all {
   .visit4__stage::before { animation: ringSpin 7s linear infinite; }
   .visit4__stage .visit3__address::before { animation: addrSweep 6s ease-in-out 1s infinite; }
   .visit4__trip::before { animation: visitRoad 1s linear infinite; }
@@ -2712,12 +2711,12 @@ main #festivals { contain-intrinsic-size: auto 6200px; }
 .footer3__copy { font-size: 0.85rem; color: rgba(245, 233, 208, 0.65); }
 .footer3__made .footer2__top { margin-top: auto; }
 
-@media (min-width: 761px) {
+@media all {
   .footer3__rays { animation: ringRotate 80s linear infinite; }
   .footer3__ring { animation: ringSpin 6s linear infinite; }
   .footer3__name { animation: creditShimmer 8s ease-in-out 1s infinite; }
 }
-@media (hover: hover) {
+@media all {
   .footer3__card:hover::after { opacity: 1; animation: ringSpin 3s linear infinite; }
 }
 @media (max-width: 760px) {
@@ -2738,7 +2737,7 @@ main #festivals { contain-intrinsic-size: auto 6200px; }
     linear-gradient(90deg, transparent, rgba(227, 183, 104, 0.45), transparent); }
 .nav--scrolled::after { opacity: 1; }
 .nav__pill.is-on { box-shadow: 0 0 18px -4px rgba(227, 183, 104, 0.6); }
-@media (min-width: 761px) {
+@media all {
   .brand__logo::before { animation: ringSpin 4s linear infinite; }
   .brand__logo::after { animation: halo 3s ease-in-out infinite; }
   .brand:hover .brand__logo::before { animation-duration: 1.4s; }
@@ -2755,7 +2754,7 @@ main #festivals { contain-intrinsic-size: auto 6200px; }
 /* Text effects. Headings: a gold shine passes across the title words every few seconds (wider screens). The Story's
    drop cap is gold with a soft glow; a gold line draws itself under the quote when it appears; card titles glow
    gold under a mouse. */
-@media (min-width: 761px) {
+@media all {
   .rhead.is-visible .rhead__word { animation: headShine 9s ease-in-out calc(1.8s + var(--w) * 0.12s) infinite; }
 }
 @keyframes headShine { 0%, 70% { background-position: 100% 0; } 100% { background-position: -50% 0; } }
@@ -2766,7 +2765,7 @@ main #festivals { contain-intrinsic-size: auto 6200px; }
 .story2__quote p { background: linear-gradient(90deg, var(--gold), #f6dfa4, transparent) 0 100% / 0 2px no-repeat; padding-bottom: 0.35rem;
   transition: background-size 1.4s var(--ease) 0.4s; }
 .story2__quote.is-visible p { background-size: 100% 2px; }
-@media (hover: hover) {
+@media all {
   .fest4__card h3, .life3__body h3, .visit4__stop strong, .footer2__season-name, .gal-3d__caption p { transition: color 0.3s, text-shadow 0.4s; }
   .fest4__card:hover h3, .life3__panel:hover .life3__body h3, .visit4__stop:hover strong, .footer2__season:hover .footer2__season-name {
     text-shadow: 0 0 18px rgba(240, 190, 90, 0.55); }
@@ -2785,14 +2784,14 @@ main #festivals { contain-intrinsic-size: auto 6200px; }
 .auth__title { background: linear-gradient(90deg, var(--gold), #f6dfa4, transparent) 0 100% / 0 2px no-repeat; padding-bottom: 0.3rem;
   animation: fadeUp 0.5s var(--ease), authLine 1.2s var(--ease) 0.3s both; }
 @keyframes authLine { to { background-size: 60% 2px; } }
-@media (min-width: 761px) {
+@media all {
   .auth__card::before { animation: ringSpin 9s linear infinite; }
   .auth__seal { animation: glow 4s ease-in-out infinite; }
   .auth__side::after { animation: addrSweep 7s ease-in-out 1.5s infinite; }
 }
 .auth__perks li { transition: translate 0.35s var(--ease); }
 .auth__perks .lucide { transition: box-shadow 0.35s, background 0.35s; }
-@media (hover: hover) {
+@media all {
   .auth__perks li:hover { translate: 4px 0; }
   .auth__perks li:hover .lucide { background: rgba(227, 183, 104, 0.25); box-shadow: 0 0 16px rgba(240, 190, 90, 0.6); }
   .auth-tabs button:not(.is-active):hover { color: var(--accent); }
@@ -2808,8 +2807,8 @@ main #festivals { contain-intrinsic-size: auto 6200px; }
    (1024–1180px) the links stay in the bar with the address line hidden; the phone menu opens with the seal, the name
    and a gold close button, a labelled theme row, and a card for the festival happening now or coming next. */
 .nav { transition: padding 0.35s var(--ease), color 0.35s, transform 0.45s var(--ease); }
-.nav--hidden { transform: translateY(-110%); }
-.nav:focus-within { transform: none; }
+
+
 .nav__menu-head, .nav__theme-row, .nav__fest { display: none; }
 @media (min-width: 1024px) and (max-width: 1279px) { .brand__sub { display: none; } }
 @media (min-width: 1024px) and (max-width: 1180px) {
@@ -2916,7 +2915,7 @@ main #festivals { contain-intrinsic-size: auto 6200px; }
 }
 .user-btn .avatar::after { content: ''; position: absolute; right: -1px; bottom: -1px; width: 9px; height: 9px; border-radius: 50%;
   background: #3fb950; box-shadow: 0 0 0 2px var(--surface), 0 0 6px rgba(63, 185, 80, 0.8); }
-@media (min-width: 761px) {
+@media all {
   .login-btn::before, .user-btn .avatar::before { animation: ringSpin 5s linear infinite; }
   .login-btn:hover::before, .user-btn:hover .avatar::before { animation-duration: 1.4s; }
 }
@@ -2950,7 +2949,7 @@ main #festivals { contain-intrinsic-size: auto 6200px; }
 .hero__next:hover, .hero__next:focus-visible { outline: none; translate: 0 -2px; background: rgba(42, 12, 15, 0.65);
   box-shadow: inset 0 0 0 1px var(--gold-light), 0 0 20px -4px rgba(240, 190, 90, 0.6); }
 @keyframes nextBob { 50% { transform: translateY(3px); } }
-@media (min-width: 761px) { .hero__next-arrow .lucide { animation: nextBob 1.8s ease-in-out infinite; } }
+@media all { .hero__next-arrow .lucide { animation: nextBob 1.8s ease-in-out infinite; } }
 @media (max-height: 740px) { .hero__foot { bottom: 4.1rem; } }
 @media (max-height: 620px) { .hero__next { display: none; } }
 @media (min-width: 1024px) {
@@ -2974,7 +2973,7 @@ main #festivals { contain-intrinsic-size: auto 6200px; }
    so the form comes first, and the perks move below the form. */
 .auth__photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 60% center; pointer-events: none;
   opacity: 0.38; mix-blend-mode: luminosity; transform: scale(1.06); }
-@media (min-width: 821px) { .auth__photo { animation: authPhoto 22s ease-in-out infinite alternate; } }
+@media all { .auth__photo { animation: authPhoto 22s ease-in-out infinite alternate; } }
 @keyframes authPhoto { to { transform: scale(1.16) translate(-2%, -1%); } }
 
 .auth-field__ok { position: absolute; right: 0.95rem; top: 50%; translate: 0 -50%; width: 1.15rem; height: 1.15rem; color: var(--leaf); animation: okPop 0.35s var(--ease); }
@@ -3089,7 +3088,7 @@ main #festivals { contain-intrinsic-size: auto 6200px; }
   mask: radial-gradient(circle, transparent 29%, #000 30%, #000 33%, transparent 34%, transparent 45%, #000 46%, #000 49%, transparent 50%); }
 .life3__art::after { content: ''; position: absolute; left: 50%; top: 50%; width: 160px; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; pointer-events: none;
   background: radial-gradient(circle, rgba(240, 190, 90, 0.32), transparent 70%); }
-@media (min-width: 761px) {
+@media all {
   .life3__art::before { animation: ringRotate 40s linear infinite; }
   .life3__art::after { animation: artGlow 3s ease-in-out infinite; }
   .life3__panel--music .life3__art .lucide { animation: drumBeat 1.1s ease-in-out infinite; }
@@ -3156,7 +3155,7 @@ main #festivals { contain-intrinsic-size: auto 6200px; }
   background: linear-gradient(180deg, #fff6dc, #e3b768); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
 .fest4__cd-cell small { margin-top: 0.2rem; font-size: 0.64rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(245, 233, 208, 0.72); }
 :lang(bn) .fest4__cd-cell small { letter-spacing: 0; text-transform: none; font-size: 0.74rem; }
-@media (min-width: 761px) { .fest4__cd-cell:last-child { animation: cdTick 1s ease-in-out infinite; } }
+@media all { .fest4__cd-cell:last-child { animation: cdTick 1s ease-in-out infinite; } }
 @keyframes cdTick { 50% { box-shadow: inset 0 0 0 1px rgba(255, 241, 201, 0.7), 0 0 14px -2px rgba(240, 190, 90, 0.6); } }
 
 .fest4__cal { display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.9rem; padding: 0.45rem 0.9rem; border-radius: 999px; cursor: pointer;
@@ -3255,7 +3254,7 @@ html.map-big main.page { transform: none; filter: none; animation: none; }
 .footer3 { padding-bottom: 0; }
 .footer3__skyline { display: block; width: 100vw; margin: 1.4rem 0 0 calc(50% - 50vw); }
 .footer3__skyline.reveal, .footer3__skyline.reveal.is-visible { opacity: 1; transform: none; }
-.footer3__skyline svg { display: block; width: 100%; height: clamp(80px, 11vw, 140px); }
+.footer3__skyline svg { display: block; width: 100%; height: clamp(84px, 13vw, 190px); }
 .footer3__skyline path { fill: none; stroke: var(--gold-light); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; opacity: 0.75;
   stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 2.2s var(--ease); }
 .footer3__skyline.is-visible path { stroke-dashoffset: 0; }
@@ -3269,9 +3268,123 @@ html.map-big main.page { transform: none; filter: none; animation: none; }
 .footer3__skyline path:nth-child(9) { transition-delay: 1.1s; }
 .footer3__skyline path:nth-child(10) { transition-delay: 1.3s; }
 .footer3__skyline path:nth-child(11) { transition-delay: 1.5s; }
-@media (min-width: 761px) { .footer3__skyline.is-visible svg { animation: skyGlow 5s ease-in-out 3s infinite; } }
+@media all { .footer3__skyline.is-visible svg { animation: skyGlow 5s ease-in-out 3s infinite; } }
 @keyframes skyGlow { 50% { filter: drop-shadow(0 0 5px rgba(240, 190, 90, 0.75)); } }
 @media (prefers-reduced-motion: reduce) {
   .footer3__skyline path { transition: none; stroke-dashoffset: 0; }
   .footer3__skyline.is-visible svg { animation: none; }
+}
+
+/* Enter screen: a softer burst with a dark glow behind the words, the name in shining gold, the welcome line in clear
+   ivory, and a gold "Enter" button that gently breathes; its outer ring fills while the site gets ready to open by itself. */
+.intro .rays { opacity: 0.55; }
+.intro__inner { isolation: isolate; }
+.intro__inner::before { content: ''; position: absolute; left: 50%; top: 56%; z-index: -1; width: min(760px, 125vw); height: 580px; translate: -50% -50%;
+  border-radius: 50%; pointer-events: none; background: radial-gradient(closest-side, rgba(30, 8, 10, 0.62), transparent); }
+.intro__title { background: linear-gradient(100deg, #e3b768 0%, #f6dfa4 35%, #fffaf0 50%, #f6dfa4 65%, #c6923a 100%) 100% 0 / 250% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; text-shadow: none;
+  filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.45)); animation: fadeUp 1s var(--ease) 0.4s both, creditShimmer 6s ease-in-out 1.6s infinite; }
+.intro__welcome { margin-top: 0.4rem; font-size: clamp(1rem, 2.4vw, 1.25rem); color: #fff4d2; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6); }
+:lang(bn) .intro__welcome { letter-spacing: 0; }
+.intro__enter { position: relative; display: inline-flex; align-items: center; gap: 0.6rem; margin-top: 0.4rem; padding: 0.85rem 1.7rem; border-radius: 999px;
+  cursor: pointer; font-size: 1.05rem; font-weight: 800; letter-spacing: 0.02em; color: var(--maroon-deep); background: linear-gradient(135deg, #fff1c9, var(--gold));
+  box-shadow: 0 0 0 6px rgba(227, 183, 104, 0.18), 0 0 34px -4px rgba(240, 190, 90, 0.75), 0 14px 30px -12px rgba(0, 0, 0, 0.6);
+  animation: fadeUp 1s var(--ease) 1.1s both, enterBreathe 2.6s ease-in-out 2.2s infinite; transition: translate 0.3s var(--ease), scale 0.3s var(--ease); }
+.intro__enter:hover, .intro__enter:focus-visible { outline: none; translate: 0 -2px; scale: 1.03; }
+.intro__enter .lucide { width: 1.1rem; height: 1.1rem; }
+.intro__enter-arrow { transition: transform 0.3s var(--ease); }
+.intro__enter:hover .intro__enter-arrow { transform: translateX(4px); }
+@keyframes enterBreathe { 50% { box-shadow: 0 0 0 10px rgba(227, 183, 104, 0.1), 0 0 48px 0 rgba(240, 190, 90, 0.85), 0 14px 30px -12px rgba(0, 0, 0, 0.6); } }
+@property --intro-p { syntax: '<number>'; initial-value: 0; inherits: false; }
+.intro__enter-ring { position: absolute; inset: -8px; padding: 2.5px; border-radius: inherit; pointer-events: none;
+  background: conic-gradient(#fff6dc calc(var(--intro-p) * 1turn), rgba(240, 217, 168, 0.22) 0);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: introFill var(--intro-ms) linear both; }
+@keyframes introFill { to { --intro-p: 1; } }
+.intro__tap { margin-top: 1rem; font-size: 0.9rem; color: rgba(255, 244, 210, 0.8); opacity: 1; animation: fadeUp 1s var(--ease) 1.4s both; }
+@media (prefers-reduced-motion: reduce) {
+  .intro__title, .intro__enter, .intro__tap { animation: none; }
+  .intro__enter-ring { animation: none; --intro-p: 1; }
+}
+
+/* Phones get the same light and motion: the festival background's beams and slow photo zoom, a turning gold border on
+   every Village Life card. With no mouse, a tap gives the same answer a hover does on desktop: cards and buttons press in
+   slightly and glow gold, and pills light up. */
+@media (max-width: 760px) {
+  .fest4__beams { display: block; }
+  .fest4__layer img { transform: scale(1.1); transition: transform 7s ease-out; }
+  .fest4__layer.is-active img { transform: scale(1); }
+}
+@media (max-width: 899px) {
+  .life3__panel::before { opacity: 0.7; animation: ringSpin 5s linear infinite; }
+}
+@media (hover: none) {
+  .cta, .fest4__card, .visit3__card, .gal-item, .life3__panel, .story2__stat, .footer3__card, .footer3__pill, .nav__link, .gal-tab, .visit4__stop-btn,
+  .fest4__cal, .visit4__way-map, .auth-submit, .intro__enter, .gal-3d__nav, .footer2__top, .login-btn { -webkit-tap-highlight-color: transparent; }
+  .fest4__card:active, .visit3__card:active, .gal-item:active, .life3__panel:active, .story2__stat:active, .footer3__card:active, .visit4__stop-btn:active {
+    scale: 0.98; box-shadow: 0 0 0 1px rgba(240, 217, 168, 0.55), 0 0 26px -6px rgba(240, 180, 80, 0.7); }
+  .cta:active, .fest4__cal:active, .visit4__way-map:active, .auth-submit:active, .intro__enter:active, .gal-3d__nav:active, .footer2__top:active, .login-btn:active,
+  .gal-tab:active { scale: 0.95; box-shadow: 0 0 22px -4px rgba(240, 190, 90, 0.8); }
+  .footer3__pill:active, .nav__links .nav__link:active { color: #3a1014; background: linear-gradient(135deg, var(--gold-light), var(--gold)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fest4__layer img { transition: none; transform: none; }
+  .life3__panel::before { animation: none; }
+}
+
+/* Moving backgrounds (BgFx), behind each section's content: embers rising and fading, stars twinkling, large soft glows
+   drifting, and a faint alpana turning very slowly. Only transform and opacity move, and sections off screen pause. */
+.bgfx { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+section:has(> .bgfx), footer:has(> .bgfx) { isolation: isolate; }
+.bgfx--hero, .bgfx--over { z-index: auto; }
+.bgfx__ember { position: absolute; left: var(--x); top: var(--y); width: var(--s); height: var(--s); border-radius: 50%; opacity: 0;
+  background: #ffe2a3; box-shadow: 0 0 6px 2px rgba(255, 190, 90, 0.75); animation: emberRise var(--t) linear var(--d) infinite; }
+@keyframes emberRise {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.6); }
+  12% { opacity: 0.95; }
+  70% { opacity: 0.55; }
+  100% { opacity: 0; transform: translate(var(--dx), -42vh) scale(1); }
+}
+.bgfx__star { position: absolute; left: var(--x); top: var(--y); width: 3px; height: 3px; border-radius: 50%; opacity: 0.15;
+  background: #fff1c9; box-shadow: 0 0 8px 2px rgba(255, 220, 150, 0.7); animation: twinkle var(--t) ease-in-out var(--d) infinite; }
+@keyframes twinkle { 50% { opacity: 1; transform: scale(1.5); } }
+.bgfx__glow { position: absolute; width: 46vmax; aspect-ratio: 1; border-radius: 50%; }
+.bgfx__glow--1 { left: -12vmax; top: 4%; background: radial-gradient(closest-side, rgba(240, 190, 90, 0.28), transparent); animation: glowDrift1 22s ease-in-out infinite alternate; }
+.bgfx__glow--2 { right: -14vmax; top: 34%; background: radial-gradient(closest-side, rgba(214, 120, 90, 0.18), transparent); animation: glowDrift2 26s ease-in-out infinite alternate; }
+.bgfx__glow--3 { left: 30%; bottom: -24vmax; background: radial-gradient(closest-side, rgba(255, 230, 170, 0.3), transparent); animation: glowDrift3 30s ease-in-out infinite alternate; }
+@keyframes glowDrift1 { to { transform: translate(14vmax, 8vmax) scale(1.15); } }
+@keyframes glowDrift2 { to { transform: translate(-12vmax, -10vmax) scale(0.9); } }
+@keyframes glowDrift3 { to { transform: translate(-16vmax, -6vmax) scale(1.2); } }
+.bgfx__alpana { position: absolute; right: -16vmax; top: 6%; width: 58vmax; aspect-ratio: 1; border-radius: 50%; opacity: 0.6;
+  background: repeating-conic-gradient(rgba(198, 146, 58, 0.18) 0deg 2deg, transparent 2deg 10deg);
+  -webkit-mask: radial-gradient(circle, transparent 17%, #000 18%, #000 20%, transparent 21%, transparent 33%, #000 34%, #000 37%, transparent 38%, transparent 52%, #000 53%, #000 55%, transparent 56%, transparent 68%, #000 69%, #000 70%, transparent 71%);
+  mask: radial-gradient(circle, transparent 17%, #000 18%, #000 20%, transparent 21%, transparent 33%, #000 34%, #000 37%, transparent 38%, transparent 52%, #000 53%, #000 55%, transparent 56%, transparent 68%, #000 69%, #000 70%, transparent 71%);
+  animation: ringRotate 140s linear infinite; }
+.band--maroon .bgfx__alpana, footer .bgfx__alpana { background: repeating-conic-gradient(rgba(240, 217, 168, 0.12) 0deg 2deg, transparent 2deg 10deg); }
+
+/* the hero photo moves a little more: a slow zoom with a gentle drift across */
+@keyframes heroPhoto { 0% { transform: scale(1.05) translate(0, 0); } 50% { transform: scale(1.13) translate(-2.5%, -1.5%); } 100% { transform: scale(1.09) translate(2%, -2.5%); } }
+.hero .hero__photo { animation-duration: 20s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .bgfx__ember { display: none; }
+  .bgfx__star, .bgfx__glow, .bgfx__alpana { animation: none; }
+}
+/* Bengali never takes letter-spacing (it pulls conjuncts apart), and the display font's space is narrow, so headings
+   get a little more room between words. */
+:lang(bn) * { letter-spacing: normal !important; }
+:lang(bn) .rhead__title, :lang(bn) .footer3__name, :lang(bn) .fest4__now-name { word-spacing: 0.18em; }
+:root {
+  --announcement-border: #b8864b;
+}
+
+.site-announcement {
+  position: relative;
+  z-index: 20;
+  padding: 10px 20px;
+  border-bottom: 1px solid color-mix(in srgb, var(--announcement-border) 28%, transparent);
+  color: var(--heading);
+  background: var(--ivory);
+  font-size: .9rem;
+  text-align: center;
 }

@@ -4,7 +4,7 @@
   "private": true,
   "description": "MERN website to preserve and learn our village language",
   "engines": {
-    "node": ">=18.17"
+    "node": ">=20.19"
   },
   "scripts": {
     "install:all": "npm install && npm install --prefix server && npm install --prefix client",

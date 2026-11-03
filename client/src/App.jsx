@@ -7,6 +7,7 @@ import Intro from './components/Intro.jsx';
 import ScrollProgress from './components/ScrollProgress.jsx';
 import Home from './pages/Home.jsx';
 import Login from './pages/Login.jsx';
+import Admin, { AdminGate, AdminLogin } from './pages/Admin.jsx';
 import { smoothScrollTo } from './smoothScroll.js';
 import { useLang } from './i18n.jsx';
 
@@ -22,6 +23,7 @@ export default function App() {
   const [theme, setTheme] = useState(initialTheme);
   const { t } = useLang();
   const { pathname, hash } = useLocation();
+  const isAdminRoute = pathname.startsWith('/admin');
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -80,19 +82,29 @@ export default function App() {
 
   return (
     <>
-      <a className="skip-link" href="#main">{t('skip')}</a>
-      <Intro />
-      <ScrollProgress />
-      <Navbar theme={theme} onToggleTheme={toggleTheme} />
+      {!isAdminRoute && <a className="skip-link" href="#main">{t('skip')}</a>}
+      {!isAdminRoute && <Intro />}
+      {!isAdminRoute && <ScrollProgress />}
+      {!isAdminRoute && <Navbar theme={theme} onToggleTheme={toggleTheme} />}
+      {!isAdminRoute && <Announcement />}
       {/* key: each page remounts, so it plays the page-in transition */}
-      <main id="main" tabIndex={-1} key={pathname} className={`page ${pathname === '/' ? 'page--home' : ''}`}>
+      <main id="main" tabIndex={-1} key={pathname} className={`page ${pathname === '/' ? 'page--home' : ''} ${isAdminRoute ? 'admin-page' : ''}`}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/*" element={<AdminGate><Admin /></AdminGate>} />
           <Route path="*" element={<Home />} />
         </Routes>
       </main>
-      <Footer />
+      {!isAdminRoute && <Footer />}
     </>
   );
+}
+
+function Announcement() {
+  const { t } = useLang();
+  const message = t('announcement.message');
+  if (!message.trim()) return null;
+  return <aside className="site-announcement" role="status">{message}</aside>;
 }

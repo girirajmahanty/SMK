@@ -10,6 +10,9 @@ const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const EMAIL_RX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 let secret = process.env.JWT_SECRET;
+if (process.env.NODE_ENV === 'production' && (!secret || secret.length < 32 || secret === 'change-me-to-a-long-random-string')) {
+  throw new Error('Set JWT_SECRET to a unique random value of at least 32 characters in production.');
+}
 if (!secret) {
   secret = crypto.randomBytes(48).toString('hex');
   console.warn('JWT_SECRET is not set: using a temporary one. Everyone is logged out when the server restarts.');
@@ -24,7 +27,6 @@ const cookieOptions = {
   httpOnly: true,
   sameSite: 'lax',
   secure: process.env.NODE_ENV === 'production',
-  maxAge: WEEK_MS,
   path: '/',
 };
 
@@ -67,7 +69,8 @@ export function authRoutes(getStore) {
   const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res)).catch(next);
 
   const signIn = (res, user) => {
-    res.cookie(COOKIE, jwt.sign({ sub: String(user._id) }, secret, { expiresIn: '7d' }), cookieOptions);
+    const lifetime = user.role === 'admin' ? 8 * 60 * 60 * 1000 : WEEK_MS;
+    res.cookie(COOKIE, jwt.sign({ sub: String(user._id) }, secret, { expiresIn: Math.floor(lifetime / 1000) }), { ...cookieOptions, maxAge: lifetime });
     return res.json({ user: publicUser(user) });
   };
 

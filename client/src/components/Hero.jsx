@@ -5,6 +5,7 @@ import { useLang } from '../i18n.jsx';
 import { village } from '../village.js';
 import { pic } from '../responsive.js';
 import Seal from './Seal.jsx';
+import BgFx from './BgFx.jsx';
 import RotatingWord from './RotatingWord.jsx';
 
 function CountUp({ value }) {
@@ -114,6 +115,7 @@ export default function Hero({ visits }) {
         {village.heroImage && <img className="hero__photo" {...pic(village.heroImage)} sizes="100vw" alt="" fetchpriority="high" decoding="async" />}
       </div>
       <div className="hero__overlay" aria-hidden="true" />
+      <BgFx embers={14} className="bgfx--hero" />
 
       {/* Village badge: centred at the top of the hero, above everything */}
       <div className="hero-badge-wrap hero-badge-wrap--top">
@@ -153,7 +155,7 @@ export default function Hero({ visits }) {
           </div>
         </div>
         <p className="hero__rotate fade-up" style={{ animationDelay: '500ms' }}>
-          {t('hero.villageOf')} <RotatingWord words={pick(village.heroWords)} /> {t('hero.villageOfEnd')}
+          <RotatingWord words={[t('hero.subtitle')]} />
         </p>
         <p key={`sub-${pick(village.heroLine)}`} className="hero__sub">
           <RevealWords text={pick(village.heroLine)} highlights={pick(village.heroHighlights)} />

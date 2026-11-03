@@ -5,6 +5,7 @@ import { village } from '../village.js';
 import Reveal from './Reveal.jsx';
 import RichHead from './RichHead.jsx';
 import Wave from './Wave.jsx';
+import BgFx from './BgFx.jsx';
 import { pic } from '../responsive.js';
 
 const STEP_MS = 5000;
@@ -79,6 +80,7 @@ export default function VillageLife() {
     <section id="life" className="band band--maroon life2-sec">
       <Wave fill="var(--ivory)" />
       <span className="life2-sec__glow" aria-hidden="true" />
+      <BgFx embers={16} stars={18} />
       <RichHead eyebrow={t('life.eyebrow')} title={t('life.title')} text={t('life.text')} Icon={Wheat} light />
       <div ref={wrapRef} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
         <Reveal className={`life3 ${running ? 'is-running' : ''}`}>

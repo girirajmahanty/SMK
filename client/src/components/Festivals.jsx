@@ -1,22 +1,29 @@
 import { useEffect, useRef, useState } from 'react';
-import { CalendarDays, CalendarPlus, Sparkles, Sparkle, Hourglass, Moon, Flame } from 'lucide-react';
+import {
+  CalendarDays, CalendarPlus, Sparkles, Sparkle, Hourglass, Moon, Flame, Wheat, Landmark, Drum,
+  Soup, ShoppingBasket, Sun, Swords, UtensilsCrossed, CloudRain, Sprout, MoonStar, Sunrise, BookOpen,
+} from 'lucide-react';
 import { useLang } from '../i18n.jsx';
+import { api } from '../api.js';
 import { village } from '../village.js';
-import { useFestivalDates, festivalStatus, formatRange, daysUntil } from '../festivalDates.js';
+import { useMemo } from 'react';
+import { useFestivalDates, festivalStatus, formatRange, daysUntil, needsDateVerification } from '../festivalDates.js';
 import { smoothScrollTo } from '../smoothScroll.js';
 import Reveal from './Reveal.jsx';
 import RichHead from './RichHead.jsx';
 import Wave from './Wave.jsx';
+import BgFx from './BgFx.jsx';
 import { pic } from '../responsive.js';
 
-const ymd = (d) => `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+const ymd = (d) => new Date(d.getTime() + 330 * 60 * 1000).toISOString().slice(0, 10).replace(/-/g, '');
+const FESTIVAL_ICONS = { Flame, Wheat, Landmark, Drum, Soup, ShoppingBasket, Sun, Swords, UtensilsCrossed, CloudRain, Sprout, MoonStar, Sunrise, BookOpen };
 const icsText = (s) => s.replace(/\\/g, '\\\\').replace(/([,;])/g, '\\$1').replace(/\n/g, '\\n');
 
 // Saves a small calendar file (.ics) for one festival's days; no server involved.
-function addToCalendar(f, range, pick) {
-  const end = new Date(range.end.getFullYear(), range.end.getMonth(), range.end.getDate() + 1);
+export function festivalCalendarText(f, range, pick) {
+  const end = new Date(range.end.getTime() + 24 * 60 * 60 * 1000);
   const name = `${pick(f.name)} · Sidhagora`;
-  const ics = [
+  return [
     'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Sidhagora//Festivals//EN', 'BEGIN:VEVENT',
     `UID:${f.name.en.toLowerCase().replace(/\W+/g, '-')}-${ymd(range.start)}@sidhagora`,
     `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').slice(0, 15)}Z`,
@@ -24,6 +31,10 @@ function addToCalendar(f, range, pick) {
     `SUMMARY:${icsText(name)}`, `DESCRIPTION:${icsText(pick(f.text))}`, 'LOCATION:Sidhagora\\, Purulia',
     'END:VEVENT', 'END:VCALENDAR',
   ].join('\r\n');
+}
+
+function addToCalendar(f, range, pick) {
+  const ics = festivalCalendarText(f, range, pick);
   const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }));
   const a = Object.assign(document.createElement('a'), { href: url, download: `${f.name.en.replace(/\W+/g, '-')}.ics` });
   a.click();
@@ -31,7 +42,7 @@ function addToCalendar(f, range, pick) {
 }
 
 // Days : hours : minutes : seconds to the festival's first day, ticking only while it is on screen.
-export function LiveCountdown({ start }) {
+export function LiveCountdown({ start, onDone }) {
   const { t, lang } = useLang();
   const ref = useRef(null);
   const [now, setNow] = useState(() => Date.now());
@@ -45,10 +56,12 @@ export function LiveCountdown({ start }) {
     return () => { io.disconnect(); clearInterval(id); };
   }, []);
   const left = Math.max(0, start - now);
+  // tell the parent when the festival begins, so it can move on without a reload
+  useEffect(() => { if (onDone && left === 0) onDone(); }, [left === 0]);
   const parts = [[Math.floor(left / 864e5), 'd'], [Math.floor(left / 36e5) % 24, 'h'], [Math.floor(left / 6e4) % 60, 'm'], [Math.floor(left / 1e3) % 60, 's']];
   const fmt = (n) => new Intl.NumberFormat(lang === 'bn' ? 'bn-IN' : 'en-IN', { minimumIntegerDigits: 2 }).format(n);
   return (
-    <div ref={ref} className="fest4__cd" role="timer" aria-label={t('fest.inDays').replace('{n}', parts[0][0])}>
+    <div ref={ref} className="fest4__cd" role="timer" aria-label={t('fest.daysRemaining').replace('{n}', parts[0][0])}>
       {parts.map(([n, k]) => (
         <span key={k} className="fest4__cd-cell"><b>{fmt(n)}</b><small>{t(`fest.cd.${k}`)}</small></span>
       ))}
@@ -57,22 +70,30 @@ export function LiveCountdown({ start }) {
 }
 
 // "In 12 days" / "Tomorrow" / "Today" under an exact date.
-export function countdown(r, t, lang) {
+export function countdown(r, t, lang, label = 'fest.inDays') {
   const n = daysUntil(r);
   if (n === 0) return t('fest.today');
   if (n === 1) return t('fest.tomorrow');
-  return t('fest.inDays').replace('{n}', new Intl.NumberFormat(lang === 'bn' ? 'bn-IN' : 'en-IN').format(n));
+  return t(label).replace('{n}', new Intl.NumberFormat(lang === 'bn' ? 'bn-IN' : 'en-IN').format(n));
 }
 
 // One festival as a glass card: dates, description and detail points. The photo lives in the sticky background.
-function FestivalCard({ f, range, status, active, soon }) {
+function FestivalCard({ f, range, status, active }) {
   const { t, pick, lang } = useLang();
+  const dateText = range ? formatRange(range, lang)
+    : needsDateVerification(f.name.en, range) ? `${t('fest.nextDatePending')} · ${pick(f.date)}`
+      : pick(f.date);
+  const now = Date.now();
+  const endOfFestival = range ? range.end.getTime() + 24 * 60 * 60 * 1000 : null;
+  const countdownTarget = range
+    ? range.start.getTime() > now ? range.start.getTime() : endOfFestival
+    : null;
   return (
     <Reveal as="li" className={`fest4__card fest3--${f.tone || 'sun'} ${f.featured ? 'is-featured' : ''} ${status ? 'is-next' : ''} ${active ? 'is-active' : ''}`}>
       <span className="fest4__card-icon" aria-hidden="true">{f.Icon ? <f.Icon /> : <Sparkles />}</span>
       <div className="fest3__meta">
-        <span className="fest3__date">
-          <CalendarDays /> {range?.approx && `${t('fest.approx')} `}{range ? formatRange(range, lang) : pick(f.date)}
+        <span className="fest3__date" aria-label={`${t('fest.dateLabel')}: ${dateText}`}>
+          <CalendarDays /> {dateText}
         </span>
         {status && (
           <span className={`fest3__status fest3__status--${status}`}>
@@ -83,15 +104,15 @@ function FestivalCard({ f, range, status, active, soon }) {
       <h3>{pick(f.name)}</h3>
       {range && (
         <p className="fest3__when">
-          <span><Hourglass /> {countdown(range, t, lang)}</span>
+          <span><Hourglass /> {countdown(range, t, lang, 'fest.daysRemaining')}</span>
           {/* the Bengali-calendar date stays visible beside the exact date */}
           <span><Moon /> {pick(f.date)}</span>
         </p>
       )}
       <p className="fest3__text">{pick(f.text)}</p>
-      {soon && <LiveCountdown start={range.start} />}
+      {countdownTarget && <LiveCountdown start={countdownTarget} />}
       {f.details?.length > 0 && (
-        <ul className="fest3__details">
+        <ul className="fest3__details" aria-label={t('fest.detailsLabel')}>
           {f.details.map((d, k) => <li key={k}><Sparkle /> {pick(d)}</li>)}
         </ul>
       )}
@@ -108,7 +129,20 @@ function FestivalCard({ f, range, status, active, soon }) {
 // the festival in the middle of the screen (its photo, or its colours and icon), with its name and Bengali date.
 export default function Festivals() {
   const { t, pick, lang } = useLang();
-  const list = village.festivals;
+  const [publishedFestivals, setPublishedFestivals] = useState(null);
+  useEffect(() => {
+    let active = true;
+    api.publicFestivals()
+      .then(({ initialized, festivals }) => {
+        if (active && initialized) setPublishedFestivals(festivals);
+      })
+      .catch((error) => console.error('Unable to load published festivals:', error));
+    return () => { active = false; };
+  }, []);
+  const list = useMemo(() => (publishedFestivals ?? village.festivals).map((festival) => ({
+    ...festival,
+    Icon: festival.Icon || FESTIVAL_ICONS[festival.icon] || null,
+  })), [publishedFestivals]);
   const dates = useFestivalDates(list);
   const status = festivalStatus(list, dates);
   const [active, setActive] = useState(0);
@@ -133,9 +167,6 @@ export default function Festivals() {
 
   if (!list.length) return null;
   const f = list[active];
-  // the nearest festival with exact dates still to come gets the live countdown
-  const now = Date.now();
-  const soonIndex = dates.reduce((best, r, i) => (r && r.start > now && (best < 0 || r.start < dates[best].start) ? i : best), -1);
   // jump to a festival's card, centred on screen
   const jump = (i) => {
     const card = listRef.current?.children[i];
@@ -145,8 +176,9 @@ export default function Festivals() {
   return (
     <section id="festivals" className="band band--sand fest-sec fest4-sec">
       <Wave fill="var(--ivory)" />
+      <BgFx glows />
       <RichHead
-        eyebrow={t('fest.eyebrow')} title={t('fest.title')} text={t('fest.sub')} Icon={Flame} lang={lang}
+        eyebrow={t('fest.eyebrow')} title={t('fest.sectionTitle')} text={t('fest.sub')} Icon={Flame} lang={lang}
         stats={[[list.length, t('fest.stat.fests')], [12, t('fest.stat.months')], [1, t('fest.stat.village')]]}
       />
       <div className="fest4">
@@ -168,6 +200,7 @@ export default function Festivals() {
           ))}
           <span className="fest4__shade" aria-hidden="true" />
           <span className="fest4__beams" aria-hidden="true" />
+          <BgFx stars={22} embers={10} className="bgfx--over" />
           <div className="fest4__now" key={active} aria-hidden="true">
             <span className="fest4__now-num">{String(active + 1).padStart(2, '0')} <small>/ {String(list.length).padStart(2, '0')}</small></span>
             <p className="fest4__now-name">{pick(f.name)}</p>
@@ -185,7 +218,7 @@ export default function Festivals() {
         </div>
         <ol className="fest4__list" ref={listRef}>
           {list.map((g, i) => (
-            <FestivalCard key={g.name.en} f={g} range={dates[i]} status={status.index === i ? status.kind : null} active={i === active} soon={i === soonIndex} />
+            <FestivalCard key={g.name.en} f={g} range={dates[i]} status={status.index === i ? status.kind : null} active={i === active} />
           ))}
         </ol>
       </div>

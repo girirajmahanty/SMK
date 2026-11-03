@@ -7,6 +7,7 @@ import mongoose from 'mongoose';
 import Word from './models/Word.js';
 import User from './models/User.js';
 import { seedWords } from './seed.js';
+import { createCmsStore } from './cmsStore.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_FILE = path.join(__dirname, 'data', 'words.json');
@@ -19,6 +20,7 @@ const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const mongoStore = {
   mode: 'mongodb',
+  cms: createCmsStore('mongodb'),
   async init() {
     if ((await Word.countDocuments()) === 0) await Word.insertMany(seedWords);
   },
@@ -55,14 +57,13 @@ const mongoStore = {
     return User.findById(id).lean();
   },
   async createUser(data) {
-    // The first person to register becomes the admin.
-    const role = (await User.countDocuments()) === 0 ? 'admin' : 'member';
-    return (await User.create({ ...data, role })).toObject();
+    return (await User.create({ ...data, role: 'member' })).toObject();
   },
 };
 
 const fileStore = {
   mode: 'json-file',
+  cms: createCmsStore('json-file'),
   words: [],
   save() {
     fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
@@ -148,8 +149,7 @@ const fileStore = {
     const u = {
       _id: crypto.randomUUID(),
       ...data,
-      // The first person to register becomes the admin.
-      role: this.users.length === 0 ? 'admin' : 'member',
+      role: 'member',
       createdAt: new Date().toISOString(),
     };
     this.users.push(u);

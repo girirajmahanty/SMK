@@ -1,80 +1,130 @@
 import { useEffect, useState } from 'react';
-import { api } from './api.js';
+import { festivalSchedule } from './festivalSchedule.js';
 
 const DAY = 24 * 60 * 60 * 1000;
+const IST_OFFSET = 5.5 * 60 * 60 * 1000;
+const TIME_ZONE = 'Asia/Kolkata';
 
-// 'YYYY-MM-DD' → local midnight
-const parseDay = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
-const today = () => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); };
-
-// The next (or current) dates of a festival from Google's events: matching events
-// a few days apart are joined, so Durga Puja runs from Maha Saptami to Dussehra.
-function nextRange(events, match) {
-  const now = today();
-  const hits = events
-    .filter((e) => match.test(e.name))
-    .map((e) => ({ start: parseDay(e.start), end: new Date(parseDay(e.end) - DAY) }))
-    .sort((a, b) => a.start - b.start);
-  const first = hits.findIndex((h) => h.end >= now);
-  if (first === -1) return null;
-  const range = { ...hits[first] };
-  for (const h of hits.slice(first + 1)) {
-    if (h.start - range.end > 4 * DAY) break;
-    if (h.end > range.end) range.end = h.end;
-  }
-  return range;
+function dayParts(date) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  return Object.fromEntries(parts.map(({ type, value }) => [type, value]));
 }
 
-// Fetched once per page load and shared by every component.
-let request = null;
-const load = () => (request ??= api.festivals().then((r) => r.events || []).catch(() => []));
+// A date-only festival day represented as midnight in Asia/Kolkata.
+function isValidDay(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [year, month, day] = value.split('-').map(Number);
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  return parsed.getUTCFullYear() === year
+    && parsed.getUTCMonth() === month - 1
+    && parsed.getUTCDate() === day;
+}
 
-// The next of the dates written in village.js ([start] or [start, end], 'YYYY-MM-DD').
-function nextWritten(dates, approx) {
-  const now = today();
-  for (const [s, e = s] of dates) {
-    const r = { start: parseDay(s), end: parseDay(e), approx };
-    if (r.end >= now) return r;
+const parseDay = (value) => {
+  const [year, month, day] = value.split('-').map(Number);
+  return new Date(Date.UTC(year, month - 1, day) - IST_OFFSET);
+};
+
+const today = (now = new Date()) => {
+  const { year, month, day } = dayParts(now);
+  return parseDay(`${year}-${month}-${day}`);
+};
+
+const addDays = (date, count) => new Date(date.getTime() + count * DAY);
+
+function nextMidnightDelay() {
+  const { year, month, day } = dayParts(new Date());
+  const next = addDays(parseDay(`${year}-${month}-${day}`), 1);
+  return Math.max(1000, next.getTime() - Date.now());
+}
+
+function verifiedRanges(festivalName) {
+  const schedule = festivalSchedule[festivalName];
+  if (!schedule) {
+    console.error(`Missing festival date verification record for "${festivalName}".`);
+    return [];
+  }
+  if (schedule.verificationStatus !== 'verified') return [];
+  return schedule.occurrences.flatMap((occurrence) => {
+    const end = occurrence.end || occurrence.start;
+    const hasVerification = occurrence.sources?.length || occurrence.verifiedBy === 'local-user';
+    if (occurrence.status !== 'verified' || !isValidDay(occurrence.start) || !isValidDay(end) || end < occurrence.start || !hasVerification) {
+      console.error(`Invalid verified date record for "${festivalName}".`, occurrence);
+      return [];
+    }
+    return [{ start: parseDay(occurrence.start), end: parseDay(end) }];
+  }).sort((a, b) => a.start - b.start);
+}
+
+export function nextFestivalOccurrence(festivalName, now = new Date()) {
+  const currentDay = today(now);
+  for (const range of verifiedRanges(festivalName)) {
+    if (range.end >= currentDay) return range;
   }
   return null;
 }
 
-// Exact dates for each festival: Google's calendar first, else the dates written in village.js, else null.
-export function useFestivalDates(list) {
-  const [events, setEvents] = useState([]);
-  useEffect(() => { let alive = true; load().then((e) => alive && setEvents(e)); return () => { alive = false; }; }, []);
-  return list.map((f) =>
-    (f.match && events.length ? nextRange(events, f.match) : null) || (f.dates ? nextWritten(f.dates, !!f.approx) : null));
+export function needsDateVerification(festivalName, range) {
+  return !range && festivalSchedule[festivalName]?.verificationStatus === 'verified';
 }
 
-// Which festival is on now, else which comes next: by exact date when known, else by month.
-export function festivalStatus(list, dates = []) {
-  const now = today();
-  let best = -1, bestStart = Infinity;
-  for (let i = 0; i < list.length; i++) {
-    const r = dates[i];
-    if (r) {
-      if (r.start <= now && now <= r.end) return { index: i, kind: 'now' };
-      if (r.start < bestStart) { bestStart = +r.start; best = i; }
-      continue;
+// The curated dates are year-specific; refresh at Kolkata midnight to move past
+// an event that ended while the page was open.
+export function useFestivalDates(list) {
+  const [, refresh] = useState(0);
+  useEffect(() => {
+    let timer;
+    const scheduleRefresh = () => {
+      timer = setTimeout(() => {
+        refresh((value) => value + 1);
+        scheduleRefresh();
+      }, nextMidnightDelay());
+    };
+    scheduleRefresh();
+    return () => clearTimeout(timer);
+  }, []);
+  return list.map((festival) => {
+    if (isValidDay(festival.startDate) && (!festival.endDate || isValidDay(festival.endDate)) && (!festival.endDate || festival.endDate >= festival.startDate)) {
+      return { start: parseDay(festival.startDate), end: parseDay(festival.endDate || festival.startDate) };
     }
-    for (const m of list[i].months || []) {
-      if (m === now.getMonth() + 1) return { index: i, kind: 'now' };
-      const y = now.getFullYear() + (m - 1 < now.getMonth() ? 1 : 0);
-      const start = +new Date(y, m - 1, 1);
-      if (start < bestStart) { bestStart = start; best = i; }
+    return nextFestivalOccurrence(festival.name.en);
+  });
+}
+
+export function festivalStatus(list, dates = [], now = new Date()) {
+  const currentDay = today(now);
+  let bestIndex = -1;
+  let bestStart = Infinity;
+  for (let index = 0; index < list.length; index++) {
+    const range = dates[index];
+    if (!range) continue;
+    if (range.start <= currentDay && currentDay <= range.end) {
+      return { index, kind: 'now' };
+    }
+    if (range.start > currentDay && range.start.getTime() < bestStart) {
+      bestStart = range.start.getTime();
+      bestIndex = index;
     }
   }
-  return { index: best, kind: 'next' };
+  return { index: bestIndex, kind: 'next' };
 }
 
-// "Sun, 8 November 2026" / "5 – 10 October 2027", in the site language.
-export function formatRange(r, lang) {
-  const one = +r.start === +r.end;
-  const fmt = new Intl.DateTimeFormat(lang === 'bn' ? 'bn-IN' : 'en-IN',
-    { ...(one && { weekday: 'short' }), day: 'numeric', month: 'long', year: 'numeric' });
-  return +r.start === +r.end ? fmt.format(r.start) : fmt.formatRange(r.start, r.end);
+export function formatRange(range, lang) {
+  const oneDay = range.start.getTime() === range.end.getTime();
+  const format = new Intl.DateTimeFormat(lang === 'bn' ? 'bn-IN' : 'en-IN', {
+    timeZone: TIME_ZONE,
+    ...(oneDay && { weekday: 'short' }),
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+  return oneDay ? format.format(range.start) : format.formatRange(range.start, range.end);
 }
 
-// Days from today to the start (0 = today or already running).
-export const daysUntil = (r) => Math.max(0, Math.round((r.start - today()) / DAY));
+export const daysUntil = (range, now = new Date()) =>
+  Math.max(0, Math.round((range.start.getTime() - today(now).getTime()) / DAY));

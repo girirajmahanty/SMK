@@ -6,6 +6,7 @@ import { useLang } from '../i18n.jsx';
 import { village } from '../village.js';
 import RichHead from '../components/RichHead.jsx';
 import Wave from '../components/Wave.jsx';
+import BgFx from '../components/BgFx.jsx';
 import Gallery from '../components/Gallery.jsx';
 import Hero from '../components/Hero.jsx';
 import Story from '../components/Story.jsx';
@@ -66,6 +67,7 @@ export default function Home() {
       {built >= 2 && (
         <section id="gallery" className="band band--ivory gal-sec">
           <Wave fill="var(--band-dark-bottom)" />
+          <BgFx glows alpana />
           <RichHead eyebrow={t('gallery.eyebrow')} title={t('gallery.title')} text={t('gallery.text')} Icon={Images} />
           <Gallery items={village.gallery} />
         </section>

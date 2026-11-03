@@ -1,7 +1,9 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { site } from './config.js';
+import { api } from './api.js';
+import { applyVillageContent } from './villageCms.js';
 
-const strings = {
+export const strings = {
   en: {
     siteName: site.name,
     docTitle: 'Sidhagora · সিধাগোড়া — Our village, Purulia',
@@ -10,51 +12,57 @@ const strings = {
     'nav.home': 'Home',
     'footer.made': `Made with love by the people of ${site.name}`,
     'footer.credit': 'নকশা ও নির্মাণে —',
+    'announcement.message': '',
     'cat.all': 'All', 'cat.greeting': 'Greetings', 'cat.family': 'Family', 'cat.food': 'Food',
     'cat.nature': 'Nature', 'cat.daily': 'Daily Life', 'cat.phrase': 'Phrases', 'cat.number': 'Numbers', 'cat.other': 'Other',
     'intro.welcome': `Welcome to ${site.name}`,
     'intro.tap': 'Tap to enter',
+    'intro.enter': 'Enter',
+    'intro.auto': 'Opening by itself in a moment',
     'nav.story': 'Our Story',
+    'nav.aboutUs': 'About Us',
     'nav.life': 'Village Life',
     'nav.gallery': 'Gallery',
     'nav.visit': 'Visit',
+    'nav.joinUs': 'Join Us',
     'nav.festivals': 'Festivals',
     'nav.festNow': 'Now',
     'nav.festDays': '{n}d',
-    'hero.eyebrow': `${site.name} · Our village`,
-    'hero.explore': 'Explore the village',
-    'hero.visits': 'visits so far',
-    'hero.gallery': 'See the photos',
+    'hero.eyebrow': `${site.name} ✧ Our Beloved Village`,
+    'hero.explore': 'Explore Our Village',
+    'hero.visits': 'Views',
+    'hero.gallery': 'Explore Our Gallery',
+    'hero.subtitle': 'A Village of Heritage, Culture & Festivals',
     'hero.villageOf': 'A village of',
-    'hero.ourVillage': 'Our village',
+    'hero.ourVillage': 'Our Beloved Village',
     'hero.villageOfEnd': '',
     'hero.photo': 'Photo',
     'hero.scroll': 'Scroll down',
-    'story.eyebrow': 'About the village',
-    'story.title': 'Our roots, since 1901',
+    'story.eyebrow': 'Our Village Story',
+    'story.title': 'Our Roots, Since 1901',
     'story.established': 'Established',
     'story.years': 'Years of tradition',
     'story.since': 'SINCE',
-    'story.cta': 'See village life',
+    'story.cta': 'Explore Village Life',
     'story.morePhotos': 'See more photos',
     'story.readMore': 'Read more',
     'story.readLess': 'Show less',
-    'story.tl1': 'Our SMK emblem, with Maa Kali at its centre',
+    'story.tl1': 'Establishment of Maa Kali Temple',
     'story.tl2Year': 'Every year',
-    'story.tl2': 'Kali Puja, then the immersion',
-    'story.tl3Year': 'Now',
-    'story.tl3': 'A new temple going up',
+    'story.tl2': 'Kali Puja & Immersion',
+    'story.tl3Year': 'Present Day',
+    'story.tl3': 'New Temple Under Construction',
     'story.visits': 'Website visits',
     'stat.founded': 'Founded',
     'stat.families': 'Families',
     'stat.population': 'People',
-    'life.eyebrow': 'How we live',
+    'life.eyebrow': 'Our Village Life',
     'life.title': `Life in ${site.name}`,
-    'life.text': "From the pond to the weekly haat, this is how we live.",
-    'gallery.eyebrow': 'In pictures',
-    'gallery.title': `Moments of ${site.name}`,
-    'gallery.text': "Photos we took ourselves: the temple, the village, and Maa Kali on her way to immersion.",
-    'gallery.all': 'All',
+    'life.text': 'From peaceful pond banks to open fields, everyday life in our village is filled with simple joys and timeless charm.',
+    'gallery.eyebrow': '🪔 Sidhagora in Pictures 🪔',
+    'gallery.title': `Memories & Moments of ${site.name}`,
+    'gallery.text': 'Explore the traditions, Maa Kali Puja, temple, and beautiful moments of village life. Every photograph captures the love, faith, and memories of Sidhagora.',
+    'gallery.all': 'All Photos',
     'gallery.temple': 'Temple',
     'gallery.procession': 'Kali Puja',
     'gallery.village': 'Village',
@@ -62,21 +70,25 @@ const strings = {
     'gallery.showLess': 'Show less',
     'gallery.video': 'Video',
     'gallery.photos': 'photos',
-    'fest.eyebrow': 'Through the year',
-    'fest.title': 'Festivals we celebrate',
-    'fest.sub': "Eleven festivals a year, from Jamai Sasthi in Jyaistha to Hori Naam in Chaitra. The whole village turns up for every one of them.",
+    'fest.eyebrow': '🪔 Throughout the Year 🪔',
+    'fest.title': 'Festivals & Traditions of Sidhagora',
+    'fest.sectionTitle': 'Our Festivals',
+    'fest.sub': 'Throughout the year, our village celebrates various festivals with joy, devotion, and tradition.',
     'fest.now': 'This season',
-    'fest.next': 'Coming next',
+    'fest.next': 'Upcoming Festival',
     'fest.inDays': 'In {n} days',
+    'fest.nextDatePending': 'Next date awaiting verification',
+    'fest.daysRemaining': 'Days Remaining: {n}',
     'fest.tomorrow': 'Tomorrow!',
     'fest.today': 'Happening now!',
-    'fest.approx': 'About',
-    'fest.addCal': 'Add to calendar',
-    'fest.index': 'All festivals',
-    'fest.cd.d': 'days', 'fest.cd.h': 'hrs', 'fest.cd.m': 'min', 'fest.cd.s': 'sec',
-    'fest.stat.fests': 'festivals',
-    'fest.stat.months': 'months of celebration',
-    'fest.stat.village': 'village, together',
+    'fest.addCal': 'Add to Calendar',
+    'fest.index': 'All Festivals',
+    'fest.dateLabel': 'Festival Date',
+    'fest.detailsLabel': 'Festival Details',
+    'fest.cd.d': 'Days', 'fest.cd.h': 'Hours', 'fest.cd.m': 'Minutes', 'fest.cd.s': 'Seconds',
+    'fest.stat.fests': 'Festivals',
+    'fest.stat.months': 'Festivals Throughout the Year',
+    'fest.stat.village': 'Village, One Family',
     'visit.eyebrow': 'Plan your visit',
     'visit.title': `Come to ${site.name}`,
     'visit.text': "Walk the lanes, sit by the pond for a while, and go and see the carved temple. If you can, come for Kali Puja. You don't need to know anyone here to be welcome.",
@@ -95,7 +107,7 @@ const strings = {
     'footer.season': 'This season in the village',
     'footer.next': 'Coming next in the village',
     'footer.top': 'Back to top',
-    'footer.countdownTo': '{name} begins in',
+    'footer.startsIn': 'Begins in',
     'visit.how': 'How to reach',
     'visit.howSub': 'From the nearest towns and the station',
     'visit.arrive': "And you're here: Sidhagora",
@@ -125,7 +137,7 @@ const strings = {
     'visit.inviteText': 'Come and see our village, Sidhagora',
     'visit.linkCopied': 'Link copied',
     'visit.map': 'Open in Google Maps',
-    'nav.login': 'Log in',
+    'nav.login': 'Login',
     'nav.logout': 'Log out',
     'theme.toDark': 'Switch to dark mode',
     'theme.toLight': 'Switch to light mode',
@@ -172,23 +184,29 @@ const strings = {
     'nav.home': 'হোম',
     'footer.made': `${site.nameBn}র মানুষজনের ভালোবাসায় বানানো`,
     'footer.credit': 'নকশা ও নির্মাণে —',
+    'announcement.message': '',
     'cat.all': 'সব', 'cat.greeting': 'সম্ভাষণ', 'cat.family': 'পরিবার', 'cat.food': 'খাবার',
     'cat.nature': 'প্রকৃতি', 'cat.daily': 'দৈনন্দিন', 'cat.phrase': 'বাক্যাংশ', 'cat.number': 'সংখ্যা', 'cat.other': 'অন্যান্য',
     'intro.welcome': `${site.nameBn}য় আপনাকে স্বাগত`,
     'intro.tap': 'প্রবেশ করতে ট্যাপ করুন',
+    'intro.enter': 'প্রবেশ করুন',
+    'intro.auto': 'একটু পরে নিজে থেকেই খুলবে',
     'nav.story': 'আমাদের কথা',
+    'nav.aboutUs': 'আমাদের কথা',
     'nav.life': 'গ্রামের জীবন',
     'nav.gallery': 'ছবি',
     'nav.visit': 'আসুন',
+    'nav.joinUs': 'আসুন',
     'nav.festivals': 'উৎসব',
     'nav.festNow': 'এখন',
     'nav.festDays': '{n} দিন',
-    'hero.eyebrow': `${site.nameBn} · আমাদের গ্রাম`,
+    'hero.eyebrow': `${site.nameBn} ✧ আমাদের প্রিয় গ্রাম`,
     'hero.explore': 'গ্রাম ঘুরে দেখুন',
     'hero.visits': 'বার দেখা হয়েছে',
-    'hero.gallery': 'ছবিগুলো দেখুন',
+    'hero.gallery': 'গ্রামের ছবিগুলো দেখুন',
+    'hero.subtitle': 'ঐতিহ্য, সংস্কৃতি ও উৎসবের গ্রাম',
     'hero.villageOf': '',
-    'hero.ourVillage': 'আমাদের গ্রাম',
+    'hero.ourVillage': 'আমাদের প্রিয় গ্রাম',
     'hero.villageOfEnd': 'গ্রাম',
     'hero.photo': 'ছবি',
     'hero.scroll': 'নিচে দেখুন',
@@ -201,44 +219,48 @@ const strings = {
     'story.morePhotos': 'আরও ছবি দেখুন',
     'story.readMore': 'আরও পড়ুন',
     'story.readLess': 'কম দেখান',
-    'story.tl1': 'আমাদের এসএমকে প্রতীক, মাঝখানে মা কালী',
+    'story.tl1': 'মা কালীর মন্দির প্রতিষ্ঠা',
     'story.tl2Year': 'প্রতি বছর',
-    'story.tl2': 'কালীপুজো, তারপর বিসর্জন',
-    'story.tl3Year': 'এখন',
-    'story.tl3': 'নতুন মন্দির তৈরি হচ্ছে',
+    'story.tl2': 'কালীপূজা ও বিসর্জন',
+    'story.tl3Year': 'বর্তমানে',
+    'story.tl3': 'নতুন মন্দির নির্মাণ চলছে',
     'story.visits': 'বার দেখা হয়েছে',
     'stat.founded': 'প্রতিষ্ঠা',
     'stat.families': 'পরিবার',
     'stat.population': 'মানুষ',
     'life.eyebrow': 'আমাদের জীবন',
     'life.title': `${site.nameBn}র জীবন`,
-    'life.text': "পুকুরঘাট থেকে হাট পর্যন্ত, আমাদের রোজকার জীবন এরকমই।",
-    'gallery.eyebrow': 'ছবিতে',
-    'gallery.title': `${site.nameBn}র মুহূর্ত`,
-    'gallery.text': "আমাদের নিজেদের তোলা ছবি: মন্দির, গ্রাম, আর বিসর্জনের পথে মা কালী।",
-    'gallery.all': 'সব',
+    'life.text': 'পুকুরঘাট থেকে মাঠ পর্যন্ত, আমাদের রোজকার জীবন একরকম মায়ায় ঘেরা।',
+    'gallery.eyebrow': '🪔 ছবিতে সিধাগোড়া 🪔',
+    'gallery.title': `${site.nameBn}র স্মৃতি ও মুহূর্ত`,
+    'gallery.text': 'আমাদের গ্রামের ঐতিহ্য, মা কালীর পূজা, মন্দির এবং গ্রামজীবনের নানা সুন্দর মুহূর্তের ছবি। প্রতিটি ছবিতে জড়িয়ে আছে সিধাগোড়ার মানুষের ভালোবাসা, বিশ্বাস ও স্মৃতি।',
+    'gallery.all': 'সব ছবি',
     'gallery.temple': 'মন্দির',
-    'gallery.procession': 'কালীপুজো',
+    'gallery.procession': 'কালীপূজা',
     'gallery.village': 'গ্রাম',
     'gallery.showAll': 'সবগুলো দেখুন',
     'gallery.showLess': 'কম দেখুন',
     'gallery.video': 'ভিডিও',
     'gallery.photos': 'টি ছবি',
-    'fest.eyebrow': 'সারা বছর',
-    'fest.title': 'আমাদের উৎসব',
-    'fest.sub': "জ্যৈষ্ঠের জামাইষষ্ঠী থেকে চৈত্রের হরিনাম, বছরে এগারোটা উৎসব। প্রতিটাতেই গোটা গ্রাম হাজির।",
+    'fest.eyebrow': '🪔 সারা বছর 🪔',
+    'fest.title': 'সিধাগোড়ার উৎসব ও ঐতিহ্য',
+    'fest.sectionTitle': 'আমাদের উৎসব',
+    'fest.sub': 'সারা বছর জুড়ে আমাদের গ্রামে বিভিন্ন উৎসব আনন্দ ও ঐতিহ্যের সঙ্গে পালিত হয়।',
     'fest.now': 'এই ঋতুতে',
-    'fest.next': 'আসছে',
+    'fest.next': 'পরবর্তী উৎসব',
     'fest.inDays': 'আর {n} দিন বাকি',
+    'fest.nextDatePending': 'পরবর্তী তারিখ যাচাইয়ের অপেক্ষায়',
+    'fest.daysRemaining': 'আর কত দিন বাকি: {n}',
     'fest.tomorrow': 'আগামীকাল!',
     'fest.today': 'এখন চলছে!',
-    'fest.approx': 'আনুমানিক',
     'fest.addCal': 'ক্যালেন্ডারে যোগ করুন',
     'fest.index': 'সব উৎসব',
+    'fest.dateLabel': 'উৎসবের তারিখ',
+    'fest.detailsLabel': 'উৎসবের বিবরণ',
     'fest.cd.d': 'দিন', 'fest.cd.h': 'ঘণ্টা', 'fest.cd.m': 'মিনিট', 'fest.cd.s': 'সেকেন্ড',
     'fest.stat.fests': 'টি উৎসব',
     'fest.stat.months': 'মাস জুড়ে উৎসব',
-    'fest.stat.village': 'টি গ্রাম, একসাথে',
+    'fest.stat.village': 'টি গ্রাম, এক পরিবার',
     'visit.eyebrow': 'বেড়াতে আসুন',
     'visit.title': `${site.nameBn}য় আসুন`,
     'visit.text': "গলি ধরে একটু হাঁটুন, পুকুরপাড়ে খানিক বসুন, কারুকাজ করা মন্দিরটা দেখে যান। পারলে কালীপুজোর সময় আসুন। এখানে কাউকে না চিনলেও আপনি স্বাগত।",
@@ -257,7 +279,7 @@ const strings = {
     'footer.season': 'এই ঋতুতে গ্রামে',
     'footer.next': 'গ্রামে আসছে',
     'footer.top': 'উপরে যান',
-    'footer.countdownTo': '{name} শুরু হতে বাকি',
+    'footer.startsIn': 'শুরু হতে বাকি',
     'visit.how': 'কীভাবে আসবেন',
     'visit.howSub': 'কাছের শহর আর স্টেশন থেকে',
     'visit.arrive': "এই তো, পৌঁছে গেলেন সিধাগোড়ায়",
@@ -332,17 +354,35 @@ export const LANGS = ['en', 'bn'];
 
 const LangContext = createContext(null);
 
+// The site opens in Bengali, unless the visitor has picked a language themselves with the switch.
+// (Only a real choice is remembered, under its own key, so the old automatic 'vl-lang' saves no longer count.)
+const CHOICE_KEY = 'vl-lang-choice';
 function initialLang() {
   try {
-    const saved = localStorage.getItem('vl-lang');
+    const saved = localStorage.getItem(CHOICE_KEY);
     if (LANGS.includes(saved)) return saved;
   } catch { /* ignore */ }
-  return navigator.language?.startsWith('bn') ? 'bn' : 'en';
+  return 'bn';
 }
 
 export function LangProvider({ children }) {
-  const [lang, setLang] = useState(initialLang);
+  const [lang, setLangState] = useState(initialLang);
+  const [cmsContent, setCmsContent] = useState({});
+  const setLang = (l) => {
+    setLangState(l);
+    try { localStorage.setItem(CHOICE_KEY, l); } catch { /* ignore */ }
+  };
   const firstRender = useRef(true);
+
+  const refreshCmsContent = async () => {
+    const result = await api.publicContent();
+    applyVillageContent(result.content);
+    setCmsContent(result.content || {});
+  };
+
+  useEffect(() => {
+    refreshCmsContent().catch((error) => console.error('Unable to load published website content:', error));
+  }, []);
 
   useEffect(() => {
     // Soft fade of the page text when switching language (not on first load).
@@ -353,16 +393,22 @@ export function LangProvider({ children }) {
     );
     document.documentElement.lang = lang;
     document.title = strings[lang].docTitle;
-    try { localStorage.setItem('vl-lang', lang); } catch { /* ignore */ }
   }, [lang]);
 
-  const t = (key) => strings[lang][key] ?? strings.en[key] ?? key;
+  const t = (key) => cmsContent[key]?.[lang] ?? strings[lang][key] ?? strings.en[key] ?? key;
   // Bengali meaning when Bengali is selected and one exists, else English.
   const meaningOf = (w) => (lang === 'bn' && w.meaningBn ? w.meaningBn : w.meaning);
   // Picks the current language from a { en, bn } object in village.js.
   const pick = (o) => (o ? o[lang] || o.en : '');
 
-  return <LangContext.Provider value={{ lang, setLang, t, meaningOf, pick }}>{children}</LangContext.Provider>;
+  return <LangContext.Provider value={{ lang, setLang, t, meaningOf, pick, cmsContent, refreshCmsContent }}>{children}</LangContext.Provider>;
 }
 
 export const useLang = () => useContext(LangContext);
+
+const editablePrefixes = ['nav.', 'footer.', 'announcement.', 'hero.', 'story.', 'stat.', 'life.', 'gallery.', 'fest.', 'visit.'];
+export const publicTextDefaults = Object.fromEntries(
+  Object.keys(strings.en)
+    .filter((key) => editablePrefixes.some((prefix) => key.startsWith(prefix)))
+    .map((key) => [key, { en: strings.en[key], bn: strings.bn[key] ?? strings.en[key] }]),
+);

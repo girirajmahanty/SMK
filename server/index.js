@@ -9,6 +9,7 @@ import cookieParser from 'cookie-parser';
 import { connectStore } from './store.js';
 import { authRoutes, attachUser, requireAdmin } from './auth.js';
 import { getFestivals } from './festivals.js';
+import { cmsRoutes } from './cmsRoutes.js';
 
 const CATEGORIES = ['greeting', 'family', 'food', 'nature', 'daily', 'phrase', 'number', 'other'];
 const clean = (v, max = 300) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
@@ -36,7 +37,10 @@ app.use((req, res, next) => {
 });
 // In production the website and the API share one address, so cross-origin access is only needed in development.
 if (!isProd) app.use(cors());
-app.use(express.json({ limit: '50kb' }));
+app.use(express.json({
+  limit: '50kb',
+  type: (req) => req.is('application/json') && !req.path.startsWith('/api/admin/media'),
+}));
 app.use(cookieParser());
 app.use(async (req, res, next) => {
   store = await storeReady;
@@ -45,6 +49,7 @@ app.use(async (req, res, next) => {
 
 app.use(attachUser(() => store));
 app.use('/api/auth', authRoutes(() => store));
+app.use('/api', cmsRoutes(() => store));
 
 const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res)).catch(next);
 
@@ -94,6 +99,17 @@ app.delete('/api/words/:id', requireAdmin, wrap(async (req, res) => {
 
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
 
+app.get('/uploads/:filename', wrap(async (req, res) => {
+  if (!/^[a-f0-9-]+\.(?:png|jpg|gif|webp)$/i.test(req.params.filename)) return res.status(404).json({ error: 'Image not found.' });
+  const image = await store.cms.readMedia(req.params.filename);
+  if (!image) return res.status(404).json({ error: 'Image not found.' });
+  res.set({
+    'Cache-Control': 'public, max-age=31536000, immutable',
+    'Content-Security-Policy': "default-src 'none'; sandbox",
+    'X-Content-Type-Options': 'nosniff',
+  }).type(image.mime).send(image.data);
+}));
+
 // The built website (npm run build). Hashed files in /assets never change, so browsers may cache them for a year.
 if (fs.existsSync(dist)) {
   app.use('/assets', express.static(path.join(dist, 'assets'), { immutable: true, maxAge: '1y' }));
@@ -108,7 +124,10 @@ if (fs.existsSync(dist)) {
 
 app.use((err, req, res, next) => {
   console.error(err);
-  res.status(500).json({ error: 'Server error' });
+  if (res.headersSent) return next(err);
+  const status = err.status || 500;
+  const message = status === 413 ? 'Request too large.' : status < 500 ? 'Invalid request.' : 'Server error';
+  res.status(status).json({ error: message });
 });
 
 // API_PORT first, so a PORT meant for the frontend dev server doesn't hijack the API locally;

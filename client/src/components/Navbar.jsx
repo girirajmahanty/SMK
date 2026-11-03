@@ -14,11 +14,11 @@ import UserMenu from './UserMenu.jsx';
 import ThemeToggle from './ThemeToggle.jsx';
 
 const links = [
-  { to: '/#story', key: 'nav.story', Icon: ScrollText },
+  { to: '/#story', key: 'nav.aboutUs', Icon: ScrollText },
   { to: '/#life', key: 'nav.life', Icon: Wheat },
   { to: '/#gallery', key: 'nav.gallery', Icon: Images },
   { to: '/#festivals', key: 'nav.festivals', Icon: Flame },
-  { to: '/#visit', key: 'nav.visit', Icon: MapPin },
+  { to: '/#visit', key: 'nav.joinUs', Icon: MapPin },
 ];
 const ids = links.map((l) => l.to.slice(2));
 
@@ -50,8 +50,6 @@ export default function Navbar({ theme, onToggleTheme }) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [section, setSection] = useState(null);
-  const [hidden, setHidden] = useState(false);
-  const lastY = useRef(0);
   const linksRef = useRef(null);
   const [pill, setPill] = useState(null);
   const dates = useFestivalDates(village.festivals);
@@ -64,17 +62,12 @@ export default function Navbar({ theme, onToggleTheme }) {
   const festBadge = status.kind === 'now' ? t('nav.festNow')
     : daysLeft != null && daysLeft <= 30 ? t('nav.festDays').replace('{n}', num(daysLeft)) : null;
 
-  // Scrollspy: follow which section is on screen. The bar slides away while you scroll down
-  // (past the hero) and comes back as soon as you scroll up.
+  // Scrollspy: follow which section is on screen.
   useEffect(() => {
     let raf = 0;
     const update = () => {
       raf = 0;
-      const y = window.scrollY;
-      if (y < 320 || y < lastY.current - 4) setHidden(false);
-      else if (y > lastY.current + 4) setHidden(true);
-      lastY.current = y;
-      setScrolled(y > 20);
+      setScrolled(window.scrollY > 20);
       setSection(pathname === '/' ? currentSection() : null);
     };
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
@@ -106,7 +99,7 @@ export default function Navbar({ theme, onToggleTheme }) {
   }, [section, lang, festBadge]);
 
   return (
-    <header className={`nav ${scrolled ? 'nav--scrolled' : ''} ${onHero ? 'nav--hero' : ''} ${hidden && !open ? 'nav--hidden' : ''}`}>
+    <header className={`nav ${scrolled ? 'nav--scrolled' : ''} ${onHero ? 'nav--hero' : ''}`}>
       <Link to="/" className="brand" onClick={() => setOpen(false)}>
         <span className="brand__logo">
           <Seal size={44} className="brand__seal" />

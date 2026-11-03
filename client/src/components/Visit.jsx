@@ -8,6 +8,7 @@ import { village } from '../village.js';
 import Reveal from './Reveal.jsx';
 import RichHead from './RichHead.jsx';
 import Wave from './Wave.jsx';
+import BgFx from './BgFx.jsx';
 
 // Red pin exactly on the coordinates, labelled with the place name
 const mapTarget = village.coords ? `${village.coords} (${village.mapQuery})` : village.mapQuery;
@@ -193,6 +194,7 @@ export default function Visit() {
       <Wave fill="var(--ivory-2)" />
       <span className="visit-sec__contours" aria-hidden="true" />
       <span className="visit-sec__glow" aria-hidden="true" />
+      <BgFx embers={14} stars={16} />
 
       <RichHead eyebrow={t('visit.eyebrow')} title={t('visit.title')} text={t('visit.text')} Icon={MapPin} light />
 

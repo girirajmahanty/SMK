@@ -8,6 +8,7 @@ import Reveal from './Reveal.jsx';
 import RichHead from './RichHead.jsx';
 import { pic } from '../responsive.js';
 import Seal from './Seal.jsx';
+import BgFx from './BgFx.jsx';
 
 // Counts up from `from` to `value` the first time it scrolls into view.
 function CountOnView({ value, from = 0, suffix = '' }) {
@@ -60,10 +61,11 @@ function StoryPhoto({ img, cat, sizes, delay, side }) {
 }
 
 export default function Story({ visits = null }) {
-  const { t, pick } = useLang();
+  const { t, pick, lang } = useLang();
   const [more, setMore] = useState(false);
 
   const est = village.established;
+  const timelineYear = est && (lang === 'bn' ? new Intl.NumberFormat('bn-IN', { useGrouping: false }).format(est) : est);
   const stats = [
     est && { Icon: Landmark, value: est, from: est - 120, label: t('story.established') },
     est && { Icon: Hourglass, value: new Date().getFullYear() - est, suffix: '+', label: t('story.years') },
@@ -75,6 +77,7 @@ export default function Story({ visits = null }) {
 
   return (
     <section id="story" className="band band--ivory story-sec">
+      <BgFx glows alpana />
       <div className="story2">
         {/* Photo collage */}
         <div className="story2__media">
@@ -113,7 +116,7 @@ export default function Story({ visits = null }) {
           {/* Three steps taken from the story itself: the emblem, the yearly puja, the new temple */}
           {est && (
             <Reveal as="ol" className="story2__timeline">
-              <li style={{ '--k': 0 }}><span className="story2__tl-dot"><Landmark /></span><strong>{est}</strong><span>{t('story.tl1')}</span></li>
+              <li style={{ '--k': 0 }}><span className="story2__tl-dot"><Landmark /></span><strong>{timelineYear}</strong><span>{t('story.tl1')}</span></li>
               <li style={{ '--k': 1 }}><span className="story2__tl-dot"><Flame /></span><strong>{t('story.tl2Year')}</strong><span>{t('story.tl2')}</span></li>
               <li style={{ '--k': 2 }}><span className="story2__tl-dot"><Hammer /></span><strong>{t('story.tl3Year')}</strong><span>{t('story.tl3')}</span></li>
             </Reveal>
