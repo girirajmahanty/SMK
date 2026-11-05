@@ -72,13 +72,15 @@ export default function Story({ visits = null }) {
   const [musicUnavailable, setMusicUnavailable] = useState(false);
   const sectionRef = useRef(null);
   const audioRef = useRef(null);
-  const isInAbout = useRef(false);
+  // true while the hero or the About section fills the middle of the screen: the song plays there.
+  const inSongZone = useRef(false);
   const userPaused = useRef(false);
   const songEnded = useRef(false);
   const stopWaitingForTap = useRef(null);
 
   // Browsers never play sound on their own before the visitor has tapped, clicked or pressed a key on the page.
-  // When the song is blocked, the first such tap anywhere starts it (if the About section is still on screen).
+  // When the song is blocked, the first such tap anywhere starts it (if the hero or About is still on screen),
+  // so the "Enter" tap on the welcome screen starts it right away.
   const startOnFirstTap = () => {
     if (stopWaitingForTap.current) return;
     const events = ['pointerdown', 'touchend', 'keydown', 'click'];
@@ -90,7 +92,7 @@ export default function Story({ visits = null }) {
       stop();
       // A tap on the song's own buttons is handled by those buttons (else play would start, then toggle off).
       if (event.target instanceof Element && event.target.closest('.story2__music')) return;
-      if (isInAbout.current) startPlayback();
+      if (inSongZone.current) startPlayback();
     };
     events.forEach((name) => window.addEventListener(name, onTap, true));
     stopWaitingForTap.current = stop;
@@ -112,7 +114,7 @@ export default function Story({ visits = null }) {
     setNeedsTap(false);
     audio.play().catch((error) => {
       if (error.name === 'NotAllowedError') {
-        if (isInAbout.current || manual) setNeedsTap(true);
+        if (inSongZone.current || manual) setNeedsTap(true);
         startOnFirstTap();
       } else if (error.name !== 'AbortError') {
         setMusicUnavailable(true);
@@ -145,12 +147,13 @@ export default function Story({ visits = null }) {
     audio.addEventListener('ended', onEnded);
     audio.addEventListener('error', onError);
 
-    // Plays while the About section fills the middle of the screen, pauses when the visitor scrolls away.
-    // (Checking the middle band, not the edges: the section starts right below the full-screen hero,
-    // so at the top of the page its edge already touches the screen.)
-    const observer = new IntersectionObserver(([entry]) => {
-      isInAbout.current = entry.isIntersecting;
-      if (entry.isIntersecting) {
+    // Plays while the hero (top of the home page) or the About section fills the middle of the screen,
+    // and pauses once the visitor scrolls on past About. The two sections touch, so it keeps playing between them.
+    const visible = new Map();
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => visible.set(entry.target, entry.isIntersecting));
+      inSongZone.current = [...visible.values()].some(Boolean);
+      if (inSongZone.current) {
         startPlayback();
       } else {
         audio.pause();
@@ -158,6 +161,8 @@ export default function Story({ visits = null }) {
       }
     }, { rootMargin: '-35% 0px -35% 0px', threshold: 0 });
 
+    const hero = document.querySelector('.hero');
+    if (hero) observer.observe(hero);
     observer.observe(section);
 
     return () => {
@@ -167,7 +172,7 @@ export default function Story({ visits = null }) {
       audio.removeEventListener('ended', onEnded);
       audio.removeEventListener('error', onError);
       stopWaitingForTap.current?.();
-      isInAbout.current = false;
+      inSongZone.current = false;
       audio.pause();
     };
   }, []);
