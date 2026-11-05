@@ -77,9 +77,28 @@ export default function Story({ visits = null }) {
   const manualPlayback = useRef(false);
   const reducedMotion = useRef(false);
   const songEnded = useRef(false);
+  const stopWaitingForTap = useRef(null);
 
-  // Plays the village song. Browsers block sound until the visitor has interacted with the page;
-  // then the button asks for a tap instead.
+  // Browsers never play sound on their own before the visitor has tapped, clicked or pressed a key on the page.
+  // When the song is blocked, the first such tap anywhere starts it (if the About section is still on screen).
+  const startOnFirstTap = () => {
+    if (stopWaitingForTap.current) return;
+    const events = ['pointerdown', 'touchend', 'keydown', 'click'];
+    const stop = () => {
+      events.forEach((name) => window.removeEventListener(name, onTap, true));
+      stopWaitingForTap.current = null;
+    };
+    const onTap = (event) => {
+      stop();
+      // A tap on the song's own buttons is handled by those buttons (else play would start, then toggle off).
+      if (event.target instanceof Element && event.target.closest('.story2__music')) return;
+      if (isInAbout.current) startPlayback();
+    };
+    events.forEach((name) => window.addEventListener(name, onTap, true));
+    stopWaitingForTap.current = stop;
+  };
+
+  // Plays the village song; if the browser blocks it, the button asks for a tap and the first tap starts it.
   const startPlayback = (manual = false) => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -97,6 +116,7 @@ export default function Story({ visits = null }) {
     audio.play().catch((error) => {
       if (error.name === 'NotAllowedError') {
         if (isInAbout.current || manual) setNeedsTap(true);
+        startOnFirstTap();
       } else if (error.name !== 'AbortError') {
         setMusicUnavailable(true);
       }
@@ -160,6 +180,7 @@ export default function Story({ visits = null }) {
       audio.removeEventListener('pause', onPause);
       audio.removeEventListener('ended', onEnded);
       audio.removeEventListener('error', onError);
+      stopWaitingForTap.current?.();
       isInAbout.current = false;
       audio.pause();
     };
