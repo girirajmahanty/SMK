@@ -152,7 +152,7 @@ export const village = {
       text: { en: 'Students worship Maa Saraswati, the goddess of learning, and place their books before her. The puja is also associated with hate khori for young children and the colour yellow.', bn: 'বিদ্যার দেবী মা সরস্বতীর আরাধনায় ছাত্রছাত্রীরা তাঁর পায়ে বই নিবেদন করে। ছোটদের হাতেখড়ি এবং বাসন্তী রঙের পোশাকও সরস্বতীপুজোর পরিচিত অনুষঙ্গ।' },
     },
     {
-      Icon: Drum, tone: 'kirtan',
+      Icon: Drum, tone: 'kirtan', img: '/gallery/festivals/harinam.jpg', position: '42% 50%',
       date: { en: '22–24 Chaitra', bn: '২২–২৪ চৈত্র' }, name: { en: 'Harinam', bn: 'হরিনাম' },
       details: [{ en: 'Three days of sankirtan', bn: 'তিন দিন ধরে সংকীর্তন' }, { en: 'Khol and kartal accompaniment', bn: 'খোল-করতালের সঙ্গ' }, { en: 'Prasad shared with everyone', bn: 'সবার মধ্যে প্রসাদ বিতরণ' }],
       text: { en: 'Hari Naam brings devotees together for three days of sankirtan. The sound of khol and kartal and the singing of the divine name fill the celebration, followed by prasad shared with everyone.', bn: 'হরিনাম উপলক্ষে ভক্তরা তিন দিন ধরে সংকীর্তনে মিলিত হন। খোল-করতালের তালে হরিনাম কীর্তনে মুখর হয়ে ওঠে উৎসব, আর শেষে সবার মধ্যে প্রসাদ বিতরণ করা হয়।' },
