@@ -10,8 +10,9 @@ import { pic } from '../responsive.js';
 import Seal from './Seal.jsx';
 import BgFx from './BgFx.jsx';
 
-// The village song, played in the About section (client/public/audio).
-const VILLAGE_SONG = '/audio/village-song.mp3';
+// The village song (client/public/audio). Browsers keep /audio files for 7 days, so bump ?v= whenever the file
+// changes, or returning visitors keep hearing the old one. v=2: first 10 seconds cut.
+const VILLAGE_SONG = '/audio/village-song.mp3?v=2';
 
 // Counts up from `from` to `value` the first time it scrolls into view.
 function CountOnView({ value, from = 0, suffix = '' }) {
