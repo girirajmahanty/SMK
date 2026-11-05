@@ -17,42 +17,43 @@ npm run install:all   # first time only
 npm run dev           # API on :5050, website on http://localhost:5180
 ```
 
-## Deploy (put the website online)
-The website and the API run as **one Node.js service**: the server serves the built site from `client/dist`
-and the API under `/api`, with compression, security headers and long-term caching of assets.
+## Deploy on Vercel
+Vercel serves the built website (`client/dist`) from its CDN, and the API runs as one serverless function
+(`api/index.js`, which uses the same Express app as `server/app.js`). `vercel.json` holds the build settings,
+the `/api/*` and `/uploads/*` routes, the single-page-app fallback, security headers and caching.
 
-**Works on any Node host** (Render, Railway, a VPS…). Use these settings:
-
-| Setting | Value |
-|---|---|
-| Node version | 20.19 or newer |
-| Build command | `npm run deploy:build` |
-| Start command | `npm start` |
-
-**Environment variables** (set them in the host's dashboard, not in a file):
+1. Push this repository to GitHub.
+2. In Vercel: **Add New → Project → import the repository**. Leave *Root Directory* as the repository root;
+   the build settings come from `vercel.json`.
+3. Before the first deploy, add these **Environment Variables** (Production, and Preview if you use previews):
 
 | Name | Value |
 |---|---|
 | `NODE_ENV` | `production` |
-| `MONGO_URI` | your MongoDB Atlas connection string (free M0 cluster) |
-| `JWT_SECRET` | a long random string (keep it secret) |
-| `SITE_URL` | the live address, e.g. `https://sidhagora.onrender.com` (for share previews) |
+| `MONGO_URI` | your MongoDB Atlas connection string (free M0 cluster) — **required** |
+| `JWT_SECRET` | a unique random string of at least 32 characters (keep it secret) |
+| `SITE_URL` | your own domain, e.g. `https://sidhagora.in` — optional; without it the Vercel production domain is used |
 | `GOOGLE_API_KEY` | optional — exact festival dates (see below) |
-| `UPLOAD_DIR` | optional — persistent filesystem directory used only by the JSON fallback for uploaded images |
 
-`JWT_SECRET` must be a unique random value of at least 32 characters. To provision the administrator, run
-`npm run seed:admin --prefix server` in an environment that can reach the same database, with `ADMIN_EMAIL`,
-`ADMIN_PASSWORD` (12–128 characters), and optional `ADMIN_NAME` set in the process environment. Do not commit
-these values or put seed credentials in the public client. The seed command creates or resets the named admin
-account; no public registration flow grants admin access.
+4. Deploy, then open `https://your-site/api/health` — it should show `"storage":"mongodb"`.
 
-Do not set `API_PORT` on the host; it provides `PORT` itself.
+Notes:
+- **MongoDB is required.** In production the API refuses to use the local JSON files, because Vercel has no
+  lasting disk. In Atlas → *Network Access*, allow `0.0.0.0/0` (Vercel has no fixed IP).
+- The function runs in Mumbai (`bom1` in `vercel.json`). Put your Atlas cluster in a nearby region
+  (e.g. Mumbai), or change `regions` to match it, so database calls stay fast.
+- Admin image uploads are limited to **3 MB**, because Vercel functions accept at most 4.5 MB per request.
+- `SITE_URL` is used at build time (share previews, `robots.txt`, `sitemap.xml`) and for the admin origin
+  check: when it is set, use the admin panel on that domain. Redeploy after changing it.
+- Rate limits are counted per running function instance, so on Vercel they slow abuse down rather than set an exact cap.
 
-**Use MongoDB Atlas in production.** Without `MONGO_URI` the server falls back to JSON files in `server/data/`,
-and most hosts wipe their disk on every deploy, so accounts and the visit counter would be lost.
-In Atlas → *Network Access*, allow `0.0.0.0/0` (or your host's IP).
+**Provision the administrator:** run `npm run seed:admin --prefix server` on your computer with `MONGO_URI`
+pointing at the same Atlas database and `ADMIN_EMAIL`, `ADMIN_PASSWORD` (12–128 characters) and optional
+`ADMIN_NAME` set in the process environment. Do not commit these values or put seed credentials in the public
+client. The seed command creates or resets the named admin account; no public registration flow grants admin access.
 
-**Check it works:** open `https://your-site/api/health` — it should show `"storage":"mongo"`.
+**Other Node hosts** still work: build with `npm run deploy:build`, start with `npm start` (`server/index.js`
+serves the API and the built website together). Do not set `API_PORT` on the host; it provides `PORT` itself.
 
 **Test production locally** (PowerShell):
 ```powershell
@@ -73,15 +74,16 @@ $env:NODE_ENV="production"; $env:PORT="8080"; npm start   # then open http://loc
   ```
 
 - Configure a unique `JWT_SECRET` of at least 32 characters. In production the server refuses to start without it. Changing it logs everyone out.
-- Admin accounts and CMS data use MongoDB when available, or the existing local JSON fallback when MongoDB is unavailable. Use MongoDB Atlas and persistent file storage in production.
-- The dashboard supports bilingual website copy, festival management, validated image uploads, activity history, and published-content delivery to the public site. Set `UPLOAD_DIR` to persistent storage if the deployment filesystem is ephemeral.
-- MongoDB stores image bytes alongside the media metadata; the local JSON fallback stores image files under `server/uploads/` (or `UPLOAD_DIR`). Keep the Mongo database on a persistent Atlas cluster in production.
+- Admin accounts and CMS data use MongoDB. In local development only, when MongoDB is unavailable, they fall back to JSON files.
+- The dashboard supports bilingual website copy, festival management, validated image uploads, activity history, and published-content delivery to the public site.
+- MongoDB stores image bytes alongside the media metadata; the local JSON fallback stores image files under `server/uploads/` (or `UPLOAD_DIR`).
 - CMS data is stored in the `cmscontents`, `festivals`, `media`, and `adminactivities` MongoDB collections. Without MongoDB, the same CMS data uses JSON files under `server/data/`.
-- Validation commands: `npm run build`, `node --test client/src/festivalDates.test.js server/cmsRoutes.test.js`, and `npm audit --omit=dev --prefix server`.
+- Validation commands: `npm run build`, `node --test` inside `server/`, `node --test src/` inside `client/`, and `npm audit --omit=dev --prefix server`.
 
 ## Database
 `server/.env` → `MONGO_URI`. Use local MongoDB or a free MongoDB Atlas URI.
-If MongoDB isn't reachable, the API automatically stores words in `server/data/words.json`.
+In local development, if MongoDB isn't reachable, the API stores data in `server/data/` instead.
+In production it refuses to start without MongoDB.
 
 ## Festival dates (automatic)
 The festival cards show exact dates and a countdown, read from Google's official

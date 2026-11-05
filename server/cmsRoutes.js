@@ -7,7 +7,8 @@ import { requireAdmin } from './auth.js';
 
 const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const KEY_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,119}$/;
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+// 3 MB: as base64 JSON that is ~4 MB, under the 4.5 MB request limit of Vercel functions.
+const MAX_IMAGE_BYTES = 3 * 1024 * 1024;
 const MAX_FESTIVALS = 100;
 const FESTIVAL_ICONS = new Set([
   'Flame', 'Wheat', 'Landmark', 'Drum', 'Soup', 'ShoppingBasket', 'Sun',
@@ -125,7 +126,7 @@ export function cmsRoutes(getStore) {
     }
     next();
   });
-  admin.use('/media', express.json({ limit: '7mb' }));
+  admin.use('/media', express.json({ limit: '4.5mb' }));
 
   const log = (req, action, target = '') => store().activity(req.user.email, action, target);
 
@@ -229,7 +230,7 @@ export function cmsRoutes(getStore) {
     const detected = imageType(buffer);
     if (!buffer.length || buffer.length > MAX_IMAGE_BYTES || buffer.toString('base64') !== match[2] || detected !== match[1]
       || !(await imageIsValid(buffer, detected))) {
-      return res.status(400).json({ error: 'Image is invalid or exceeds the 5 MB limit.' });
+      return res.status(400).json({ error: 'Image is invalid or exceeds the 3 MB limit.' });
     }
     const extension = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/gif': 'gif', 'image/webp': 'webp' }[detected];
     const filename = `${crypto.randomUUID()}.${extension}`;
@@ -267,7 +268,7 @@ export function cmsRoutes(getStore) {
     const detected = imageType(buffer);
     if (!buffer.length || buffer.length > MAX_IMAGE_BYTES || buffer.toString('base64') !== match[2] || detected !== match[1]
       || !(await imageIsValid(buffer, detected))) {
-      return res.status(400).json({ error: 'Image is invalid or exceeds the 5 MB limit.' });
+      return res.status(400).json({ error: 'Image is invalid or exceeds the 3 MB limit.' });
     }
     const extension = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/gif': 'gif', 'image/webp': 'webp' }[detected];
     const filename = `${crypto.randomUUID()}.${extension}`;

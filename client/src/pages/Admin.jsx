@@ -329,8 +329,8 @@ function MediaWorkspace({ media, onUpload, onCaption, onDelete, onReplace }) {
     event.preventDefault();
     setError('');
     if (!file) return setError('Choose an image to upload.');
-    if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type) || file.size > 5 * 1024 * 1024) {
-      return setError('Choose a PNG, JPG, GIF, or WebP image smaller than 5 MB.');
+    if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type) || file.size > 3 * 1024 * 1024) {
+      return setError('Choose a PNG, JPG, GIF, or WebP image smaller than 3 MB.');
     }
     setUploading(true);
     try {
@@ -359,7 +359,7 @@ function MediaWorkspace({ media, onUpload, onCaption, onDelete, onReplace }) {
     <section className="admin-panel">
       <div className="admin-panel__heading"><div><p className="admin-kicker">IMAGE COLLECTION</p><h2>Media library</h2><p>Validated images are stored on the server and can be used by festival and homepage content.</p></div><span className="admin-count">{media.length} images</span></div>
       <form className="admin-upload" onSubmit={upload}>
-        <div className="admin-upload__icon"><ImagePlus /></div><div className="admin-upload__copy"><strong>Add an image</strong><span>PNG, JPG, GIF, or WebP · up to 5 MB</span></div>
+        <div className="admin-upload__icon"><ImagePlus /></div><div className="admin-upload__copy"><strong>Add an image</strong><span>PNG, JPG, GIF, or WebP · up to 3 MB</span></div>
         <label className="admin-file"><Upload /> Choose image<input type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={(event) => setFile(event.target.files?.[0] || null)} />{file && <span>{file.name}</span>}</label>
         <input className="admin-caption-input" aria-label="Image caption" placeholder="Optional caption" value={caption} onChange={(event) => setCaption(event.target.value)} />
         <button className="admin-button admin-button--primary" disabled={uploading}>{uploading ? <LoaderCircle className="admin-spin" /> : <Plus />} Upload</button>
@@ -478,8 +478,8 @@ function AdminDashboard() {
   const captionMedia = (item, caption) => perform(async () => { await api.updateMedia(item.id, caption); }, 'Image caption updated');
   const removeMedia = (item) => perform(async () => { await api.deleteMedia(item.id); }, 'Image deleted');
   const replaceMedia = async (item, file) => {
-    if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type) || file.size > 5 * 1024 * 1024) {
-      setError('Choose a PNG, JPG, GIF, or WebP image smaller than 5 MB.');
+    if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type) || file.size > 3 * 1024 * 1024) {
+      setError('Choose a PNG, JPG, GIF, or WebP image smaller than 3 MB.');
       return;
     }
     const data = await new Promise((resolve, reject) => {

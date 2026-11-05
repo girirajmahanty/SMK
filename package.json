@@ -2,6 +2,7 @@
   "name": "village-language",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "MERN website to preserve and learn our village language",
   "engines": {
     "node": ">=20.19"
