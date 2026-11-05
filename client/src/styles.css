@@ -3411,3 +3411,36 @@ section:has(> .bgfx), footer:has(> .bgfx) { isolation: isolate; }
   font-size: .9rem;
   text-align: center;
 }
+
+/* =========================================================
+   Phones and tablets (touch screens): the same look with lighter effects.
+   Live blur, blend-mode light layers and repainted ring animations are cheap on a desktop GPU but make
+   phones stutter, flicker and jump while scrolling, so touch screens get still versions of them.
+   ========================================================= */
+@media (hover: none) and (pointer: coarse) {
+  /* Every section is laid out at its real height from the start, so the page no longer grows and jumps
+     while you scroll (the 1100px / 11000px first guesses were often far off on phones). */
+  main .band, main #festivals { content-visibility: visible; contain-intrinsic-size: none; }
+
+  /* No live blur behind glass panels: it is redrawn on every frame of scrolling and of the moving hero photo.
+     The panels get a slightly deeper tint instead, so text stays as readable. */
+  *, *::before, *::after { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+  .nav::before { background: color-mix(in srgb, var(--bg) 97%, transparent); }
+  .hero__inner { background: linear-gradient(140deg, rgba(36, 10, 13, 0.8), rgba(36, 10, 13, 0.66)); }
+  .hero-badge, .hero__visits, .cta--glass { background-color: rgba(30, 8, 10, 0.5); }
+
+  /* Light layers blended over moving pictures flicker on phones. */
+  .hero .hero__overlay::after, .hero__layer--bg::after, .fest4__beams, .gal-3d__shine { display: none; }
+
+  /* Moving section backgrounds: no rising embers, and the glows, stars and alpana stay still. */
+  .bgfx__ember { display: none; }
+  .bgfx__glow, .bgfx__star, .bgfx__alpana { animation: none; }
+
+  /* Turning gold rings, the logo halo and the text shines repaint on every frame: they stay still here
+     (still shown, just not moving). Empty keyframes keep each element's resting look. */
+  @keyframes ringSpin { }
+  @keyframes halo { }
+  @keyframes headShine { }
+  @keyframes creditShimmer { }
+  @keyframes navLine { }
+}
