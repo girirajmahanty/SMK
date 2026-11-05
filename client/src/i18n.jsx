@@ -383,9 +383,23 @@ function initialLang() {
   return 'bn';
 }
 
+// Published CMS text from the last visit, shown at once so the page doesn't first paint the built-in text
+// and then swap it; the fresh copy from the server replaces it a moment later.
+const CMS_CACHE_KEY = 'vl-cms';
+function cachedCmsContent() {
+  try {
+    const cached = JSON.parse(localStorage.getItem(CMS_CACHE_KEY) || '{}');
+    if (cached && typeof cached === 'object' && !Array.isArray(cached)) {
+      applyVillageContent(cached);
+      return cached;
+    }
+  } catch { /* ignore: no storage or a broken entry, the server copy follows */ }
+  return {};
+}
+
 export function LangProvider({ children }) {
   const [lang, setLangState] = useState(initialLang);
-  const [cmsContent, setCmsContent] = useState({});
+  const [cmsContent, setCmsContent] = useState(cachedCmsContent);
   const setLang = (l) => {
     setLangState(l);
     try { localStorage.setItem(CHOICE_KEY, l); } catch { /* ignore */ }
@@ -396,6 +410,7 @@ export function LangProvider({ children }) {
     const result = await api.publicContent();
     applyVillageContent(result.content);
     setCmsContent(result.content || {});
+    try { localStorage.setItem(CMS_CACHE_KEY, JSON.stringify(result.content || {})); } catch { /* ignore */ }
   };
 
   useEffect(() => {

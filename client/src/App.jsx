@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
@@ -6,10 +6,16 @@ import Footer from './components/Footer.jsx';
 import Intro from './components/Intro.jsx';
 import ScrollProgress from './components/ScrollProgress.jsx';
 import Home from './pages/Home.jsx';
-import Login from './pages/Login.jsx';
-import Admin, { AdminGate, AdminLogin } from './pages/Admin.jsx';
 import { smoothScrollTo } from './smoothScroll.js';
 import { useLang } from './i18n.jsx';
+
+// Login and admin pages are downloaded only when someone opens them, so visitors of the home page
+// don't pay for the admin dashboard (and its stylesheet).
+const Login = lazy(() => import('./pages/Login.jsx'));
+const AdminLogin = lazy(() => import('./pages/Admin.jsx').then((m) => ({ default: m.AdminLogin })));
+const Admin = lazy(() => import('./pages/Admin.jsx').then((m) => ({
+  default: () => <m.AdminGate><m.default /></m.AdminGate>,
+})));
 
 function initialTheme() {
   try {
@@ -89,13 +95,15 @@ export default function App() {
       {!isAdminRoute && <Announcement />}
       {/* key: each page remounts, so it plays the page-in transition */}
       <main id="main" tabIndex={-1} key={pathname} className={`page ${pathname === '/' ? 'page--home' : ''} ${isAdminRoute ? 'admin-page' : ''}`}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin/*" element={<AdminGate><Admin /></AdminGate>} />
-          <Route path="*" element={<Home />} />
-        </Routes>
+        <Suspense fallback={null}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin/*" element={<Admin />} />
+            <Route path="*" element={<Home />} />
+          </Routes>
+        </Suspense>
       </main>
       {!isAdminRoute && <Footer />}
     </>
