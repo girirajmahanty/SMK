@@ -158,13 +158,17 @@ const fileStore = {
   },
 };
 
-export async function connectStore(uri) {
+// In production the JSON file is not an option: hosting disks are wiped on every restart or deploy,
+// so users, words and admin changes would silently disappear. Fail loudly instead.
+export async function connectStore(uri, { production = process.env.NODE_ENV === 'production' } = {}) {
+  if (!uri && production) throw new Error('MONGO_URI is required in production.');
   if (uri) {
     try {
-      await mongoose.connect(uri, { serverSelectionTimeoutMS: 3000 });
+      await mongoose.connect(uri, { serverSelectionTimeoutMS: production ? 15000 : 3000 });
       await mongoStore.init();
       return mongoStore;
     } catch (err) {
+      if (production) throw new Error(`MongoDB not reachable: ${err.message}`);
       console.warn(`MongoDB not reachable (${err.message}). Using local JSON file instead.`);
     }
   }

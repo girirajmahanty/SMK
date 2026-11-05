@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { createRateLimit } from './rateLimit.js';
 
 const COOKIE = 'sg_token';
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
@@ -31,16 +32,11 @@ const cookieOptions = {
 };
 
 // At most 10 login/register attempts per IP every 15 minutes.
-const attempts = new Map();
-function rateLimit(req, res, next) {
-  const now = Date.now();
-  const entry = attempts.get(req.ip);
-  if (!entry || entry.reset < now) attempts.set(req.ip, { count: 1, reset: now + 15 * 60 * 1000 });
-  else if (++entry.count > 10) {
-    return res.status(429).json({ code: 'TOO_MANY', error: 'Too many attempts. Please try again in a few minutes.' });
-  }
-  next();
-}
+const rateLimit = createRateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  error: 'Too many attempts. Please try again in a few minutes.',
+});
 
 // Adds req.user when a valid login cookie is present.
 export function attachUser(getStore) {
@@ -57,6 +53,11 @@ export function attachUser(getStore) {
     }
     next();
   };
+}
+
+export function requireLogin(req, res, next) {
+  if (req.user) return next();
+  res.status(401).json({ code: 'LOGIN_REQUIRED', error: 'Please log in first.' });
 }
 
 export function requireAdmin(req, res, next) {

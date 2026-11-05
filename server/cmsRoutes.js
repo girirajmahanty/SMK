@@ -173,8 +173,9 @@ export function cmsRoutes(getStore) {
       existingNames.add(name);
     }
     await store().setInitialized();
-    await log(req, 'Imported existing festivals', `${festivals.length} festivals`);
-    res.status(201).json({ initialized: true, festivals });
+    const imported = await store().festivals();
+    await log(req, 'Imported existing festivals', `${imported.length - festivals.length} festivals`);
+    res.status(201).json({ initialized: true, festivals: imported });
   }));
   admin.post('/festivals', wrap(async (req, res) => {
     const parsed = parseFestival(req.body);

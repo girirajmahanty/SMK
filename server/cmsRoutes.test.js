@@ -36,7 +36,8 @@ const cms = {
     const index = cmsData.content.findIndex((item) => item.key === key);
     return index < 0 ? null : cmsData.content.splice(index, 1)[0];
   },
-  async festivals() { return cmsData.festivals; },
+  // A copy, like the real stores, so a route can't rely on a list read before it changed.
+  async festivals() { return [...cmsData.festivals]; },
   async createFestival(value) {
     const item = { ...value, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
     cmsData.festivals.push(item);
@@ -169,6 +170,7 @@ test('admin can persist bilingual copy and festival CRUD; drafts stay private', 
     method: 'POST', cookie, body: { festivals: [template, { ...template, name: { en: 'Private Festival', bn: 'ব্যক্তিগত উৎসব' }, published: false, order: 1 }] },
   });
   assert.equal(initialized.response.status, 201);
+  assert.equal(initialized.data.festivals.length, 2, 'the reply lists the festivals just imported');
   const retriedInitialization = await request('/api/admin/festivals/initialize', {
     method: 'POST', cookie, body: { festivals: [template] },
   });

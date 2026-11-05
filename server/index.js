@@ -7,7 +7,8 @@ import cors from 'cors';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import { connectStore } from './store.js';
-import { authRoutes, attachUser, requireAdmin } from './auth.js';
+import { authRoutes, attachUser, requireAdmin, requireLogin } from './auth.js';
+import { createRateLimit } from './rateLimit.js';
 import { getFestivals } from './festivals.js';
 import { cmsRoutes } from './cmsRoutes.js';
 
@@ -15,8 +16,18 @@ const CATEGORIES = ['greeting', 'family', 'food', 'nature', 'daily', 'phrase', '
 const clean = (v, max = 300) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
 
 // Start listening right away; requests wait until the database is ready.
-const storeReady = connectStore(process.env.MONGO_URI);
+// If storage can't start (e.g. MongoDB is down in production), exit so the host shows the failure and restarts us.
+const storeReady = connectStore(process.env.MONGO_URI).catch((err) => {
+  console.error(`Storage failed to start: ${err.message}`);
+  process.exit(1);
+});
 let store;
+
+// Public write endpoints, limited per IP so a script can't flood them.
+const wordLimit = createRateLimit({ windowMs: 60 * 60 * 1000, max: 20 });
+const likeLimit = createRateLimit({ windowMs: 15 * 60 * 1000, max: 30 });
+// Visits beyond this are still answered with the count, just not added to it.
+const visitLimit = createRateLimit({ windowMs: 60 * 60 * 1000, max: 5 });
 const app = express();
 const isProd = process.env.NODE_ENV === 'production';
 const dist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../client/dist');
@@ -64,11 +75,12 @@ app.get('/api/words/random', wrap(async (req, res) => res.json(await store.rando
 app.get('/api/stats', wrap(async (req, res) => res.json(await store.stats())));
 
 app.get('/api/visits', wrap(async (req, res) => res.json({ visits: await store.visit(0) })));
-app.post('/api/visits', wrap(async (req, res) => res.json({ visits: await store.visit(1) })));
+app.post('/api/visits', wrap(async (req, res) => res.json({ visits: await store.visit(visitLimit.allow(req.ip) ? 1 : 0) })));
 
 app.get('/api/festivals', wrap(async (req, res) => res.json(await getFestivals())));
 
-app.post('/api/words', wrap(async (req, res) => {
+// Only logged-in members can add words, so every entry has a real account behind it.
+app.post('/api/words', requireLogin, wordLimit, wrap(async (req, res) => {
   const b = req.body || {};
   const data = {
     word: clean(b.word, 100),
@@ -78,14 +90,14 @@ app.post('/api/words', wrap(async (req, res) => {
     category: CATEGORIES.includes(b.category) ? b.category : 'other',
     example: clean(b.example),
     exampleMeaning: clean(b.exampleMeaning),
-    // Logged-in members are credited by their account name.
-    contributor: req.user?.name || clean(b.contributor, 60) || 'Anonymous',
+    // Credited by their account name.
+    contributor: req.user.name,
   };
   if (!data.word || !data.meaning) return res.status(400).json({ error: 'Word and meaning are required.' });
   res.status(201).json(await store.create(data));
 }));
 
-app.post('/api/words/:id/like', wrap(async (req, res) => {
+app.post('/api/words/:id/like', likeLimit, wrap(async (req, res) => {
   const w = await store.like(req.params.id);
   if (!w) return res.status(404).json({ error: 'Not found' });
   res.json(w);
