@@ -146,7 +146,7 @@ export const village = {
       text: { en: 'Makar Sankranti marks a seasonal transition and is associated with harvest traditions. Pithe-puli made with new rice and a holy dip at dawn are among the festival observances.', bn: 'মকর সংক্রান্তি ঋতু পরিবর্তন ও ফসলের ঐতিহ্যের সঙ্গে যুক্ত। নতুন চালের পিঠে-পুলি তৈরি এবং ভোরে পুণ্যস্নান এই উৎসবের পরিচিত রীতিগুলোর মধ্যে রয়েছে।' },
     },
     {
-      Icon: BookOpen, tone: 'learn',
+      Icon: BookOpen, tone: 'learn', img: '/gallery/festivals/saraswati-puja.jpg', position: '46% 28%',
       date: { en: 'Magh, Shukla Panchami', bn: 'মাঘ মাসের শুক্লা পঞ্চমী' }, name: { en: 'Saraswati Puja', bn: 'সরস্বতী পূজা' },
       details: [{ en: 'Books offered to the goddess', bn: 'দেবীর পায়ে বই নিবেদন' }, { en: 'Hate khori for young children', bn: 'ছোটদের হাতেখড়ি' }, { en: 'Yellow attire and khichuri bhog', bn: 'বাসন্তী সাজ ও খিচুড়ি ভোগ' }],
       text: { en: 'Students worship Maa Saraswati, the goddess of learning, and place their books before her. The puja is also associated with hate khori for young children and the colour yellow.', bn: 'বিদ্যার দেবী মা সরস্বতীর আরাধনায় ছাত্রছাত্রীরা তাঁর পায়ে বই নিবেদন করে। ছোটদের হাতেখড়ি এবং বাসন্তী রঙের পোশাকও সরস্বতীপুজোর পরিচিত অনুষঙ্গ।' },
