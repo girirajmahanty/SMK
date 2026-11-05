@@ -3689,3 +3689,9 @@ section:has(> .bgfx), footer:has(> .bgfx) { isolation: isolate; }
   }
   .fest4__chips button.is-active { color: var(--maroon-deep); background: linear-gradient(135deg, #fff1c9, var(--gold)); box-shadow: 0 0 14px -2px rgba(240, 190, 90, 0.7); }
 }
+/* Phones: the festival photo's shading started near-black at the top of the screen (82%), which showed as a dark
+   band behind the festival chips. The top is now the site's deep maroon and lighter; the title area keeps enough
+   shade for the gold heading, and the bottom stays darker behind the cards. */
+@media (max-width: 760px) {
+  .fest4__shade { background: linear-gradient(180deg, rgba(74, 22, 26, 0.5), rgba(46, 12, 15, 0.42) 28%, rgba(20, 5, 7, 0.32) 50%, rgba(20, 5, 7, 0.6)); }
+}
