@@ -3501,3 +3501,48 @@ section:has(> .bgfx), footer:has(> .bgfx) { isolation: isolate; }
   :where(main img[loading='lazy']:not([data-loaded])) { opacity: 1; }
   :where(main img[loading='lazy'][data-loaded]) { animation: none; }
 }
+
+/* =========================================================
+   Song card: rounder corners, a gold light running round its border, and a lively note icon.
+   The border light is one large conic-gradient square that is only rotated (transform), so the GPU turns it
+   without repainting, which keeps it smooth on phones too (unlike the custom-property rings elsewhere).
+   ========================================================= */
+.story2__music {
+  position: relative; isolation: isolate; padding: 2.5px; border: 0; border-radius: 22px;
+  background: color-mix(in srgb, var(--gold) 38%, transparent);
+  box-shadow: 0 10px 26px -16px rgba(74, 22, 26, 0.6);
+  transition: box-shadow 0.5s ease;
+}
+.story2__music::before {
+  content: ''; position: absolute; z-index: -1; left: 50%; top: 50%; width: 760px; height: 760px; translate: -50% -50%;
+  pointer-events: none;
+  /* two lights on opposite sides, so both long edges of the card catch one at the same time */
+  background: conic-gradient(from 0deg,
+    transparent 0deg 95deg, rgba(214, 130, 40, 0.55) 125deg, #e8a93c 150deg, #fff4d6 168deg, #d98a2b 176deg, transparent 180deg,
+    transparent 180deg 275deg, rgba(214, 130, 40, 0.55) 305deg, #e8a93c 330deg, #fff4d6 348deg, #d98a2b 356deg, transparent 360deg);
+  animation: songBorderLight 6s linear infinite;
+}
+.story2__music.is-playing::before { animation-duration: 3s; }
+.story2__music.is-playing { box-shadow: 0 10px 26px -16px rgba(74, 22, 26, 0.6), 0 0 22px -8px rgba(240, 190, 90, 0.7); }
+@keyframes songBorderLight { to { transform: rotate(1turn); } }
+.story2__music-controls { position: relative; border-radius: 19.5px; background: var(--card); }
+
+/* Note icon: breathes softly at rest; while the stotra plays the note sways and two rings ripple out of it. */
+.story2__music-icon { position: relative; animation: noteBreath 3.2s ease-in-out infinite; }
+@keyframes noteBreath { 50% { transform: scale(1.07); } }
+.story2__music-icon::before, .story2__music-icon::after {
+  content: ''; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; opacity: 0;
+  border: 1.5px solid rgba(227, 183, 104, 0.8);
+}
+.story2__music.is-playing .story2__music-icon { animation: none; }
+.story2__music.is-playing .story2__music-icon::before { animation: noteRipple 2s ease-out infinite; }
+.story2__music.is-playing .story2__music-icon::after { animation: noteRipple 2s ease-out 1s infinite; }
+@keyframes noteRipple { from { transform: scale(1); opacity: 0.85; } to { transform: scale(1.6); opacity: 0; } }
+.story2__music.is-playing .story2__music-icon .lucide { animation: noteSway 1.3s ease-in-out infinite; }
+@keyframes noteSway { 0%, 100% { transform: translateY(0) rotate(-8deg); } 50% { transform: translateY(-2px) rotate(8deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .story2__music::before { animation: none; }
+  .story2__music-icon, .story2__music.is-playing .story2__music-icon .lucide,
+  .story2__music.is-playing .story2__music-icon::before, .story2__music.is-playing .story2__music-icon::after { animation: none; }
+}
