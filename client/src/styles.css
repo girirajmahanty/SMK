@@ -3710,3 +3710,14 @@ section:has(> .bgfx), footer:has(> .bgfx) { isolation: isolate; }
 @media (prefers-reduced-motion: reduce) {
   .fest4__layer.is-active img { animation: none; }
 }
+
+/* Phones: the visit info cards (best time, must see, language, ...) stacked a big medal above two short lines, so each
+   card was ~165px tall with ~95px above the text. On narrow screens the medal sits on the left and the text beside it,
+   left-aligned: the same content in a compact, even row. */
+@media (max-width: 520px) {
+  .visit3__card { display: grid; grid-template-columns: auto 1fr; column-gap: 1rem; align-items: center; text-align: left; padding: 1rem 1.1rem 1rem 1.2rem; }
+  .visit3__card-medal { grid-row: span 2; width: 50px; height: 50px; margin: 0 0.15rem 0 0.1rem; }
+  .visit3__card-medal .lucide { width: 1.3rem; height: 1.3rem; }
+  .visit3__card .visit2__label { align-self: end; }
+  .visit3__card-value { align-self: start; margin-top: 0.2rem; }
+}
