@@ -9,7 +9,7 @@ const years = [2026, 2027, 2028, 2029, 2030];
 
 test('every displayed festival has verified occurrences for 2026–2030', () => {
   const names = village.festivals.map(({ name }) => name.en);
-  assert.equal(names.length, 13);
+  assert.equal(names.length, 12);
   assert.equal(new Set(names).size, names.length);
   assert.deepEqual(Object.keys(festivalSchedule).sort(), [...names].sort());
 
@@ -59,7 +59,7 @@ test('multi-day festivals stay active through their inclusive end date', () => {
 });
 
 test('countdowns count calendar days in Asia/Kolkata', () => {
-  const range = nextFestivalOccurrence('Hori', kolkataTime('2027-04-05T23:59:00'));
+  const range = nextFestivalOccurrence('Harinam', kolkataTime('2027-04-05T23:59:00'));
   assert.equal(daysUntil(range, kolkataTime('2027-04-05T23:59:00')), 1);
   assert.equal(daysUntil(range, kolkataTime('2027-04-06T00:01:00')), 0);
 });

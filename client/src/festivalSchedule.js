@@ -153,31 +153,6 @@ export const festivalSchedule = {
       day('2030-02-07', [drikEvent('festivals/vasant-panchami/vasant-panchami-puja-date-time.html', 2030)]),
     ],
   },
-  Hori: {
-    verificationStatus: 'verified',
-    occurrences: [
-      range('2026-04-06', '2026-04-08', [
-        drikPanjikaDay('06/04/2026'),
-        drikPanjikaDay('08/04/2026'),
-      ], { verifiedBy: 'local-user', observance: 'User-confirmed local dates: 22–24 Chaitra 1432.' }),
-      range('2027-04-06', '2027-04-08', [
-        drikPanjikaDay('06/04/2027'),
-        drikPanjikaDay('08/04/2027'),
-      ], { verifiedBy: 'local-user', observance: 'User-confirmed local dates: 22–24 Chaitra 1433.' }),
-      range('2028-04-05', '2028-04-07', [
-        drikPanjikaDay('05/04/2028'),
-        drikPanjikaDay('07/04/2028'),
-      ], { verifiedBy: 'local-user', observance: 'User-confirmed local dates: 22–24 Chaitra 1434.' }),
-      range('2029-04-05', '2029-04-07', [
-        drikPanjikaDay('05/04/2029'),
-        drikPanjikaDay('07/04/2029'),
-      ], { verifiedBy: 'local-user', observance: 'User-confirmed local dates: 22–24 Chaitra 1435.' }),
-      range('2030-04-06', '2030-04-08', [
-        drikPanjikaDay('06/04/2030'),
-        drikPanjikaDay('08/04/2030'),
-      ], { verifiedBy: 'local-user', observance: 'User-confirmed local dates: 22–24 Chaitra 1436.' }),
-    ],
-  },
   Harinam: {
     verificationStatus: 'verified',
     occurrences: [

@@ -104,7 +104,7 @@ export const village = {
       text: { en: 'In Sidhagora, worship of Manasa (Bishahari), the serpent goddess, is associated with Nag Panchami and Shravan Sankranti. Devotees pray for protection and well-being during the monsoon, and Manasamangal songs are part of the wider Bengali tradition.', bn: 'সিধাগোড়ায় সাপের দেবী মনসা (বিষহরী)-র পূজা নাগপঞ্চমী ও শ্রাবণ সংক্রান্তির সঙ্গে যুক্ত। বর্ষাকালে সুরক্ষা ও মঙ্গল কামনায় ভক্তরা আরাধনা করেন; মনসামঙ্গলের গানও বাংলার এই ঐতিহ্যের অংশ।' },
     },
     {
-      Icon: MoonStar, tone: 'moon',
+      Icon: MoonStar, tone: 'moon', img: '/gallery/festivals/jita-ashtami.jpg', position: '63% 45%',
       date: { en: 'Ashwin, Krishna Ashtami', bn: 'আশ্বিন মাসের কৃষ্ণ অষ্টমী' }, name: { en: 'Jita Ashtami', bn: 'জিতা অষ্টমী' },
       details: [{ en: 'A day-long nirjala fast', bn: 'সারাদিন নির্জলা উপবাস' }, { en: 'Puja of Jimutavahana', bn: 'জীমূতবাহনের পুজো' }, { en: 'Prayers for the children', bn: 'সন্তানের মঙ্গল কামনা' }],
       text: { en: 'Jita Ashtami is observed on Ashwin Krishna Ashtami. Mothers fast and worship Jimutavahana, praying for their children’s well-being and long life.', bn: 'আশ্বিন মাসের কৃষ্ণ অষ্টমীতে জিতা অষ্টমী পালিত হয়। সন্তানের মঙ্গল ও দীর্ঘায়ু কামনায় মায়েরা উপবাস রেখে জীমূতবাহনের পূজা করেন।' },
@@ -156,12 +156,6 @@ export const village = {
       date: { en: '22–24 Chaitra', bn: '২২–২৪ চৈত্র' }, name: { en: 'Harinam', bn: 'হরিনাম' },
       details: [{ en: 'Three days of sankirtan', bn: 'তিন দিন ধরে সংকীর্তন' }, { en: 'Khol and kartal accompaniment', bn: 'খোল-করতালের সঙ্গ' }, { en: 'Prasad shared with everyone', bn: 'সবার মধ্যে প্রসাদ বিতরণ' }],
       text: { en: 'Hari Naam brings devotees together for three days of sankirtan. The sound of khol and kartal and the singing of the divine name fill the celebration, followed by prasad shared with everyone.', bn: 'হরিনাম উপলক্ষে ভক্তরা তিন দিন ধরে সংকীর্তনে মিলিত হন। খোল-করতালের তালে হরিনাম কীর্তনে মুখর হয়ে ওঠে উৎসব, আর শেষে সবার মধ্যে প্রসাদ বিতরণ করা হয়।' },
-    },
-    {
-      Icon: Drum, tone: 'kirtan',
-      date: { en: '22–24 Chaitra · local dates', bn: '২২–২৪ চৈত্র · স্থানীয় তারিখ' }, name: { en: 'Hori', bn: 'হোরি' },
-      details: [{ en: 'Three-day Sidhagora observance', bn: 'সিধাগোড়ার তিন দিনের পালন' }, { en: '22–24 Chaitra in the village calendar', bn: 'গ্রামের পঞ্জিকায় ২২–২৪ চৈত্র' }],
-      text: { en: 'Hori is a separate local festival in Sidhagora, observed on 22–24 Chaitra according to the dates you provided. It is listed separately from Harinam.', bn: 'হোরি সিধাগোড়ার একটি স্বতন্ত্র স্থানীয় উৎসব, আপনার দেওয়া তারিখ অনুযায়ী ২২–২৪ চৈত্রে পালিত হয়। হরিনাম থেকে এটি আলাদা উৎসব হিসেবে দেখানো হয়েছে।' },
     },
   ],
 
