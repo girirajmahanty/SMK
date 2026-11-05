@@ -3512,6 +3512,9 @@ section:has(> .bgfx), footer:has(> .bgfx) { isolation: isolate; }
   background: color-mix(in srgb, var(--gold) 38%, transparent);
   box-shadow: 0 10px 26px -16px rgba(74, 22, 26, 0.6);
   transition: box-shadow 0.5s ease;
+  /* clip, not hidden: the turning light layer is far bigger than the card, and a hidden-overflow box can still be
+     scrolled by the browser (focus, scrollIntoView), which slid the controls sideways. A clipped box cannot scroll. */
+  overflow: clip;
 }
 .story2__music::before {
   content: ''; position: absolute; z-index: -1; left: 50%; top: 50%; width: 760px; height: 760px; translate: -50% -50%;
@@ -3545,4 +3548,38 @@ section:has(> .bgfx), footer:has(> .bgfx) { isolation: isolate; }
   .story2__music::before { animation: none; }
   .story2__music-icon, .story2__music.is-playing .story2__music-icon .lucide,
   .story2__music.is-playing .story2__music-icon::before, .story2__music.is-playing .story2__music-icon::after { animation: none; }
+}
+
+/* Song buttons: with a mouse, the play/pause button fills with gold, lifts a little, glows, a shine sweeps across it
+   and its icon pops; the sound button gets the same gold fill. On touch screens the same gold shows while pressed. */
+.story2__music-btn { position: relative; isolation: isolate; overflow: hidden; overflow: clip;
+  transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, translate 0.25s ease; }
+.story2__music-btn--play::after {
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, 0.7) 50%, transparent 70%);
+  transform: translateX(-120%);
+}
+@media (hover: hover) {
+  .story2__music-btn--play:hover:not(:disabled) {
+    translate: 0 -1px; color: var(--maroon-deep); border-color: transparent;
+    background: linear-gradient(135deg, #fff1c9, var(--gold));
+    box-shadow: 0 8px 18px -10px rgba(201, 140, 40, 0.9), 0 0 0 3px color-mix(in srgb, var(--gold) 22%, transparent);
+  }
+  .story2__music-btn--play:hover:not(:disabled)::after { transform: translateX(120%); transition: transform 0.75s ease; }
+  .story2__music-btn--play:hover:not(:disabled) .lucide { animation: songIconPop 0.5s ease; }
+  .story2__music-btn--mute:hover:not(:disabled) {
+    color: var(--maroon-deep); border-color: transparent; background: linear-gradient(135deg, #fff1c9, var(--gold));
+    box-shadow: 0 6px 14px -8px rgba(201, 140, 40, 0.9);
+  }
+  .story2__music-btn--mute:hover:not(:disabled) .lucide { animation: songIconPop 0.5s ease; }
+}
+@keyframes songIconPop { 40% { transform: scale(1.28); } }
+@media (hover: none) {
+  .story2__music-btn:active:not(:disabled) { color: var(--maroon-deep); border-color: transparent; background: linear-gradient(135deg, #fff1c9, var(--gold)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .story2__music-btn { transition: none; }
+  .story2__music-btn--play:hover:not(:disabled) { translate: none; }
+  .story2__music-btn--play::after { display: none; }
+  .story2__music-btn .lucide { animation: none !important; }
 }
