@@ -11,8 +11,8 @@ import Seal from './Seal.jsx';
 import BgFx from './BgFx.jsx';
 
 // The village song (client/public/audio). Browsers keep /audio files for 7 days, so bump ?v= whenever the file
-// changes, or returning visitors keep hearing the old one. v=2: first 10 seconds cut.
-const VILLAGE_SONG = '/audio/village-song.mp3?v=2';
+// changes, or returning visitors keep hearing the old one. v=3: first 13 seconds cut (10, then 3 more).
+const VILLAGE_SONG = '/audio/village-song.mp3?v=3';
 
 // Counts up from `from` to `value` the first time it scrolls into view.
 function CountOnView({ value, from = 0, suffix = '' }) {
