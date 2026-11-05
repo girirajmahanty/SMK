@@ -122,7 +122,7 @@ export const village = {
       text: { en: 'The Mahishasuramardini hymns before dawn and the ritual of tarpan mark Mahalaya. It also brings the beginning of Devipaksha and the anticipation of Durga Puja.', bn: 'ভোরের আগে মহিষাসুরমর্দিনীর স্তোত্রপাঠ ও পিতৃপুরুষের উদ্দেশে তর্পণের মধ্য দিয়ে মহালয়া পালিত হয়। এই দিন দেবীপক্ষের সূচনা এবং দুর্গাপুজোর প্রতীক্ষাও নিয়ে আসে।' },
     },
     {
-      Icon: Swords, tone: 'durga',
+      Icon: Swords, tone: 'durga', img: '/gallery/festivals/durga-puja.jpg', position: '48% 62%',
       date: { en: 'Ashwin, Shukla Shashthi to Dashami', bn: 'আশ্বিন মাসের শুক্লা ষষ্ঠী থেকে দশমী' }, name: { en: 'Durga Puja', bn: 'দুর্গাপূজা' },
       details: [{ en: 'Celebrations from Shashthi to Dashami', bn: 'ষষ্ঠী থেকে দশমী পর্যন্ত উদ্‌যাপন' }, { en: 'Dhak, arati, and illuminated pandals', bn: 'ঢাক, আরতি ও আলোকসজ্জিত মণ্ডপ' }, { en: 'Sindoor khela and Bijoya greetings', bn: 'সিঁদুর খেলা ও বিজয়ার শুভেচ্ছা' }],
       text: { en: 'Durga Puja brings together worship, festive gatherings, and the sounds of dhak. From the decorated pandals to the farewell on Dashami, each day carries its own joy and devotion.', bn: 'দুর্গাপুজোয় আরাধনা, উৎসবের মিলন আর ঢাকের শব্দে মুখর হয়ে ওঠে চারপাশ। সাজানো মণ্ডপ থেকে দশমীর বিদায়—প্রতিটি দিনেই থাকে আনন্দ ও ভক্তির আবহ।' },
