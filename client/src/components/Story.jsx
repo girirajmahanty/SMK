@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Quote, Landmark, Hourglass, Eye, Users, House, ScrollText, Images, ChevronDown, Flame, Hammer } from 'lucide-react';
+import { ArrowRight, Quote, Landmark, Hourglass, Eye, Users, House, ScrollText, Images, ChevronDown, Flame, Hammer, Music2, Pause, Play, Volume2, VolumeX } from 'lucide-react';
 import { showGalleryCategory } from './Gallery.jsx';
 import { useLang } from '../i18n.jsx';
 import { village } from '../village.js';
@@ -9,6 +9,33 @@ import RichHead from './RichHead.jsx';
 import { pic } from '../responsive.js';
 import Seal from './Seal.jsx';
 import BgFx from './BgFx.jsx';
+
+const YOUTUBE_VIDEO_ID = 'gi_rDssK6cg';
+let youtubeApiPromise;
+
+function loadYouTubeApi() {
+  if (window.YT?.Player) return Promise.resolve(window.YT);
+  if (youtubeApiPromise) return youtubeApiPromise;
+
+  youtubeApiPromise = new Promise((resolve, reject) => {
+    const script = document.querySelector('script[src="https://www.youtube.com/iframe_api"]') || document.createElement('script');
+    const previousCallback = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => {
+      previousCallback?.();
+      resolve(window.YT);
+    };
+    script.onerror = () => {
+      youtubeApiPromise = null;
+      reject(new Error('Unable to load the YouTube player'));
+    };
+    if (!script.src) {
+      script.src = 'https://www.youtube.com/iframe_api';
+      document.head.appendChild(script);
+    }
+  });
+
+  return youtubeApiPromise;
+}
 
 // Counts up from `from` to `value` the first time it scrolls into view.
 function CountOnView({ value, from = 0, suffix = '' }) {
@@ -63,6 +90,174 @@ function StoryPhoto({ img, cat, sizes, delay, side }) {
 export default function Story({ visits = null }) {
   const { t, pick, lang } = useLang();
   const [more, setMore] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [needsTap, setNeedsTap] = useState(false);
+  const [playerReady, setPlayerReady] = useState(false);
+  const [musicUnavailable, setMusicUnavailable] = useState(false);
+  const sectionRef = useRef(null);
+  const playerContainerRef = useRef(null);
+  const playerRef = useRef(null);
+  const isInAbout = useRef(false);
+  const userPaused = useRef(false);
+  const manualPlayback = useRef(false);
+  const reducedMotion = useRef(false);
+  const songEnded = useRef(false);
+  const playAttempt = useRef(0);
+  const pendingAttempt = useRef(null);
+
+  const clearPendingAttempt = () => {
+    if (pendingAttempt.current !== null) {
+      window.clearTimeout(pendingAttempt.current);
+      pendingAttempt.current = null;
+    }
+  };
+
+  const startPlayback = (manual = false) => {
+    const player = playerRef.current;
+    if (!player) return;
+
+    if (manual) {
+      userPaused.current = false;
+      manualPlayback.current = true;
+      songEnded.current = false;
+    } else if (userPaused.current || songEnded.current || (reducedMotion.current && !manualPlayback.current)) {
+      return;
+    }
+
+    if (player.getPlayerState() === window.YT.PlayerState.PLAYING || pendingAttempt.current !== null) return;
+
+    const attempt = ++playAttempt.current;
+    setNeedsTap(false);
+    try {
+      player.playVideo();
+      pendingAttempt.current = window.setTimeout(() => {
+        pendingAttempt.current = null;
+        if (playAttempt.current === attempt && isInAbout.current && playerRef.current?.getPlayerState() !== window.YT.PlayerState.PLAYING) {
+          setNeedsTap(true);
+        }
+      }, 2500);
+    } catch (error) {
+      if (error.name === 'NotAllowedError') setNeedsTap(true);
+      else setMusicUnavailable(true);
+    }
+  };
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section || !playerContainerRef.current) return undefined;
+
+    const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+    reducedMotion.current = motionPreference.matches;
+    let active = true;
+
+    loadYouTubeApi().then((YT) => {
+      if (!active) return;
+      playerRef.current = new YT.Player(playerContainerRef.current, {
+        width: 360,
+        height: 200,
+        videoId: YOUTUBE_VIDEO_ID,
+        host: 'https://www.youtube-nocookie.com',
+        playerVars: {
+          autoplay: 0,
+          controls: 1,
+          enablejsapi: 1,
+          playsinline: 1,
+          rel: 0,
+          origin: window.location.origin,
+        },
+        events: {
+          onReady: (event) => {
+            if (!active) {
+              event.target.destroy();
+              return;
+            }
+            setPlayerReady(true);
+            if (isInAbout.current) startPlayback();
+          },
+          onStateChange: (event) => {
+            if (!active) return;
+            if (event.data === YT.PlayerState.PLAYING) {
+              clearPendingAttempt();
+              songEnded.current = false;
+              setIsPlaying(true);
+              setNeedsTap(false);
+            } else {
+              if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) clearPendingAttempt();
+              setIsPlaying(false);
+              if (event.data === YT.PlayerState.ENDED) songEnded.current = true;
+            }
+          },
+          onError: () => {
+            if (!active) return;
+            clearPendingAttempt();
+            setMusicUnavailable(true);
+            setNeedsTap(false);
+          },
+        },
+      });
+    }).catch(() => {
+      if (active) setMusicUnavailable(true);
+    });
+
+    const observer = new IntersectionObserver(([entry]) => {
+      isInAbout.current = entry.isIntersecting;
+      if (entry.isIntersecting) {
+        startPlayback();
+      } else {
+        playerRef.current?.pauseVideo();
+        playAttempt.current += 1;
+        clearPendingAttempt();
+        setNeedsTap(false);
+      }
+    }, { threshold: 0 });
+
+    const handleMotionChange = (event) => {
+      reducedMotion.current = event.matches;
+      if (event.matches && !manualPlayback.current) {
+        playerRef.current?.pauseVideo();
+        playAttempt.current += 1;
+        clearPendingAttempt();
+      } else if (isInAbout.current) {
+        startPlayback();
+      }
+    };
+
+    observer.observe(section);
+    motionPreference.addEventListener('change', handleMotionChange);
+
+    return () => {
+      active = false;
+      observer.disconnect();
+      motionPreference.removeEventListener('change', handleMotionChange);
+      isInAbout.current = false;
+      playAttempt.current += 1;
+      clearPendingAttempt();
+      playerRef.current?.destroy();
+      playerRef.current = null;
+    };
+  }, []);
+
+  const togglePlayback = () => {
+    if (!playerRef.current) return;
+    if (isPlaying) {
+      userPaused.current = true;
+      manualPlayback.current = true;
+      playAttempt.current += 1;
+      clearPendingAttempt();
+      playerRef.current.pauseVideo();
+    } else {
+      startPlayback(true);
+    }
+  };
+
+  const toggleMute = () => {
+    const player = playerRef.current;
+    if (!player) return;
+    if (isMuted) player.unMute();
+    else player.mute();
+    setIsMuted(!isMuted);
+  };
 
   const est = village.established;
   const timelineYear = est && (lang === 'bn' ? new Intl.NumberFormat('bn-IN', { useGrouping: false }).format(est) : est);
@@ -76,7 +271,7 @@ export default function Story({ visits = null }) {
   const { main, side } = village.storyImages;
 
   return (
-    <section id="story" className="band band--ivory story-sec">
+    <section id="story" ref={sectionRef} className="band band--ivory story-sec">
       <BgFx glows alpana />
       <div className="story2">
         {/* Photo collage */}
@@ -112,6 +307,39 @@ export default function Story({ visits = null }) {
               <p>{pick(village.storyQuote)}</p>
             </Reveal>
           )}
+
+          <div className={`story2__music${isPlaying ? ' is-playing' : ''}${musicUnavailable ? ' is-unavailable' : ''}`}>
+            <div className="story2__youtube-player" ref={playerContainerRef} />
+            <div className="story2__music-controls">
+              <span className="story2__music-icon" aria-hidden="true"><Music2 /></span>
+              <span className="story2__music-status" role="status" aria-live="polite">
+                <span className="story2__music-dot" aria-hidden="true" />
+                {musicUnavailable ? t('story.musicUnavailable') : !playerReady ? t('story.musicLoading') : isPlaying ? t('story.musicPlaying') : t('story.musicName')}
+              </span>
+              <div className="story2__music-actions">
+                <button
+                  type="button"
+                  className="story2__music-btn story2__music-btn--play"
+                  onClick={togglePlayback}
+                  disabled={!playerReady || musicUnavailable}
+                  aria-label={isPlaying ? t('story.musicPause') : needsTap ? t('story.musicTap') : t('story.musicPlay')}
+                >
+                  {isPlaying ? <Pause /> : <Play />}
+                  <span>{musicUnavailable ? t('story.musicUnavailable') : !playerReady ? t('story.musicLoading') : needsTap ? t('story.musicTap') : isPlaying ? t('story.musicPause') : t('story.musicPlay')}</span>
+                </button>
+                <button
+                  type="button"
+                  className="story2__music-btn story2__music-btn--mute"
+                  onClick={toggleMute}
+                  disabled={!playerReady || musicUnavailable}
+                  aria-label={isMuted ? t('story.musicUnmute') : t('story.musicMute')}
+                  aria-pressed={isMuted}
+                >
+                  {isMuted ? <VolumeX /> : <Volume2 />}
+                </button>
+              </div>
+            </div>
+          </div>
 
           {/* Three steps taken from the story itself: the emblem, the yearly puja, the new temple */}
           {est && (
