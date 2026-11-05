@@ -3668,3 +3668,24 @@ section:has(> .bgfx), footer:has(> .bgfx) { isolation: isolate; }
 /* the "See more photos" chip sits in the top corner everywhere now (the taller captions fill the bottom of the photo) */
 .story2__open, .story2__frame--side .story2__open { place-items: start start; padding: 0.8rem; }
 .story2__more { box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.6); }
+
+/* =========================================================
+   Phones/tablets (single-column story): the timeline's three steps sit in the middle of their columns, with the gold
+   line running from the first dot's centre to the last one's, instead of hugging the left edge (built for the
+   desktop's left-aligned text column).
+   ========================================================= */
+@media (max-width: 900px) {
+  .story2__timeline li { align-items: center; text-align: center; }
+  .story2__timeline::before { left: calc((100% - 1.6rem) / 6); right: calc((100% - 1.6rem) / 6); }
+}
+
+/* Phones: the festival name chips no longer sit on a near-black strip. The bar itself is clear; each chip is the
+   site's deep maroon with a gold edge and a soft shadow, so it stays readable when the bar sticks over the cards. */
+@media (max-width: 760px) {
+  .fest4__chips { background: none; }
+  .fest4__chips button {
+    color: #fff1d2; background: rgba(74, 22, 26, 0.9);
+    box-shadow: inset 0 0 0 1px rgba(240, 217, 168, 0.45), 0 6px 14px -8px rgba(0, 0, 0, 0.7);
+  }
+  .fest4__chips button.is-active { color: var(--maroon-deep); background: linear-gradient(135deg, #fff1c9, var(--gold)); box-shadow: 0 0 14px -2px rgba(240, 190, 90, 0.7); }
+}
