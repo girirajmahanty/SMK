@@ -29,7 +29,7 @@
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
     },
     {
-      "source": "/(opt|gallery|logo)/(.*)",
+      "source": "/(opt|gallery|logo|audio)/(.*)",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800" }]
     }
   ]

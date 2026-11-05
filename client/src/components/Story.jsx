@@ -10,32 +10,8 @@ import { pic } from '../responsive.js';
 import Seal from './Seal.jsx';
 import BgFx from './BgFx.jsx';
 
-const YOUTUBE_VIDEO_ID = 'gi_rDssK6cg';
-let youtubeApiPromise;
-
-function loadYouTubeApi() {
-  if (window.YT?.Player) return Promise.resolve(window.YT);
-  if (youtubeApiPromise) return youtubeApiPromise;
-
-  youtubeApiPromise = new Promise((resolve, reject) => {
-    const script = document.querySelector('script[src="https://www.youtube.com/iframe_api"]') || document.createElement('script');
-    const previousCallback = window.onYouTubeIframeAPIReady;
-    window.onYouTubeIframeAPIReady = () => {
-      previousCallback?.();
-      resolve(window.YT);
-    };
-    script.onerror = () => {
-      youtubeApiPromise = null;
-      reject(new Error('Unable to load the YouTube player'));
-    };
-    if (!script.src) {
-      script.src = 'https://www.youtube.com/iframe_api';
-      document.head.appendChild(script);
-    }
-  });
-
-  return youtubeApiPromise;
-}
+// The village song, played in the About section (client/public/audio).
+const VILLAGE_SONG = '/audio/village-song.mp3';
 
 // Counts up from `from` to `value` the first time it scrolls into view.
 function CountOnView({ value, from = 0, suffix = '' }) {
@@ -93,29 +69,20 @@ export default function Story({ visits = null }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [needsTap, setNeedsTap] = useState(false);
-  const [playerReady, setPlayerReady] = useState(false);
   const [musicUnavailable, setMusicUnavailable] = useState(false);
   const sectionRef = useRef(null);
-  const playerContainerRef = useRef(null);
-  const playerRef = useRef(null);
+  const audioRef = useRef(null);
   const isInAbout = useRef(false);
   const userPaused = useRef(false);
   const manualPlayback = useRef(false);
   const reducedMotion = useRef(false);
   const songEnded = useRef(false);
-  const playAttempt = useRef(0);
-  const pendingAttempt = useRef(null);
 
-  const clearPendingAttempt = () => {
-    if (pendingAttempt.current !== null) {
-      window.clearTimeout(pendingAttempt.current);
-      pendingAttempt.current = null;
-    }
-  };
-
+  // Plays the village song. Browsers block sound until the visitor has interacted with the page;
+  // then the button asks for a tap instead.
   const startPlayback = (manual = false) => {
-    const player = playerRef.current;
-    if (!player) return;
+    const audio = audioRef.current;
+    if (!audio) return;
 
     if (manual) {
       userPaused.current = false;
@@ -124,138 +91,96 @@ export default function Story({ visits = null }) {
     } else if (userPaused.current || songEnded.current || (reducedMotion.current && !manualPlayback.current)) {
       return;
     }
+    if (!audio.paused) return;
 
-    if (player.getPlayerState() === window.YT.PlayerState.PLAYING || pendingAttempt.current !== null) return;
-
-    const attempt = ++playAttempt.current;
     setNeedsTap(false);
-    try {
-      player.playVideo();
-      pendingAttempt.current = window.setTimeout(() => {
-        pendingAttempt.current = null;
-        if (playAttempt.current === attempt && isInAbout.current && playerRef.current?.getPlayerState() !== window.YT.PlayerState.PLAYING) {
-          setNeedsTap(true);
-        }
-      }, 2500);
-    } catch (error) {
-      if (error.name === 'NotAllowedError') setNeedsTap(true);
-      else setMusicUnavailable(true);
-    }
+    audio.play().catch((error) => {
+      if (error.name === 'NotAllowedError') {
+        if (isInAbout.current || manual) setNeedsTap(true);
+      } else if (error.name !== 'AbortError') {
+        setMusicUnavailable(true);
+      }
+    });
   };
 
   useEffect(() => {
     const section = sectionRef.current;
-    if (!section || !playerContainerRef.current) return undefined;
+    const audio = audioRef.current;
+    if (!section || !audio) return undefined;
 
     const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
     reducedMotion.current = motionPreference.matches;
-    let active = true;
 
-    loadYouTubeApi().then((YT) => {
-      if (!active) return;
-      playerRef.current = new YT.Player(playerContainerRef.current, {
-        width: 360,
-        height: 200,
-        videoId: YOUTUBE_VIDEO_ID,
-        host: 'https://www.youtube-nocookie.com',
-        playerVars: {
-          autoplay: 0,
-          controls: 1,
-          enablejsapi: 1,
-          playsinline: 1,
-          rel: 0,
-          origin: window.location.origin,
-        },
-        events: {
-          onReady: (event) => {
-            if (!active) {
-              event.target.destroy();
-              return;
-            }
-            setPlayerReady(true);
-            if (isInAbout.current) startPlayback();
-          },
-          onStateChange: (event) => {
-            if (!active) return;
-            if (event.data === YT.PlayerState.PLAYING) {
-              clearPendingAttempt();
-              songEnded.current = false;
-              setIsPlaying(true);
-              setNeedsTap(false);
-            } else {
-              if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) clearPendingAttempt();
-              setIsPlaying(false);
-              if (event.data === YT.PlayerState.ENDED) songEnded.current = true;
-            }
-          },
-          onError: () => {
-            if (!active) return;
-            clearPendingAttempt();
-            setMusicUnavailable(true);
-            setNeedsTap(false);
-          },
-        },
-      });
-    }).catch(() => {
-      if (active) setMusicUnavailable(true);
-    });
+    const onPlaying = () => {
+      songEnded.current = false;
+      setIsPlaying(true);
+      setNeedsTap(false);
+    };
+    const onPause = () => setIsPlaying(false);
+    const onEnded = () => {
+      songEnded.current = true;
+      setIsPlaying(false);
+    };
+    const onError = () => {
+      setMusicUnavailable(true);
+      setIsPlaying(false);
+      setNeedsTap(false);
+    };
+    audio.addEventListener('playing', onPlaying);
+    audio.addEventListener('pause', onPause);
+    audio.addEventListener('ended', onEnded);
+    audio.addEventListener('error', onError);
 
+    // Plays while the About section fills the middle of the screen, pauses when the visitor scrolls away.
+    // (Checking the middle band, not the edges: the section starts right below the full-screen hero,
+    // so at the top of the page its edge already touches the screen.)
     const observer = new IntersectionObserver(([entry]) => {
       isInAbout.current = entry.isIntersecting;
       if (entry.isIntersecting) {
         startPlayback();
       } else {
-        playerRef.current?.pauseVideo();
-        playAttempt.current += 1;
-        clearPendingAttempt();
+        audio.pause();
         setNeedsTap(false);
       }
-    }, { threshold: 0 });
+    }, { rootMargin: '-35% 0px -35% 0px', threshold: 0 });
 
     const handleMotionChange = (event) => {
       reducedMotion.current = event.matches;
-      if (event.matches && !manualPlayback.current) {
-        playerRef.current?.pauseVideo();
-        playAttempt.current += 1;
-        clearPendingAttempt();
-      } else if (isInAbout.current) {
-        startPlayback();
-      }
+      if (event.matches && !manualPlayback.current) audio.pause();
+      else if (isInAbout.current) startPlayback();
     };
 
     observer.observe(section);
     motionPreference.addEventListener('change', handleMotionChange);
 
     return () => {
-      active = false;
       observer.disconnect();
       motionPreference.removeEventListener('change', handleMotionChange);
+      audio.removeEventListener('playing', onPlaying);
+      audio.removeEventListener('pause', onPause);
+      audio.removeEventListener('ended', onEnded);
+      audio.removeEventListener('error', onError);
       isInAbout.current = false;
-      playAttempt.current += 1;
-      clearPendingAttempt();
-      playerRef.current?.destroy();
-      playerRef.current = null;
+      audio.pause();
     };
   }, []);
 
   const togglePlayback = () => {
-    if (!playerRef.current) return;
+    const audio = audioRef.current;
+    if (!audio) return;
     if (isPlaying) {
       userPaused.current = true;
       manualPlayback.current = true;
-      playAttempt.current += 1;
-      clearPendingAttempt();
-      playerRef.current.pauseVideo();
+      audio.pause();
     } else {
       startPlayback(true);
     }
   };
 
   const toggleMute = () => {
-    const player = playerRef.current;
-    if (!player) return;
-    if (isMuted) player.unMute();
-    else player.mute();
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.muted = !isMuted;
     setIsMuted(!isMuted);
   };
 
@@ -309,29 +234,30 @@ export default function Story({ visits = null }) {
           )}
 
           <div className={`story2__music${isPlaying ? ' is-playing' : ''}${musicUnavailable ? ' is-unavailable' : ''}`}>
-            <div className="story2__youtube-player" ref={playerContainerRef} />
+            {/* preload="none": the song (about 12 MB) downloads only when it starts playing */}
+            <audio ref={audioRef} src={VILLAGE_SONG} preload="none" />
             <div className="story2__music-controls">
               <span className="story2__music-icon" aria-hidden="true"><Music2 /></span>
               <span className="story2__music-status" role="status" aria-live="polite">
                 <span className="story2__music-dot" aria-hidden="true" />
-                {musicUnavailable ? t('story.musicUnavailable') : !playerReady ? t('story.musicLoading') : isPlaying ? t('story.musicPlaying') : t('story.musicName')}
+                {musicUnavailable ? t('story.musicUnavailable') : isPlaying ? t('story.musicPlaying') : t('story.musicName')}
               </span>
               <div className="story2__music-actions">
                 <button
                   type="button"
                   className="story2__music-btn story2__music-btn--play"
                   onClick={togglePlayback}
-                  disabled={!playerReady || musicUnavailable}
+                  disabled={musicUnavailable}
                   aria-label={isPlaying ? t('story.musicPause') : needsTap ? t('story.musicTap') : t('story.musicPlay')}
                 >
                   {isPlaying ? <Pause /> : <Play />}
-                  <span>{musicUnavailable ? t('story.musicUnavailable') : !playerReady ? t('story.musicLoading') : needsTap ? t('story.musicTap') : isPlaying ? t('story.musicPause') : t('story.musicPlay')}</span>
+                  <span>{musicUnavailable ? t('story.musicUnavailable') : needsTap ? t('story.musicTap') : isPlaying ? t('story.musicPause') : t('story.musicPlay')}</span>
                 </button>
                 <button
                   type="button"
                   className="story2__music-btn story2__music-btn--mute"
                   onClick={toggleMute}
-                  disabled={!playerReady || musicUnavailable}
+                  disabled={musicUnavailable}
                   aria-label={isMuted ? t('story.musicUnmute') : t('story.musicMute')}
                   aria-pressed={isMuted}
                 >
