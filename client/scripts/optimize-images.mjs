@@ -24,7 +24,9 @@ for (const file of walk(path.join(pub, 'gallery')).filter((f) => /\.jpe?g$/i.tes
   manifest[rel] = [];
   for (const w of sizes) {
     const name = `${base}-${w}.webp`;
-    await sharp(file).resize({ width: w, withoutEnlargement: true }).webp({ quality: 74, effort: 5 }).toFile(path.join(out, name));
+    // festival photos fill the whole screen behind the festival section, so they get a higher quality
+    const quality = rel.startsWith('/gallery/festivals/') ? 82 : 74;
+    await sharp(file).resize({ width: w, withoutEnlargement: true }).webp({ quality, effort: 5 }).toFile(path.join(out, name));
     manifest[rel].push([w, `/opt/${name}`]);
   }
 }

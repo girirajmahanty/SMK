@@ -3695,3 +3695,18 @@ section:has(> .bgfx), footer:has(> .bgfx) { isolation: isolate; }
 @media (max-width: 760px) {
   .fest4__shade { background: linear-gradient(180deg, rgba(74, 22, 26, 0.5), rgba(46, 12, 15, 0.42) 28%, rgba(20, 5, 7, 0.32) 50%, rgba(20, 5, 7, 0.6)); }
 }
+
+/* =========================================================
+   Festival photos. When the festival on screen has a photo, its shading is a little lighter so the photo shows.
+   Desktop (mouse): after the slow zoom, the photo keeps drifting gently side to side (translate only, on the GPU).
+   Phones keep just the zoom, which ends after a few seconds.
+   ========================================================= */
+.fest4__shade { transition: opacity 0.9s ease; }
+.fest4__bg:has(.fest4__layer.is-active img) .fest4__shade { opacity: 0.8; }
+@media (min-width: 761px) and (hover: hover) and (pointer: fine) {
+  .fest4__layer.is-active img { transform: scale(1.05); animation: festDrift 20s ease-in-out 1s infinite alternate; }
+}
+@keyframes festDrift { from { translate: -1.6% 0.4%; } to { translate: 1.6% -0.8%; } }
+@media (prefers-reduced-motion: reduce) {
+  .fest4__layer.is-active img { animation: none; }
+}

@@ -86,7 +86,7 @@ export const village = {
   // details: short points shown as chips on the card.
   festivals: [
     {
-      Icon: UtensilsCrossed, tone: 'sun',
+      Icon: UtensilsCrossed, tone: 'sun', img: '/gallery/festivals/jamai-shashti.jpg', position: '55% 52%',
       date: { en: 'Jyeshtha Shukla Shashthi', bn: 'জ্যৈষ্ঠ মাসের শুক্লা ষষ্ঠী' }, name: { en: 'Jamai Shashti', bn: 'জামাই ষষ্ঠী' },
       details: [{ en: 'Worship of Goddess Shashthi', bn: 'দেবী ষষ্ঠীর পূজা' }, { en: 'A warm welcome for the son-in-law', bn: 'জামাইকে সাদরে বরণ' }, { en: 'A family meal together', bn: 'পরিবারের সঙ্গে ভোজ' }],
       text: { en: 'On Jamai Shashti, a mother-in-law worships Goddess Shashthi and welcomes her son-in-law with affection. The family gathers over a festive meal, making the day a celebration of care and family bonds.', bn: 'জামাই ষষ্ঠীতে শাশুড়ি দেবী ষষ্ঠীর পূজা করে জামাইকে সাদরে বরণ করেন। পরিবারের সকলে মিলে উৎসবের ভোজে অংশ নেন; দিনটি স্নেহ ও পারিবারিক বন্ধনের আনন্দে ভরে ওঠে।' },

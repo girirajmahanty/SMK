@@ -139,10 +139,16 @@ export default function Festivals() {
       .catch((error) => console.error('Unable to load published festivals:', error));
     return () => { active = false; };
   }, []);
-  const list = useMemo(() => (publishedFestivals ?? village.festivals).map((festival) => ({
-    ...festival,
-    Icon: festival.Icon || FESTIVAL_ICONS[festival.icon] || null,
-  })), [publishedFestivals]);
+  const list = useMemo(() => (publishedFestivals ?? village.festivals).map((festival) => {
+    // A festival saved in the admin panel without a photo uses the photo given for it in village.js (matched by its
+    // English name), so new photos added in code show up; a photo chosen in the admin panel still wins.
+    const fallback = festival.img ? null : village.festivals.find((item) => item.img && item.name.en === festival.name?.en);
+    return {
+      ...festival,
+      ...(fallback && { img: fallback.img, position: festival.position || fallback.position }),
+      Icon: festival.Icon || FESTIVAL_ICONS[festival.icon] || null,
+    };
+  }), [publishedFestivals]);
   const dates = useFestivalDates(list);
   const status = festivalStatus(list, dates);
   const [active, setActive] = useState(0);

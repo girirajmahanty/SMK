@@ -1,4 +1,18 @@
 {
+ "/gallery/festivals/jamai-shashti.jpg": [
+  [
+   480,
+   "/opt/jamai-shashti-480.webp"
+  ],
+  [
+   960,
+   "/opt/jamai-shashti-960.webp"
+  ],
+  [
+   1400,
+   "/opt/jamai-shashti-1400.webp"
+  ]
+ ],
  "/gallery/hero-festival.jpg": [
   [
    480,
