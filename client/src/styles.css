@@ -3743,3 +3743,16 @@ section:has(> .bgfx), footer:has(> .bgfx) { isolation: isolate; }
   /* login / sign-up page: less space under the card before the footer */
   .auth { padding-bottom: 2.5rem; }
 }
+
+/* Phones, second pass: still less empty space.
+   - The festival list kept 55vh above the first card and 42vh between cards (~390px on a phone) so the festival
+     photo could show between them: twelve festivals meant ~4,700px of mostly empty scrolling. The photo still shows
+     between cards, but the spaces are about 60% smaller. The space after the last card stays large enough for it
+     to reach the middle of the screen and become the active festival.
+   - Sections sit a little closer again, and the footer starts closer to the last section. */
+@media (max-width: 760px) {
+  .fest4__list { gap: 24vh; padding: 34vh 0 26vh; }
+  .band { padding-block: 2rem; }
+  .band:has(> .wave) { padding-top: calc(34px + 1.75rem); }
+  .footer2 { padding-top: calc(34px + 1.25rem); }
+}
