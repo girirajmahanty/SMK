@@ -3641,3 +3641,30 @@ section:has(> .bgfx), footer:has(> .bgfx) { isolation: isolate; }
   .rhead.is-visible .rhead__gem::after, .rhead.is-visible .rhead__ornament .lucide,
   .story2__timeline.is-visible .story2__tl-dot, .rhead::before { animation: none; }
 }
+
+/* =========================================================
+   Story photo captions: readable, and never hidden under the small photo.
+   The small photo covers the bottom-right third of the big one (it spans 52%-100% of the photo block, the big
+   photo 0-78%), so the big photo's caption ends before that point and wraps instead. Captions are small dark
+   cards (not pills, which looked odd on two lines) with a gold edge, so the text stays clear on a busy photo.
+   ========================================================= */
+.story2__frame figcaption {
+  left: 14px; bottom: 14px; padding: 0.45rem 0.75rem 0.5rem 0.85rem; border-radius: 12px;
+  font-size: 0.82rem; font-weight: 600; line-height: 1.45; color: #fffaf0; text-wrap: pretty;
+  background: linear-gradient(135deg, rgba(36, 10, 13, 0.9), rgba(36, 10, 13, 0.78));
+  border: 1px solid rgba(240, 217, 168, 0.4); border-left: 3px solid var(--gold);
+  box-shadow: 0 8px 20px -10px rgba(0, 0, 0, 0.7);
+  text-shadow: none; -webkit-font-smoothing: antialiased;
+}
+/* big photo: stop at ~66% of its width, where the small photo begins */
+.story2__frame--main figcaption { right: calc(100% / 78 * 26 + 10px); }
+/* small photo: may use its full width */
+.story2__frame--side figcaption { left: 10px; right: 10px; bottom: 10px; font-size: 0.76rem; }
+@media (max-width: 600px) {
+  .story2__frame figcaption { left: 10px; bottom: 10px; padding: 0.38rem 0.6rem 0.42rem 0.7rem; font-size: 0.74rem; }
+  .story2__frame--main figcaption { right: calc(100% / 78 * 26 + 8px); }
+  .story2__frame--side figcaption { left: 8px; right: 8px; bottom: 8px; font-size: 0.7rem; }
+}
+/* the "See more photos" chip sits in the top corner everywhere now (the taller captions fill the bottom of the photo) */
+.story2__open, .story2__frame--side .story2__open { place-items: start start; padding: 0.8rem; }
+.story2__more { box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.6); }
