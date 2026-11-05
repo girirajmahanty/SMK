@@ -1789,11 +1789,6 @@ main:focus { outline: none; }
   letter-spacing: 0.6em; opacity: 0; transition: letter-spacing 1.2s var(--ease), opacity 1s; }
 .rhead.is-visible .rhead__eyebrow { letter-spacing: 0.24em; opacity: 1; }
 :lang(bn) .rhead__eyebrow { letter-spacing: normal; font-size: 0.95rem; }
-/* a tiny clay diya on each side of the eyebrow */
-.rhead__diya { position: relative; width: 18px; height: 8px; border-radius: 0 0 10px 10px; background: linear-gradient(#c2410c, #7c2d12); }
-.rhead__diya::after { content: ''; position: absolute; left: 50%; bottom: 6px; width: 7px; height: 12px; margin-left: -3.5px; border-radius: 50% 50% 50% 50% / 65% 65% 35% 35%;
-  background: radial-gradient(circle at 50% 70%, #fff7d6, #ffb703 45%, #f97316); box-shadow: 0 0 12px 4px rgba(255, 183, 3, 0.55); transform-origin: 50% 100%; animation: festFlame 0.9s ease-in-out infinite alternate; }
-@keyframes festFlame { from { transform: rotate(-5deg) scaleY(0.9); } to { transform: rotate(5deg) scaleY(1.12); } }
 
 .rhead__word-wrap, .rhead__tword-wrap { display: inline-block; overflow: hidden; vertical-align: bottom; padding: 0.08em 0.04em 0.14em; margin: -0.08em -0.04em -0.14em; }
 .rhead__word {
@@ -1826,7 +1821,7 @@ main:focus { outline: none; }
 .rhead__stat small { font-size: 0.82rem; color: var(--muted); }
 
 @media (prefers-reduced-motion: reduce) {
-  .rhead::before, .rhead__word, .rhead__diya::after { animation: none; }
+  .rhead::before, .rhead__word { animation: none; }
   .rhead { translate: none; rotate: none; }
 }
 @media (max-width: 760px) {
@@ -2232,7 +2227,7 @@ main #festivals { contain-intrinsic-size: auto 6200px; }
 .hero__seal, .hero-badge__word, .hero-badge__sep, .hero__flourish-gem, .hero__btn--1, .cta.hero__btn--1 { animation-iteration-count: 1; }
 
 /* decorative loops: off */
-.brand__logo::before, .brand__logo::after, .nav__links::before, .nav__pill::after, .lang-switch::before, .lang-switch__thumb::after, .login-btn::after, .hero__photo, .hero__emblem::before, .hero__emblem::after, .hero__emblem .hero__seal, .ring--a, .ring--b, .ring--c, .ring--petals, .orbit circle, .orbit--1, .orbit--2, .orbit--3, .hero__title::after, .hero-badge::before, .hero-badge__ping .lucide, .hero-badge__ping::after, .cta--gold::before, .cta--glass .cta__ring, .cta--glass .cta__end .lucide, .hero__inner::before, .seal__sheen, .story2__ring, .story2__frame--main figure, .gal-tabs::before, .gal-tabs__indicator::after, .gal-item__ring, .gal-more__btn::after, .auth__card::before, .auth__seal, .theme-toggle[data-mode='dark'] .theme-toggle__star, .icon-heart, .rhead::before, .rhead__diya::after, .rhead__word, .rhead.is-visible .rhead__ornament .lucide, .visit-sec__contours, .visit-sec__glow, .visit3__address::before, .visit3__directions, .visit3__directions::after, .visit3__address-pin .lucide, .visit3__address-pin::after, .visit3__card-medal::after, .visit3__cta-glow, .visit3__cta-icon, .footer2__glow, .footer2__logo, .footer2__season-icon, .footer2__season-icon .lucide, .footer2__rule .lucide, .footer2__designer, .wave__layer { animation: none; }
+.brand__logo::before, .brand__logo::after, .nav__links::before, .nav__pill::after, .lang-switch::before, .lang-switch__thumb::after, .login-btn::after, .hero__photo, .hero__emblem::before, .hero__emblem::after, .hero__emblem .hero__seal, .ring--a, .ring--b, .ring--c, .ring--petals, .orbit circle, .orbit--1, .orbit--2, .orbit--3, .hero__title::after, .hero-badge::before, .hero-badge__ping .lucide, .hero-badge__ping::after, .cta--gold::before, .cta--glass .cta__ring, .cta--glass .cta__end .lucide, .hero__inner::before, .seal__sheen, .story2__ring, .story2__frame--main figure, .gal-tabs::before, .gal-tabs__indicator::after, .gal-item__ring, .gal-more__btn::after, .auth__card::before, .auth__seal, .theme-toggle[data-mode='dark'] .theme-toggle__star, .icon-heart, .rhead::before, .rhead__word, .rhead.is-visible .rhead__ornament .lucide, .visit-sec__contours, .visit-sec__glow, .visit3__address::before, .visit3__directions, .visit3__directions::after, .visit3__address-pin .lucide, .visit3__address-pin::after, .visit3__card-medal::after, .visit3__cta-glow, .visit3__cta-icon, .footer2__glow, .footer2__logo, .footer2__season-icon, .footer2__season-icon .lucide, .footer2__rule .lucide, .footer2__designer, .wave__layer { animation: none; }
 
 /* running gold borders only while you point at them */
 .gal-item:hover .gal-item__ring, .gal-item:focus-visible .gal-item__ring { animation: ringSpin 3s linear infinite; }
@@ -3582,4 +3577,67 @@ section:has(> .bgfx), footer:has(> .bgfx) { isolation: isolate; }
   .story2__music-btn--play:hover:not(:disabled) { translate: none; }
   .story2__music-btn--play::after { display: none; }
   .story2__music-btn .lucide { animation: none !important; }
+}
+
+/* =========================================================
+   Section heading ornaments (in place of the clay diyas and the 🪔 emoji):
+   on each side of the eyebrow a fine gold line draws itself towards the text and ends in a small gold gem
+   that twinkles; under the title the section's icon sits in a gold medallion and floats gently.
+   Only transform and opacity move, so it stays smooth on phones.
+   ========================================================= */
+.rhead__gem { position: relative; display: inline-block; flex: 0 0 auto; width: 38px; height: 10px; }
+.rhead__gem:last-child { transform: scaleX(-1); } /* the right one is a mirror image, its gem also next to the text */
+.rhead__gem::before {
+  content: ''; position: absolute; top: 50%; left: 0; right: 10px; height: 1.5px; margin-top: -0.75px; border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold)); transform: scaleX(0); transform-origin: right;
+  transition: transform 0.9s var(--ease) 0.3s;
+}
+.rhead__gem::after {
+  content: ''; position: absolute; top: 50%; right: 0; width: 7px; height: 7px; margin-top: -3.5px;
+  rotate: 45deg; background: linear-gradient(135deg, #fff4d6, var(--gold) 55%, #b9782a); box-shadow: 0 0 6px rgba(240, 190, 90, 0.75);
+  opacity: 0; scale: 0.3; transition: opacity 0.5s ease 0.9s, scale 0.6s cubic-bezier(0.34, 1.6, 0.64, 1) 0.9s;
+}
+.rhead.is-visible .rhead__gem::before { transform: scaleX(1); }
+.rhead.is-visible .rhead__gem::after { opacity: 1; scale: 1; animation: gemTwinkle 2.8s ease-in-out 1.6s infinite; }
+.rhead.is-visible .rhead__gem:last-child::after { animation-delay: 3s; }
+@keyframes gemTwinkle { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.65); } }
+
+.rhead__ornament { color: var(--accent); }
+.rhead--light .rhead__ornament { color: var(--gold-light); }
+.rhead__ornament .lucide {
+  box-sizing: content-box; width: 1.05rem; height: 1.05rem; padding: 0.42rem; border-radius: 50%;
+  border: 1.5px solid color-mix(in srgb, var(--gold) 70%, transparent);
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--gold) 24%, transparent), transparent 72%);
+}
+.rhead.is-visible .rhead__ornament .lucide { animation: ornFloat 4.5s ease-in-out 1.6s infinite; }
+@keyframes ornFloat { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-3px) rotate(-6deg); } }
+
+/* =========================================================
+   Story timeline: each step's dot pops in as it lights up (phones too), and with a mouse it lifts and glows on hover.
+   ========================================================= */
+.story2__tl-dot {
+  transition: background 0.5s, color 0.5s, box-shadow 0.5s, transform 0.35s cubic-bezier(0.34, 1.6, 0.64, 1);
+  transition-delay: calc(0.4s + var(--k) * 0.45s), calc(0.4s + var(--k) * 0.45s), calc(0.4s + var(--k) * 0.45s), 0s;
+}
+.story2__timeline.is-visible .story2__tl-dot { animation: dotPop 0.6s cubic-bezier(0.34, 1.6, 0.64, 1) backwards; animation-delay: calc(0.4s + var(--k) * 0.45s); }
+@keyframes dotPop { 0% { transform: scale(0.55); } 100% { transform: scale(1); } }
+@media (hover: hover) and (pointer: fine) {
+  .story2__timeline li:hover .story2__tl-dot {
+    transform: translateY(-4px) scale(1.08); transition-delay: 0s;
+    box-shadow: 0 10px 22px -10px rgba(201, 140, 40, 0.9), 0 0 0 5px color-mix(in srgb, var(--gold) 24%, transparent);
+  }
+  .story2__timeline li:hover .story2__tl-dot .lucide { animation: songIconPop 0.5s ease; }
+}
+
+/* Desktop only (mouse): the soft breathing gold halo behind section headings comes back. It was switched off everywhere
+   in the calm-motion pass; a desktop handles it easily, phones keep it still. (Titles already shimmer via headShine.) */
+@media (hover: hover) and (pointer: fine) {
+  .rhead::before { animation: festHalo 4s ease-in-out infinite; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rhead__gem::before { transform: none; transition: none; }
+  .rhead__gem::after { opacity: 1; scale: 1; transition: none; }
+  .rhead.is-visible .rhead__gem::after, .rhead.is-visible .rhead__ornament .lucide,
+  .story2__timeline.is-visible .story2__tl-dot, .rhead::before { animation: none; }
 }

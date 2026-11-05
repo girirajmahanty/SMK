@@ -37,15 +37,16 @@ export function CountUp({ to, lang }) {
   return <b ref={ref}>{new Intl.NumberFormat(lang === 'bn' ? 'bn-IN' : 'en-IN').format(n)}</b>;
 }
 
-// Section heading: eyebrow between two flickering diyas, title words rising with a gold shimmer,
-// an ornament that draws itself, subtitle words floating up, optional counting stats.
+// Section heading: eyebrow between two gold ornaments (a line that draws itself, ending in a twinkling gem),
+// title words rising with a gold shimmer, an ornament with the section's icon in a gold medallion,
+// subtitle words floating up, optional counting stats.
 export default function RichHead({ eyebrow, title, text, Icon = Sparkles, stats, light = false, align = 'center', className = '', lang }) {
   return (
     <Reveal className={`head rhead ${light ? 'rhead--light' : ''} ${align === 'left' ? 'rhead--left' : ''} ${className}`}>
       <p className="rhead__eyebrow">
-        <span className="rhead__diya" aria-hidden="true" />
+        <span className="rhead__gem" aria-hidden="true" />
         <span>{eyebrow}</span>
-        <span className="rhead__diya" aria-hidden="true" />
+        <span className="rhead__gem" aria-hidden="true" />
       </p>
       <h2 className="head__title rhead__title">
         <span className="sr-only">{title}</span>
