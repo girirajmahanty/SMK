@@ -3446,3 +3446,58 @@ section:has(> .bgfx), footer:has(> .bgfx) { isolation: isolate; }
   @keyframes creditShimmer { }
   @keyframes navLine { }
 }
+
+/* =========================================================
+   Readability: subtext that is easy to read on a phone.
+   Bengali at regular weight and small sizes looked thin and faint, so descriptive lines get medium weight (500)
+   and small labels get semi-bold, a little more size and full-strength colour.
+   ========================================================= */
+/* descriptive lines under headings and in cards */
+.hero__sub, .rhead__text, .story2__p, .fest3__text, .life3__body p, .footer3__card p, .visit4__routes-head p { font-weight: 500; }
+.hero__rotate { font-weight: 600; }
+.hero__sub { color: rgba(245, 233, 208, 0.96); }
+.rhead--light .rhead__text { color: rgba(245, 233, 208, 0.93); }
+.life3__body p { color: rgba(245, 233, 208, 0.96); }
+.visit4__routes-head p { color: rgba(245, 233, 208, 0.9); }
+.footer3__card p { color: rgba(245, 233, 208, 0.92); }
+
+/* small labels */
+.story2__timeline li > span:last-child { font-size: 0.88rem; font-weight: 600; color: var(--text); }
+.rhead__stat small { font-weight: 600; color: var(--text); }
+.fest3__details li { font-size: 0.84rem; }
+.fest4__cd-cell small, :lang(bn) .fest4__cd-cell small { font-size: 0.8rem; color: rgba(245, 233, 208, 0.92); }
+.fest4__chips button, .fest4__index button { font-size: 0.84rem; font-weight: 700; color: rgba(255, 244, 210, 0.9); }
+.visit4__meta { font-size: 0.86rem; font-weight: 600; color: rgba(245, 233, 208, 0.9); }
+.footer2__season-date { font-weight: 600; }
+.footer3__copy { color: rgba(245, 233, 208, 0.82); }
+.story2__music-btn--play { font-size: 0.82rem; }
+@media (max-width: 600px) {
+  .story2__timeline li > span:last-child { font-size: 0.8rem; }
+  .story2__music-btn--play { font-size: 0.76rem; }
+}
+
+/* Phones: the "See more photos" chip on the story photos sat on top of their captions (it only rises in on hover
+   with a mouse, but touch screens always show it). It moves to the photo's top corner instead. */
+@media (hover: none) {
+  .story2__open, .story2__frame--side .story2__open { place-items: start start; padding: 0.7rem; }
+  .story2__more { box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.6); }
+}
+
+/* =========================================================
+   Small motion touches (opacity and scale only, so they stay smooth on phones)
+   ========================================================= */
+/* Photos fade in once they have loaded instead of popping in (data-loaded is set in main.jsx). */
+@keyframes imgIn { from { opacity: 0; } }
+:where(main img[loading='lazy']:not([data-loaded])) { opacity: 0; }
+:where(main img[loading='lazy'][data-loaded]) { animation: imgIn 0.7s ease both; }
+
+/* Touch screens: buttons give a little press when tapped. */
+@media (hover: none) {
+  :is(.cta, .story2__cta, .story2__readmore, .story2__music-btn, .gal-more__btn, .gal-tabs button, .fest4__chips button,
+    .fest4__index button, .fest4__cal, .visit3__directions, .visit3__copy, .hero__next, .login-btn):active { scale: 0.96; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(main img[loading='lazy']:not([data-loaded])) { opacity: 1; }
+  :where(main img[loading='lazy'][data-loaded]) { animation: none; }
+}
