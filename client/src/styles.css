@@ -3426,7 +3426,9 @@ section:has(> .bgfx), footer:has(> .bgfx) { isolation: isolate; }
      The panels get a slightly deeper tint instead, so text stays as readable. */
   *, *::before, *::after { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
   .nav::before { background: color-mix(in srgb, var(--bg) 97%, transparent); }
-  .hero__inner { background: linear-gradient(140deg, rgba(36, 10, 13, 0.8), rgba(36, 10, 13, 0.66)); }
+  /* The hero text has no panel behind it (only the photo's soft shading); on a small screen the temple carvings
+     sit right behind the words, so the text gets a deeper soft shadow to stand out from them. */
+  .hero__rotate, .hero__sub { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85), 0 0 14px rgba(20, 5, 7, 0.9), 0 0 28px rgba(20, 5, 7, 0.6); }
   .hero-badge, .hero__visits, .cta--glass { background-color: rgba(30, 8, 10, 0.5); }
 
   /* Light layers blended over moving pictures flicker on phones. */
