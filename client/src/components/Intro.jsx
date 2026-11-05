@@ -3,18 +3,17 @@ import { ArrowRight, Sparkles } from 'lucide-react';
 import { useLang } from '../i18n.jsx';
 import Seal from './Seal.jsx';
 
-const AUTO_MS = 6000;
+// How long the gold ring around "Enter" takes to fill (decoration only).
+const RING_MS = 2400;
 
-// Full-screen welcome splash, shown once per browser session. A gold "Enter" button (a tap anywhere works too);
-// its ring fills over a few seconds and the site opens by itself.
+// Full-screen welcome splash on every page load, closed with a tap (on the gold "Enter" button or anywhere).
+// It waits for that tap on purpose: browsers only allow sound after the visitor has tapped the page,
+// so this tap is what lets the village song start by itself in the About section.
 export default function Intro() {
   const { t } = useLang();
-  const [state, setState] = useState(() => {
-    try { return sessionStorage.getItem('vl-intro') ? 'gone' : 'open'; } catch { return 'open'; }
-  });
+  const [state, setState] = useState('open');
 
   const enter = () => {
-    try { sessionStorage.setItem('vl-intro', '1'); } catch { /* ignore */ }
     setState((s) => (s === 'open' ? 'closing' : s));
     setTimeout(() => setState('gone'), 900);
   };
@@ -23,16 +22,10 @@ export default function Intro() {
     document.body.style.overflow = state === 'open' ? 'hidden' : '';
   }, [state]);
 
-  useEffect(() => {
-    if (state !== 'open') return;
-    const id = setTimeout(enter, AUTO_MS);
-    return () => clearTimeout(id);
-  }, [state]);
-
   if (state === 'gone') return null;
 
   return (
-    <div className={`intro ${state === 'closing' ? 'is-closing' : ''}`} onClick={enter} style={{ '--intro-ms': `${AUTO_MS}ms` }}>
+    <div className={`intro ${state === 'closing' ? 'is-closing' : ''}`} onClick={enter} style={{ '--intro-ms': `${RING_MS}ms` }}>
       <div className="rays" aria-hidden="true" />
       <div className="intro__inner">
         <Seal size={190} className="intro__seal" shine />
@@ -45,7 +38,7 @@ export default function Intro() {
           <span>{t('intro.enter')}</span>
           <ArrowRight className="intro__enter-arrow" />
         </button>
-        <p className="intro__tap">{t('intro.auto')}</p>
+        <p className="intro__tap">{t('intro.tap')}</p>
       </div>
     </div>
   );

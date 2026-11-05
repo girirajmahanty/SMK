@@ -74,8 +74,6 @@ export default function Story({ visits = null }) {
   const audioRef = useRef(null);
   const isInAbout = useRef(false);
   const userPaused = useRef(false);
-  const manualPlayback = useRef(false);
-  const reducedMotion = useRef(false);
   const songEnded = useRef(false);
   const stopWaitingForTap = useRef(null);
 
@@ -105,10 +103,9 @@ export default function Story({ visits = null }) {
 
     if (manual) {
       userPaused.current = false;
-      manualPlayback.current = true;
       songEnded.current = false;
-    } else if (userPaused.current || songEnded.current || (reducedMotion.current && !manualPlayback.current)) {
-      return;
+    } else if (userPaused.current || songEnded.current) {
+      return; // the visitor paused it, or it has played to the end: don't restart on scroll
     }
     if (!audio.paused) return;
 
@@ -127,9 +124,6 @@ export default function Story({ visits = null }) {
     const section = sectionRef.current;
     const audio = audioRef.current;
     if (!section || !audio) return undefined;
-
-    const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
-    reducedMotion.current = motionPreference.matches;
 
     const onPlaying = () => {
       songEnded.current = false;
@@ -164,18 +158,10 @@ export default function Story({ visits = null }) {
       }
     }, { rootMargin: '-35% 0px -35% 0px', threshold: 0 });
 
-    const handleMotionChange = (event) => {
-      reducedMotion.current = event.matches;
-      if (event.matches && !manualPlayback.current) audio.pause();
-      else if (isInAbout.current) startPlayback();
-    };
-
     observer.observe(section);
-    motionPreference.addEventListener('change', handleMotionChange);
 
     return () => {
       observer.disconnect();
-      motionPreference.removeEventListener('change', handleMotionChange);
       audio.removeEventListener('playing', onPlaying);
       audio.removeEventListener('pause', onPause);
       audio.removeEventListener('ended', onEnded);
@@ -191,7 +177,6 @@ export default function Story({ visits = null }) {
     if (!audio) return;
     if (isPlaying) {
       userPaused.current = true;
-      manualPlayback.current = true;
       audio.pause();
     } else {
       startPlayback(true);
