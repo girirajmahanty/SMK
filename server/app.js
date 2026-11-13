@@ -124,8 +124,10 @@ app.get('/uploads/:filename', wrap(async (req, res) => {
   if (!/^[a-f0-9-]+\.(?:png|jpg|gif|webp)$/i.test(req.params.filename)) return res.status(404).json({ error: 'Image not found.' });
   const image = await store.cms.readMedia(req.params.filename);
   if (!image) return res.status(404).json({ error: 'Image not found.' });
+  // Every upload (and every replacement) gets a new random file name, so a file never changes: browsers and the
+  // hosting CDN (s-maxage) may keep it for a year, and the function and database only serve it the first time.
   res.set({
-    'Cache-Control': 'public, max-age=31536000, immutable',
+    'Cache-Control': 'public, max-age=31536000, s-maxage=31536000, immutable',
     'Content-Security-Policy': "default-src 'none'; sandbox",
     'X-Content-Type-Options': 'nosniff',
   }).type(image.mime).send(image.data);

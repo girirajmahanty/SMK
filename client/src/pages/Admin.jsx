@@ -10,6 +10,7 @@ import { useAuth } from '../auth.jsx';
 import { useLang, publicTextDefaults } from '../i18n.jsx';
 import { api } from '../api.js';
 import { village } from '../village.js';
+import { small } from '../responsive.js';
 import './admin.css';
 
 const VILLAGE_FIELDS = [
@@ -53,6 +54,20 @@ const EMPTY_FESTIVAL = {
   details: [], tone: 'kali', icon: 'Flame', img: '', position: '', featured: true, published: true,
   startDate: '', endDate: '', order: 0,
 };
+// Photos that ship with the website (client/public), offered next to uploaded images when choosing a festival photo.
+const SITE_PHOTOS = [
+  ...village.festivals.filter((item) => item.img).map((item) => ({ url: item.img, label: `Festival photo · ${item.name.en}` })),
+  ...[village.storyImages.main, village.storyImages.side, ...village.gallery].filter((item) => item?.src)
+    .map((item) => ({ url: item.src, label: `Website photo · ${item.caption?.en?.split(' — ')[0] || item.src.split('/').pop()}` })),
+].filter((item, index, all) => all.findIndex((other) => other.url === item.url) === index);
+// The photo a festival shows when none is chosen in the admin panel (matched by English name, as the website does).
+const defaultFestivalPhoto = (festival) => village.festivals.find((item) => item.img && item.name.en === festival?.name?.en) || null;
+const parseFocus = (value) => {
+  const match = /^(\d{1,3}(?:\.\d+)?)% (\d{1,3}(?:\.\d+)?)%$/.exec(value || '');
+  return match ? { x: Math.min(100, Number(match[1])), y: Math.min(100, Number(match[2])) } : { x: 50, y: 50 };
+};
+// One festival import per page load: React's development double render and quick reloads used to send two at once.
+let festivalImport = null;
 const prettyKey = (key) => key.split('.').slice(0, -1).join(' · ') || 'Website copy';
 const formatDate = (value) => value ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(value)) : '—';
 
@@ -187,8 +202,14 @@ function FestivalEditor({ festival, media, onClose, onSave }) {
             <label>First day<input type="date" value={form.startDate || ''} onChange={(event) => change('startDate', event.target.value)} /></label>
             <label>Last day<input type="date" value={form.endDate || ''} min={form.startDate || undefined} onChange={(event) => change('endDate', event.target.value)} /></label>
             <label>Festival symbol<select value={form.icon || 'Flame'} onChange={(event) => change('icon', event.target.value)}>{['Flame', 'Wheat', 'Landmark', 'Drum', 'Soup', 'ShoppingBasket', 'Sun', 'Swords', 'UtensilsCrossed', 'CloudRain', 'Sprout', 'MoonStar', 'Sunrise', 'BookOpen'].map((icon) => <option key={icon}>{icon}</option>)}</select></label>
-            <label>Festival image<select value={form.img || ''} onChange={(event) => change('img', event.target.value)}><option value="">Use the existing card artwork</option>{media.map((item) => <option value={item.url} key={item.id}>{item.caption || item.filename}</option>)}</select></label>
+            <label>Festival image<select value={form.img || ''} onChange={(event) => change('img', event.target.value)}>
+              <option value="">{defaultFestivalPhoto(form) ? 'Default: this festival’s website photo' : 'Use the existing card artwork'}</option>
+              {!!SITE_PHOTOS.length && <optgroup label="Website photos">{SITE_PHOTOS.map((item) => <option value={item.url} key={item.url}>{item.label}</option>)}</optgroup>}
+              {!!media.length && <optgroup label="Uploaded images">{media.map((item) => <option value={item.url} key={item.id}>{item.caption || item.filename}</option>)}</optgroup>}
+              {form.img && !SITE_PHOTOS.some((item) => item.url === form.img) && !media.some((item) => item.url === form.img) && <option value={form.img}>Current image</option>}
+            </select></label>
           </div>
+          <FocusPicker src={form.img || defaultFestivalPhoto(form)?.img || ''} value={form.position || (form.img ? '' : defaultFestivalPhoto(form)?.position) || ''} onChange={(value) => change('position', value)} />
           <div className="admin-form-grid admin-form-grid--flags">
             <label className="admin-check"><input type="checkbox" checked={form.published !== false} onChange={(event) => change('published', event.target.checked)} /> Published on the website</label>
           </div>
@@ -201,6 +222,39 @@ function FestivalEditor({ festival, media, onClose, onSave }) {
         </form>
       </section>
     </div>
+  );
+}
+
+// Choose which part of a festival photo stays in view when the website crops it (tall phone screens show a narrow
+// strip, wide desktop screens a short band). Click the photo or use the sliders; the two previews show both crops.
+function FocusPicker({ src, value, onChange }) {
+  if (!src) return null;
+  const focus = parseFocus(value);
+  const set = (x, y) => onChange(`${Math.round(x)}% ${Math.round(y)}%`);
+  const pick = (event) => {
+    const box = event.currentTarget.getBoundingClientRect();
+    set(((event.clientX - box.left) / box.width) * 100, ((event.clientY - box.top) / box.height) * 100);
+  };
+  const objectPosition = `${focus.x}% ${focus.y}%`;
+  return (
+    <fieldset className="admin-focus">
+      <legend>Photo focus <small>the part kept in view when the photo is cropped</small></legend>
+      <div className="admin-focus__body">
+        <button type="button" className="admin-focus__photo" onClick={pick} aria-label="Click the part of the photo to keep in view">
+          <img src={src} alt="" />
+          <span className="admin-focus__dot" style={{ left: `${focus.x}%`, top: `${focus.y}%` }} aria-hidden="true" />
+        </button>
+        <div className="admin-focus__previews">
+          <figure><div className="admin-focus__crop admin-focus__crop--phone"><img src={src} alt="" style={{ objectPosition }} /></div><figcaption>Phone</figcaption></figure>
+          <figure><div className="admin-focus__crop admin-focus__crop--desktop"><img src={src} alt="" style={{ objectPosition }} /></div><figcaption>Desktop</figcaption></figure>
+        </div>
+      </div>
+      <div className="admin-focus__sliders">
+        <label>Left ↔ right<input type="range" min="0" max="100" value={focus.x} onChange={(event) => set(Number(event.target.value), focus.y)} /></label>
+        <label>Top ↕ bottom<input type="range" min="0" max="100" value={focus.y} onChange={(event) => set(focus.x, Number(event.target.value))} /></label>
+        <button type="button" className="admin-button admin-button--small" onClick={() => onChange('')}>Reset</button>
+      </div>
+    </fieldset>
   );
 }
 
@@ -311,7 +365,8 @@ function FestivalWorkspace({ festivals, media, onCreate, onUpdate, onDelete, onR
       <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Festival</th><th>Visibility</th><th>Dates</th><th>Updated</th><th>Order</th><th><span className="admin-sr-only">Actions</span></th></tr></thead><tbody>
         {shown.map((festival) => {
           const actualIndex = festivals.findIndex((item) => item.id === festival.id);
-          return <tr key={festival.id}><td><div className="admin-festival-cell">{festival.img ? <img src={festival.img} alt="" /> : <span className="admin-festival-cell__icon"><Flame /></span>}<div><strong>{festival.name.en}</strong><small lang="bn">{festival.name.bn}</small></div></div></td><td><span className={`admin-status ${festival.published === false ? 'is-draft' : ''}`}><i />{festival.published === false ? 'Draft' : 'Live'}</span></td><td>{festival.startDate || festival.date?.en || 'Date not set'}</td><td>{formatDate(festival.updatedAt || festival.createdAt)}</td><td className="admin-order-cell"><button disabled={actualIndex === 0} onClick={() => onReorder(actualIndex, -1)} aria-label={`Move ${festival.name.en} up`}><ArrowUp /></button><button disabled={actualIndex === festivals.length - 1} onClick={() => onReorder(actualIndex, 1)} aria-label={`Move ${festival.name.en} down`}><ArrowDown /></button></td><td><div className="admin-row-actions"><button className="admin-button admin-button--small" onClick={() => setEditing(festival)}>Edit</button><button className="admin-icon-button admin-danger" onClick={() => { if (window.confirm(`Permanently delete ${festival.name.en}? This cannot be undone.`)) onDelete(festival); }} aria-label={`Delete ${festival.name.en}`}><Trash2 /></button></div></td></tr>;
+          const photo = festival.img || defaultFestivalPhoto(festival)?.img;
+          return <tr key={festival.id}><td><div className="admin-festival-cell">{photo ? <img src={small(photo)} alt="" /> : <span className="admin-festival-cell__icon"><Flame /></span>}<div><strong>{festival.name.en}</strong><small lang="bn">{festival.name.bn}{!festival.img && photo && <em className="admin-festival-cell__note"> · website photo</em>}</small></div></div></td><td><span className={`admin-status ${festival.published === false ? 'is-draft' : ''}`}><i />{festival.published === false ? 'Draft' : 'Live'}</span></td><td>{festival.startDate || festival.date?.en || 'Date not set'}</td><td>{formatDate(festival.updatedAt || festival.createdAt)}</td><td className="admin-order-cell"><button disabled={actualIndex === 0} onClick={() => onReorder(actualIndex, -1)} aria-label={`Move ${festival.name.en} up`}><ArrowUp /></button><button disabled={actualIndex === festivals.length - 1} onClick={() => onReorder(actualIndex, 1)} aria-label={`Move ${festival.name.en} down`}><ArrowDown /></button></td><td><div className="admin-row-actions"><button className="admin-button admin-button--small" onClick={() => setEditing(festival)}>Edit</button><button className="admin-icon-button admin-danger" onClick={() => { if (window.confirm(`Permanently delete ${festival.name.en}? This cannot be undone.`)) onDelete(festival); }} aria-label={`Delete ${festival.name.en}`}><Trash2 /></button></div></td></tr>;
         })}
       </tbody></table>
       {!shown.length && <div className="admin-empty"><Flame /><h3>No festivals found</h3><p>Add a festival or adjust your filters.</p></div>}</div>
@@ -408,7 +463,8 @@ function AdminDashboard() {
           icon: Object.entries({ Flame, Wheat, Landmark, Drum, Soup, ShoppingBasket, Sun, Swords, UtensilsCrossed, CloudRain, Sprout, MoonStar, Sunrise, BookOpen })
             .find(([, Icon]) => Icon === festival.Icon)?.[0] || 'Flame',
         }));
-        await api.initializeFestivals(initial);
+        festivalImport ??= api.initializeFestivals(initial).finally(() => { festivalImport = null; });
+        await festivalImport;
         const [updatedFestivals, updatedOverview] = await Promise.all([api.adminFestivals(), api.adminOverview()]);
         setFestivals(updatedFestivals.festivals);
         setOverview(updatedOverview);

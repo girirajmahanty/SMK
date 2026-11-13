@@ -211,8 +211,11 @@ test('image uploads validate decoded image content and expose only safe formats'
     method: 'POST', cookie, body: { data: `data:image/png;base64,${png}`, caption: 'Village temple' },
   });
   assert.equal(uploaded.response.status, 201, uploaded.data.error);
-  assert.equal(uploaded.data.mime, 'image/png');
-  assert.match(uploaded.data.url, /^\/uploads\/[a-f0-9-]+\.png$/);
+  // stored ready for the website: converted to WebP
+  assert.equal(uploaded.data.mime, 'image/webp');
+  assert.match(uploaded.data.url, /^\/uploads\/[a-f0-9-]+\.webp$/);
+  const stored = await fs.readFile(path.join(temporaryUploads, uploaded.data.filename));
+  assert.equal(stored.toString('ascii', 8, 12), 'WEBP');
 
   const replacement = await request(`/api/admin/media/${uploaded.data.id}/replace`, {
     method: 'PUT', cookie, body: { data: `data:image/png;base64,${png}` },
@@ -229,4 +232,31 @@ test('image uploads validate decoded image content and expose only safe formats'
   assert.equal(loggedOut.response.status, 200);
   assert.match(loggedOut.response.headers.get('set-cookie'), /Expires=Thu, 01 Jan 1970/);
   assert.equal((await request('/api/admin/overview')).response.status, 401);
+});
+
+test('two festival imports at the same moment import each festival once', async () => {
+  cmsData.festivals.length = 0;
+  cmsData.initialized = false;
+  const login = await request('/api/auth/login', { method: 'POST', body: { email: admin.email, password: 'StrongTestPassword123!' } });
+  const cookie = login.response.headers.get('set-cookie').split(';')[0];
+  const festival = (en, bn) => ({ name: { en, bn }, date: { en: 'x', bn: 'x' }, text: { en: 'x', bn: 'x' }, details: [], icon: 'Flame', published: true });
+  const body = { festivals: [festival('Durga Puja', 'দুর্গাপূজা'), festival('Kali Puja', 'কালীপূজা')] };
+  const [first, second] = await Promise.all([
+    request('/api/admin/festivals/initialize', { method: 'POST', cookie, body }),
+    request('/api/admin/festivals/initialize', { method: 'POST', cookie, body }),
+  ]);
+  assert.deepEqual([first.response.status, second.response.status].sort(), [200, 201]);
+  assert.equal(cmsData.festivals.length, 2);
+});
+
+test('festival photo focus points are kept only in the "X% Y%" form', async () => {
+  const login = await request('/api/auth/login', { method: 'POST', body: { email: admin.email, password: 'StrongTestPassword123!' } });
+  const cookie = login.response.headers.get('set-cookie').split(';')[0];
+  const base = { name: { en: 'Focus Fest', bn: 'ফোকাস' }, date: { en: 'x', bn: 'x' }, text: { en: 'x', bn: 'x' }, details: [], icon: 'Flame', published: true };
+  const created = await request('/api/admin/festivals', { method: 'POST', cookie, body: { ...base, position: '63% 45%' } });
+  assert.equal(created.response.status, 201);
+  assert.equal(created.data.position, '63% 45%');
+  const bad = await request(`/api/admin/festivals/${created.data.id}`, { method: 'PUT', cookie, body: { ...base, position: '150% 10%; color: red' } });
+  assert.equal(bad.response.status, 200);
+  assert.equal(bad.data.position, '');
 });

@@ -28,6 +28,32 @@ const validDate = (value) => {
   return parsed.getUTCFullYear() === year && parsed.getUTCMonth() === month - 1 && parsed.getUTCDate() === day;
 };
 const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res)).catch(next);
+// A photo's focus point as "X% Y%" (each 0-100), the part of the photo kept in view when it is cropped.
+const POSITION_PATTERN = /^(\d{1,3}(?:\.\d{1,2})?)% (\d{1,3}(?:\.\d{1,2})?)%$/;
+const focusPoint = (value) => {
+  const match = POSITION_PATTERN.exec(text(value, 20));
+  return match && Number(match[1]) <= 100 && Number(match[2]) <= 100 ? `${match[1]}% ${match[2]}%` : '';
+};
+// Uploaded photos are stored ready for the website: turned upright, at most 1600px on their longest side and saved as
+// WebP (a fraction of a phone photo's size). Animated GIFs are kept as they are.
+const MAX_STORED_SIDE = 1600;
+async function prepareUpload(dataUrl) {
+  const match = /^data:(image\/(?:png|jpeg|gif|webp));base64,([A-Za-z0-9+/]+={0,2})$/.exec(dataUrl || '');
+  if (!match) return { error: 'Choose a PNG, JPG, GIF, or WebP image.' };
+  const buffer = Buffer.from(match[2], 'base64');
+  const detected = imageType(buffer);
+  if (!buffer.length || buffer.length > MAX_IMAGE_BYTES || buffer.toString('base64') !== match[2] || detected !== match[1]
+    || !(await imageIsValid(buffer, detected))) {
+    return { error: 'Image is invalid or exceeds the 3 MB limit.' };
+  }
+  if (detected === 'image/gif') return { buffer, mime: detected, extension: 'gif' };
+  const optimized = await sharp(buffer, { limitInputPixels: 40_000_000, failOn: 'warning' })
+    .rotate()
+    .resize({ width: MAX_STORED_SIDE, height: MAX_STORED_SIDE, fit: 'inside', withoutEnlargement: true })
+    .webp({ quality: 82, effort: 5 })
+    .toBuffer();
+  return { buffer: optimized, mime: 'image/webp', extension: 'webp' };
+}
 
 function parseFestival(body, previous = {}) {
   const name = localized(body?.name, 120);
@@ -49,7 +75,7 @@ function parseFestival(body, previous = {}) {
       tone: text(body?.tone, 30) || previous.tone || 'kali',
       icon: FESTIVAL_ICONS.has(body?.icon) ? body.icon : (previous.icon || 'Flame'),
       img: text(body?.img, 500),
-      position: text(body?.position, 50),
+      position: focusPoint(body?.position),
       featured: body?.featured === undefined ? previous.featured ?? true : body.featured === true,
       published: body?.published === undefined ? previous.published !== false : body.published === true,
       startDate,
@@ -158,13 +184,17 @@ export function cmsRoutes(getStore) {
     const [festivals, initialized] = await Promise.all([store().festivals(), store().initialized()]);
     res.json({ festivals, initialized });
   }));
-  admin.post('/festivals/initialize', wrap(async (req, res) => {
-    if (await store().initialized()) return res.json({ initialized: true, festivals: await store().festivals() });
+  // One import at a time: two requests arriving together (a double click, two tabs, React's development double
+  // render) used to both see "not imported yet" and import every festival twice. Each import now waits for the one
+  // before it, so the second finds the work done.
+  let importQueue = Promise.resolve();
+  const importFestivals = async (req) => {
+    if (await store().initialized()) return { status: 200, body: { initialized: true, festivals: await store().festivals() } };
     const input = req.body?.festivals;
-    if (!Array.isArray(input) || input.length > MAX_FESTIVALS) return res.status(400).json({ error: 'Invalid festival defaults.' });
+    if (!Array.isArray(input) || input.length > MAX_FESTIVALS) return { status: 400, body: { error: 'Invalid festival defaults.' } };
     const normalized = input.map((item, index) => parseFestival({ ...item, order: index }));
     const invalid = normalized.find((item) => item.error);
-    if (invalid) return res.status(400).json({ error: invalid.error });
+    if (invalid) return { status: 400, body: { error: invalid.error } };
     const festivals = await store().festivals();
     const existingNames = new Set(festivals.map((festival) => festival.name.en.toLocaleLowerCase()));
     for (const item of normalized) {
@@ -176,7 +206,13 @@ export function cmsRoutes(getStore) {
     await store().setInitialized();
     const imported = await store().festivals();
     await log(req, 'Imported existing festivals', `${imported.length - festivals.length} festivals`);
-    res.status(201).json({ initialized: true, festivals: imported });
+    return { status: 201, body: { initialized: true, festivals: imported } };
+  };
+  admin.post('/festivals/initialize', wrap(async (req, res) => {
+    const task = importQueue.then(() => importFestivals(req));
+    importQueue = task.catch(() => {});
+    const { status, body } = await task;
+    res.status(status).json(body);
   }));
   admin.post('/festivals', wrap(async (req, res) => {
     const parsed = parseFestival(req.body);
@@ -224,15 +260,9 @@ export function cmsRoutes(getStore) {
 
   admin.get('/media', wrap(async (_req, res) => res.json(await store().media())));
   admin.post('/media', wrap(async (req, res) => {
-    const match = /^data:(image\/(?:png|jpeg|gif|webp));base64,([A-Za-z0-9+/]+={0,2})$/.exec(req.body?.data || '');
-    if (!match) return res.status(400).json({ error: 'Choose a PNG, JPG, GIF, or WebP image.' });
-    const buffer = Buffer.from(match[2], 'base64');
-    const detected = imageType(buffer);
-    if (!buffer.length || buffer.length > MAX_IMAGE_BYTES || buffer.toString('base64') !== match[2] || detected !== match[1]
-      || !(await imageIsValid(buffer, detected))) {
-      return res.status(400).json({ error: 'Image is invalid or exceeds the 3 MB limit.' });
-    }
-    const extension = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/gif': 'gif', 'image/webp': 'webp' }[detected];
+    const upload = await prepareUpload(req.body?.data);
+    if (upload.error) return res.status(400).json({ error: upload.error });
+    const { buffer, mime: detected, extension } = upload;
     const filename = `${crypto.randomUUID()}.${extension}`;
     if (isJsonStorage()) {
       await fs.mkdir(store().mediaDirectory, { recursive: true });
@@ -262,15 +292,9 @@ export function cmsRoutes(getStore) {
     res.json(updated);
   }));
   admin.put('/media/:id/replace', wrap(async (req, res) => {
-    const match = /^data:(image\/(?:png|jpeg|gif|webp));base64,([A-Za-z0-9+/]+={0,2})$/.exec(req.body?.data || '');
-    if (!match) return res.status(400).json({ error: 'Choose a PNG, JPG, GIF, or WebP image.' });
-    const buffer = Buffer.from(match[2], 'base64');
-    const detected = imageType(buffer);
-    if (!buffer.length || buffer.length > MAX_IMAGE_BYTES || buffer.toString('base64') !== match[2] || detected !== match[1]
-      || !(await imageIsValid(buffer, detected))) {
-      return res.status(400).json({ error: 'Image is invalid or exceeds the 3 MB limit.' });
-    }
-    const extension = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/gif': 'gif', 'image/webp': 'webp' }[detected];
+    const upload = await prepareUpload(req.body?.data);
+    if (upload.error) return res.status(400).json({ error: upload.error });
+    const { buffer, mime: detected, extension } = upload;
     const filename = `${crypto.randomUUID()}.${extension}`;
     if (isJsonStorage()) {
       await fs.mkdir(store().mediaDirectory, { recursive: true });

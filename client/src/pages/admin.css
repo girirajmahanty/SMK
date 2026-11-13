@@ -428,3 +428,27 @@
 @media (prefers-reduced-motion: reduce) {
   .admin-page *, .admin-page *::before, .admin-page *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+/* Festival photo focus picker: click the photo or use the sliders; phone and desktop crops preview the result */
+.admin-focus { min-width: 0; margin: 0; padding: 11px; border: 1px solid #e6e8eb; border-radius: 8px; display: grid; gap: 10px; }
+.admin-focus legend { padding: 0 4px; font-size: 11px; font-weight: 700; color: #424a53; }
+.admin-focus legend small { font-weight: 500; color: #858e96; }
+.admin-focus__body { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+.admin-focus__photo { position: relative; display: block; justify-self: center; width: fit-content; max-width: 100%; padding: 0; border: 0; border-radius: 8px; overflow: hidden; cursor: crosshair; background: #f3f4f6; }
+/* the button is exactly the size of the photo, so a click maps straight to a point on it */
+.admin-focus__photo img { display: block; width: auto; max-width: 100%; height: auto; max-height: 260px; }
+.admin-focus__dot { position: absolute; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; border: 2px solid #fff; background: rgba(176, 102, 38, 0.85); box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.35); pointer-events: none; }
+.admin-focus__previews { display: flex; gap: 10px; align-items: flex-end; }
+.admin-focus__previews figure { margin: 0; display: grid; gap: 4px; justify-items: center; }
+.admin-focus__previews figcaption { font-size: 10px; color: #858e96; }
+.admin-focus__crop { overflow: hidden; border-radius: 6px; border: 1px solid #e6e8eb; background: #f3f4f6; }
+.admin-focus__crop img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.admin-focus__crop--phone { width: 64px; height: 138px; }
+.admin-focus__crop--desktop { width: 150px; height: 84px; }
+.admin-focus__sliders { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+.admin-focus__sliders label { flex: 1 1 140px; display: grid; gap: 4px; font-size: 11px; color: #424a53; }
+.admin-focus__sliders input[type=range] { width: 100%; accent-color: #b06626; }
+.admin-festival-cell__note { font-style: normal; color: #b06626; }
+@media (max-width: 760px) {
+  .admin-focus__body { grid-template-columns: 1fr; }
+  .admin-focus__previews { justify-content: center; }
+}
