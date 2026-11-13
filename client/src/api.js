@@ -38,4 +38,6 @@ export const api = {
   adminGalleryPhotos: (status = 'pending') => request(`/admin/gallery/photos?status=${status}`),
   approveGalleryPhoto: (id) => request(`/admin/gallery/photos/${encodeURIComponent(id)}/approve`, { method: 'POST' }),
   deleteGalleryPhoto: (id) => request(`/admin/gallery/photos/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  updateGalleryPhoto: (id, body) => request(`/admin/gallery/photos/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  deleteMyGalleryPhoto: (id) => request(`/gallery/photos/mine/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 };

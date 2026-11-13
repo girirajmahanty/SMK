@@ -3830,7 +3830,12 @@ section:has(> .bgfx), footer:has(> .bgfx) { isolation: isolate; }
 .share-dlg__mine h4 { margin: 0 0 0.6rem; color: var(--maroon); }
 .share-dlg__mine ul { display: grid; grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr)); gap: 0.6rem; margin: 0; padding: 0; list-style: none; }
 .share-dlg__mine li { display: grid; gap: 0.3rem; }
+.share-dlg__mine ul { max-height: 15rem; overflow-y: auto; }
+.share-dlg__thumb { position: relative; display: block; }
 .share-dlg__mine img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; }
+.share-dlg__remove { position: absolute; top: 0.3rem; right: 0.3rem; display: grid; place-items: center; width: 1.9rem; height: 1.9rem; border-radius: 50%; color: #fff; background: rgba(138, 20, 36, 0.88); box-shadow: 0 4px 10px -4px #000; }
+.share-dlg__remove .lucide { width: 0.95rem; height: 0.95rem; }
+.share-dlg__remove:disabled { opacity: 0.5; }
 .share-dlg__status { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.72rem; font-weight: 700; }
 .share-dlg__status .lucide { width: 0.85rem; height: 0.85rem; flex: none; }
 .share-dlg__status.is-pending { color: var(--gold-text); }

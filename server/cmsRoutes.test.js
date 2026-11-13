@@ -8,6 +8,7 @@ import bcrypt from 'bcryptjs';
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import sharp from 'sharp';
+import jwt from 'jsonwebtoken';
 
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = 'cms-route-test-secret-with-at-least-32-characters';
@@ -16,6 +17,7 @@ const temporaryUploads = await fs.mkdtemp(path.join(os.tmpdir(), 'sidhagora-cms-
 process.env.UPLOAD_DIR = temporaryUploads;
 const { attachUser, authRoutes } = await import('./auth.js');
 const { cmsRoutes } = await import('./cmsRoutes.js');
+const { uploadAccess } = await import('./app.js');
 
 const users = new Map();
 const admin = {
@@ -98,6 +100,13 @@ const cms = {
     const { data, ...rest } = item;
     return rest;
   },
+  async updateGalleryPhoto(id, value) {
+    const item = cmsData.gallery.find((entry) => entry.id === id);
+    if (!item) return null;
+    Object.assign(item, value);
+    const { data, ...rest } = item;
+    return rest;
+  },
   async deleteGalleryPhoto(id) {
     const index = cmsData.gallery.findIndex((item) => item.id === id);
     return index < 0 ? null : cmsData.gallery.splice(index, 1)[0];
@@ -137,6 +146,14 @@ after(async () => {
   await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
   await fs.rm(temporaryUploads, { recursive: true, force: true });
 });
+
+// A session cookie for a user, without the login route (limited to 10 attempts per IP).
+const sessionFor = (user) => `sg_token=${jwt.sign({ sub: String(user._id) }, process.env.JWT_SECRET)}`;
+const memberNamed = (name, email) => {
+  const user = { _id: crypto.randomUUID(), name, email, role: 'member' };
+  users.set(email, user);
+  return sessionFor(user);
+};
 
 async function request(route, { method = 'GET', body, cookie } = {}) {
   const response = await fetch(`${origin}${route}`, {
@@ -331,4 +348,46 @@ test('a visitor can send at most ten gallery photos a day', async () => {
   for (let i = 0; i < 10; i += 1) cmsData.gallery.push({ id: `seed-${i}`, userId: String(user._id), status: 'pending', caption: 'x', createdAt: new Date().toISOString() });
   const tooMany = await request('/api/gallery/photos', { method: 'POST', cookie: member, body: { data: `data:image/png;base64,${photo}`, caption: 'One more' } });
   assert.equal(tooMany.response.status, 429);
+});
+
+test('members can take back their own gallery photos, but not other people\'s', async () => {
+  const photo = (await sharp({ create: { width: 60, height: 40, channels: 3, background: { r: 1, g: 2, b: 3 } } }).png().toBuffer()).toString('base64');
+  const owner = memberNamed('Owner', 'owner@example.test');
+  const other = memberNamed('Other', 'other@example.test');
+  const sent = await request('/api/gallery/photos', { method: 'POST', cookie: owner, body: { data: `data:image/png;base64,${photo}`, caption: 'Mine' } });
+  assert.equal(sent.response.status, 201);
+
+  assert.equal((await request(`/api/gallery/photos/mine/${sent.data.id}`, { method: 'DELETE' })).response.status, 401);
+  assert.equal((await request(`/api/gallery/photos/mine/${sent.data.id}`, { method: 'DELETE', cookie: other })).response.status, 404);
+  assert.ok(cmsData.gallery.some((item) => item.id === sent.data.id), 'another member cannot delete it');
+  assert.equal((await request(`/api/gallery/photos/mine/${sent.data.id}`, { method: 'DELETE', cookie: owner })).response.status, 200);
+  assert.ok(!cmsData.gallery.some((item) => item.id === sent.data.id));
+});
+
+test('admins can fix a visitor photo\'s caption and category; the overview counts waiting photos', async () => {
+  const photo = (await sharp({ create: { width: 60, height: 40, channels: 3, background: { r: 9, g: 8, b: 7 } } }).png().toBuffer()).toString('base64');
+  const member = memberNamed('Typo Member', 'typo@example.test');
+  const sent = await request('/api/gallery/photos', { method: 'POST', cookie: member, body: { data: `data:image/png;base64,${photo}`, caption: 'Templ at nite', cat: 'village' } });
+  const adminCookie = sessionFor([...users.values()].find((item) => item.email === admin.email));
+
+  const waiting = cmsData.gallery.filter((item) => item.status === 'pending').length;
+  assert.equal((await request('/api/admin/overview', { cookie: adminCookie })).data.stats.photoRequests, waiting);
+
+  assert.equal((await request(`/api/admin/gallery/photos/${sent.data.id}`, { method: 'PATCH', cookie: member, body: { caption: 'x', cat: 'temple' } })).response.status, 403);
+  assert.equal((await request(`/api/admin/gallery/photos/${sent.data.id}`, { method: 'PATCH', cookie: adminCookie, body: { caption: 'Temple', cat: 'kitchen' } })).response.status, 400);
+  assert.equal((await request(`/api/admin/gallery/photos/${sent.data.id}`, { method: 'PATCH', cookie: adminCookie, body: { caption: '  ', cat: 'temple' } })).response.status, 400);
+  const fixed = await request(`/api/admin/gallery/photos/${sent.data.id}`, { method: 'PATCH', cookie: adminCookie, body: { caption: 'Temple at night', cat: 'temple' } });
+  assert.equal(fixed.response.status, 200);
+  assert.deepEqual([fixed.data.caption, fixed.data.cat, fixed.data.status], ['Temple at night', 'temple', 'pending']);
+});
+
+test('a waiting gallery photo file is private and never cached; approved ones are cached briefly', () => {
+  const pending = { gallery: { status: 'pending', userId: 'u1' } };
+  assert.equal(uploadAccess(pending, undefined), null);
+  assert.equal(uploadAccess(pending, { id: 'u2', role: 'member' }), null);
+  assert.equal(uploadAccess(pending, { id: 'u1', role: 'member' }).cacheControl, 'private, no-store');
+  assert.equal(uploadAccess(pending, { id: 'admin', role: 'admin' }).cacheControl, 'private, no-store');
+  assert.equal(uploadAccess({ gallery: { status: 'pending' } }, undefined), null);
+  assert.match(uploadAccess({ gallery: { status: 'approved', userId: 'u1' } }, undefined).cacheControl, /max-age=3600\b/);
+  assert.match(uploadAccess({}, undefined).cacheControl, /immutable/);
 });

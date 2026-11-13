@@ -121,14 +121,27 @@ app.delete('/api/words/:id', requireAdmin, wrap(async (req, res) => {
 
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
 
+// Who may see an uploaded image, and how long browsers and the CDN may keep it.
+// Every upload (and every replacement) gets a new random file name, so a file never changes: admin uploads may be kept
+// for a year. A visitor's gallery photo can be taken down later, so it is kept for an hour only; one still waiting for
+// approval is shown only to its sender and to admins, and never cached.
+export function uploadAccess(image, user) {
+  if (image.gallery?.status === 'pending') {
+    if (!user || (user.role !== 'admin' && user.id !== image.gallery.userId)) return null;
+    return { cacheControl: 'private, no-store' };
+  }
+  if (image.gallery) return { cacheControl: 'public, max-age=3600, s-maxage=3600' };
+  return { cacheControl: 'public, max-age=31536000, s-maxage=31536000, immutable' };
+}
+
 app.get('/uploads/:filename', wrap(async (req, res) => {
   if (!/^[a-f0-9-]+\.(?:png|jpg|gif|webp)$/i.test(req.params.filename)) return res.status(404).json({ error: 'Image not found.' });
   const image = await store.cms.readMedia(req.params.filename);
   if (!image) return res.status(404).json({ error: 'Image not found.' });
-  // Every upload (and every replacement) gets a new random file name, so a file never changes: browsers and the
-  // hosting CDN (s-maxage) may keep it for a year, and the function and database only serve it the first time.
+  const access = uploadAccess(image, req.user);
+  if (!access) return res.status(404).json({ error: 'Image not found.' });
   res.set({
-    'Cache-Control': 'public, max-age=31536000, s-maxage=31536000, immutable',
+    'Cache-Control': access.cacheControl,
     'Content-Security-Policy': "default-src 'none'; sandbox",
     'X-Content-Type-Options': 'nosniff',
   }).type(image.mime).send(image.data);

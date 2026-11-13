@@ -433,6 +433,10 @@ function PhotoRequestsWorkspace({ onChange, onToast, onError }) {
   const [items, setItems] = useState(null);
   const [busyId, setBusyId] = useState('');
   const [viewing, setViewing] = useState(null);
+  const [draft, setDraft] = useState({ caption: '', cat: 'village' });
+  const [saving, setSaving] = useState(false);
+  const view = (item) => { setViewing(item); setDraft({ caption: item.caption, cat: item.cat }); };
+  const edited = viewing && (draft.caption.trim() !== viewing.caption || draft.cat !== viewing.cat);
 
   const load = async (status) => {
     try {
@@ -452,7 +456,26 @@ function PhotoRequestsWorkspace({ onChange, onToast, onError }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [viewing]);
 
+  const saveDraft = async () => {
+    if (!draft.caption.trim()) return onError('Please add a short caption.');
+    setSaving(true);
+    try {
+      const updated = await api.updateGalleryPhoto(viewing.id, { caption: draft.caption.trim(), cat: draft.cat });
+      setViewing(updated);
+      setItems((current) => current.map((item) => (item.id === updated.id ? { ...item, ...updated } : item)));
+      onToast('Photo details saved');
+      return true;
+    } catch (reason) {
+      onError(reason.message || 'That change could not be saved.');
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const act = async (item, approve) => {
+    // approving from the viewer keeps an unsaved caption fix
+    if (approve && viewing?.id === item.id && edited && !(await saveDraft())) return;
     if (!approve && !window.confirm(item.status === 'approved' ? 'Remove this photo from the website gallery? It will be deleted.' : 'Reject this photo? It will be deleted.')) return;
     setBusyId(item.id);
     try {
@@ -486,9 +509,10 @@ function PhotoRequestsWorkspace({ onChange, onToast, onError }) {
         : !items.length ? <div className="admin-empty"><Camera /><h3>{tab === 'pending' ? 'No photos waiting' : 'No visitor photos in the gallery yet'}</h3><p>{tab === 'pending' ? 'New photos from visitors will show up here.' : 'Photos you approve are listed here.'}</p></div>
         : <div className="admin-media-grid">{items.map((item) => (
           <article key={item.id} className="admin-media-card admin-photo-card">
-            <button className="admin-media-card__image admin-photo-card__image" onClick={() => setViewing(item)} aria-label={`View photo: ${item.caption}`}><img src={item.url} alt={item.caption} loading="lazy" /><span>{catLabel[item.cat] || item.cat}</span></button>
+            <button className="admin-media-card__image admin-photo-card__image" onClick={() => view(item)} aria-label={`View photo: ${item.caption}`}><img src={item.url} alt={item.caption} loading="lazy" /><span>{catLabel[item.cat] || item.cat}</span></button>
             <p className="admin-photo-card__caption">{item.caption}</p>
             <p className="admin-photo-card__meta"><UserRound /> {item.by || 'Visitor'} · {formatDate(item.createdAt)}</p>
+            <button className="admin-text-button admin-photo-card__edit" onClick={() => view(item)}>Edit caption or category <ChevronRight /></button>
             {actions(item, true)}
           </article>
         ))}</div>}
@@ -496,7 +520,12 @@ function PhotoRequestsWorkspace({ onChange, onToast, onError }) {
         <figure onClick={(event) => event.stopPropagation()}>
           <button className="admin-icon-button admin-photo-view__close" onClick={() => setViewing(null)} aria-label="Close" autoFocus><X /></button>
           <img src={viewing.url} alt={viewing.caption} />
-          <figcaption><strong>{viewing.caption}</strong><span>{viewing.by || 'Visitor'} · {catLabel[viewing.cat] || viewing.cat} · {viewing.w}×{viewing.h}</span></figcaption>
+          <figcaption><span>{viewing.by || 'Visitor'} · {formatDate(viewing.createdAt)} · {viewing.w}×{viewing.h}</span></figcaption>
+          <div className="admin-photo-edit">
+            <label>Caption<textarea value={draft.caption} maxLength={200} rows={2} onChange={(event) => setDraft({ ...draft, caption: event.target.value })} /></label>
+            <label>Category<select value={draft.cat} onChange={(event) => setDraft({ ...draft, cat: event.target.value })}>{Object.entries(catLabel).map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></label>
+            {edited && <button className="admin-button admin-button--small" disabled={saving} onClick={saveDraft}>{saving ? <LoaderCircle className="admin-spin" /> : <Check />} Save changes</button>}
+          </div>
           {actions(viewing, false)}
         </figure>
       </div>}
@@ -530,7 +559,6 @@ function AdminDashboard() {
   const [content, setContent] = useState({});
   const [media, setMedia] = useState([]);
   const [pendingPhotos, setPendingPhotos] = useState(0);
-  const countPendingPhotos = () => api.adminGalleryPhotos('pending').then((list) => setPendingPhotos(list.length)).catch((reason) => console.error('Could not count photo requests', reason));
 
   const reload = async () => {
     setError('');
@@ -566,7 +594,9 @@ function AdminDashboard() {
     }
   };
 
-  useEffect(() => { reload(); countPendingPhotos(); }, []);
+  useEffect(() => { reload(); }, []);
+  // the overview carries how many visitor photos wait for approval
+  useEffect(() => { setPendingPhotos(overview.stats?.photoRequests ?? 0); }, [overview]);
   useEffect(() => {
     if (!toast) return undefined;
     const timer = setTimeout(() => setToast(''), 3200);
@@ -650,7 +680,7 @@ function AdminDashboard() {
           {error && <div className="admin-alert admin-alert--banner" role="alert"><CircleAlert />{error}<button onClick={() => setError('')} aria-label="Dismiss error"><X /></button></div>}
           {loading ? <div className="admin-loading"><LoaderCircle className="admin-spin" /><span>Loading your workspace…</span></div> : (
             <>
-              {section === 'overview' && <Overview stats={overview.stats || {}} activities={activities} navigate={setSection} />}
+              {section === 'overview' && <Overview stats={overview.stats || {}} activities={activities} navigate={setSection} pendingPhotos={pendingPhotos} />}
               {section === 'festivals' && <FestivalWorkspace festivals={festivals} media={media} onCreate={createFestival} onUpdate={updateFestival} onDelete={deleteFestival} onReorder={reorderFestival} />}
               {section === 'content' && <ContentWorkspace records={content} media={media} onSave={saveContent} onReset={resetContent} />}
               {section === 'media' && <MediaWorkspace media={media} onUpload={uploadMedia} onCaption={captionMedia} onDelete={removeMedia} onReplace={replaceMedia} />}
@@ -670,13 +700,18 @@ function AdminDashboard() {
 
 export default AdminDashboard;
 
-function Overview({ stats, activities, navigate }) {
+function Overview({ stats, activities, navigate, pendingPhotos }) {
   const quickActions = [
     { title: 'Add a festival', text: 'Create a new festival card', section: 'festivals', icon: Flame },
     { title: 'Edit website copy', text: 'Update Bengali or English text', section: 'content', icon: FileText },
     { title: 'Upload an image', text: 'Add a photo to your media library', section: 'media', icon: ImagePlus },
   ];
   return <>
+    {pendingPhotos > 0 && <button className="admin-photo-alert" onClick={() => navigate('photos')}>
+      <span><Camera /></span>
+      <div><strong>{pendingPhotos === 1 ? '1 photo from a visitor is waiting for approval' : `${pendingPhotos} photos from visitors are waiting for approval`}</strong><small>Approve them to show them in the website gallery, or reject them.</small></div>
+      <em>Review <ChevronRight /></em>
+    </button>}
     <div className="admin-stat-grid">
       <StatCard icon={Flame} label="Festival cards" value={stats.festivals ?? 0} detail="Published and draft cards" accent="gold" />
       <StatCard icon={FileText} label="Content overrides" value={stats.content ?? 0} detail="Bilingual website fields saved" accent="blue" />

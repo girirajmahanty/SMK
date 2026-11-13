@@ -191,6 +191,13 @@ export function cmsRoutes(getStore) {
     });
     res.status(201).json({ ...publicPhoto(photo), status: photo.status });
   }));
+  // A member may take back their own photo, waiting or already in the gallery.
+  router.delete('/gallery/photos/mine/:id', requireLogin, sameOrigin, wrap(async (req, res) => {
+    const photo = (await store().galleryPhotos()).find((item) => item.id === req.params.id && item.userId === req.user.id);
+    if (!photo) return res.status(404).json({ error: 'Photo was not found.' });
+    await store().deleteGalleryPhoto(photo.id);
+    res.json({ ok: true });
+  }));
 
   admin.use(requireAdmin);
   admin.use(sameOrigin);
@@ -206,6 +213,16 @@ export function cmsRoutes(getStore) {
     await log(req, 'Approved gallery photo', `${photo.caption.slice(0, 60)} · by ${photo.userName}`);
     res.json({ ...publicPhoto(photo), status: photo.status });
   }));
+  // Fix a caption or category before (or after) approving.
+  admin.patch('/gallery/photos/:id', express.json({ limit: '10kb' }), wrap(async (req, res) => {
+    const caption = text(req.body?.caption, 200);
+    if (!caption) return res.status(400).json({ code: 'CAPTION_REQUIRED', error: 'Please add a short caption.' });
+    if (!GALLERY_CATS.has(req.body?.cat)) return res.status(400).json({ error: 'Choose a category.' });
+    const photo = await store().updateGalleryPhoto(req.params.id, { caption, cat: req.body.cat });
+    if (!photo) return res.status(404).json({ error: 'Photo was not found.' });
+    await log(req, 'Edited gallery photo', `${caption.slice(0, 60)} · by ${photo.userName}`);
+    res.json({ ...publicPhoto(photo), status: photo.status });
+  }));
   admin.delete('/gallery/photos/:id', wrap(async (req, res) => {
     const photo = await store().deleteGalleryPhoto(req.params.id);
     if (!photo) return res.status(404).json({ error: 'Photo was not found.' });
@@ -214,8 +231,8 @@ export function cmsRoutes(getStore) {
   }));
 
   admin.get('/overview', wrap(async (_req, res) => {
-    const [stats, activities] = await Promise.all([store().stats(), store().activities()]);
-    res.json({ stats, activities });
+    const [stats, activities, photoRequests] = await Promise.all([store().stats(), store().activities(), store().galleryPhotos('pending')]);
+    res.json({ stats: { ...stats, photoRequests: photoRequests.length }, activities });
   }));
 
   admin.get('/content', wrap(async (_req, res) => res.json(await store().content())));

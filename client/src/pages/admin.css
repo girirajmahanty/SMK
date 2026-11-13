@@ -471,3 +471,25 @@
 .admin-photo-view figcaption { display: grid; gap: 4px; }
 .admin-photo-view figcaption span { color: #6b7280; font-size: 13px; }
 .admin-photo-view__close { position: absolute; top: 20px; right: 20px; z-index: 1; background: #fff; }
+
+.admin-photo-alert { width: 100%; margin-bottom: 18px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; border: 1px solid #e7c98f; border-radius: 10px; color: #4a3520; background: linear-gradient(90deg, #fff6e6, #fffdfa); text-align: left; cursor: pointer; transition: border-color .16s, transform .16s; }
+.admin-photo-alert:hover { transform: translateY(-1px); border-color: #c6923a; }
+.admin-photo-alert > span { flex: none; width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; color: #fff; background: #c8102e; }
+.admin-photo-alert > span svg { width: 18px; }
+.admin-photo-alert > div { flex: 1; display: grid; gap: 3px; min-width: 0; }
+.admin-photo-alert strong { font-size: 14px; }
+.admin-photo-alert small { color: #7a6a58; font-size: 12px; }
+.admin-photo-alert em { flex: none; display: inline-flex; align-items: center; gap: 4px; font-style: normal; font-weight: 700; color: #633b31; font-size: 13px; }
+.admin-photo-alert em svg { width: 15px; }
+.admin-photo-card__edit { margin: -4px 0 10px; padding: 0; font-size: 11px; }
+.admin-photo-edit { display: grid; grid-template-columns: 1fr 180px; gap: 10px; align-items: end; }
+.admin-photo-edit label { display: grid; gap: 5px; color: #495361; font-size: 12px; font-weight: 650; }
+.admin-photo-edit textarea, .admin-photo-edit select { font: inherit; font-size: 13px; font-weight: 500; padding: 8px 10px; border: 1px solid #dcdfe3; border-radius: 7px; background: #fff; color: #1f2933; resize: vertical; }
+.admin-photo-edit textarea:focus, .admin-photo-edit select:focus { outline: 2px solid #c6923a; outline-offset: 1px; }
+.admin-photo-edit > button { grid-column: 1 / -1; justify-self: start; }
+@media (max-width: 640px) {
+  .admin-photo-alert { flex-wrap: wrap; }
+  .admin-photo-alert > div { flex-basis: calc(100% - 50px); }
+  .admin-photo-alert em { margin-left: 50px; }
+  .admin-photo-edit { grid-template-columns: 1fr; }
+}

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ImagePlus, X, CheckCircle2, Clock, LogIn, Upload } from 'lucide-react';
+import { ImagePlus, X, CheckCircle2, Clock, LogIn, Upload, Trash2 } from 'lucide-react';
 import { useLang } from '../i18n.jsx';
 import { useAuth } from '../auth.jsx';
 import { api } from '../api.js';
@@ -36,7 +36,7 @@ async function shrink(file) {
 
 // "Add your photo" under the gallery. Anyone may click it; visitors who are not signed in are sent to the login page
 // and brought back here. Signed-in members pick a photo, add a caption and category, and send it for an admin to approve.
-export default function GalleryShare({ onApproved }) {
+export default function GalleryShare({ onChange }) {
   const { t } = useLang();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -56,12 +56,12 @@ export default function GalleryShare({ onApproved }) {
         {t('galleryAdd.button')}
       </button>
       {!user && <small className="gal-share__login">{t('galleryAdd.loginHint')}</small>}
-      {open && user && <ShareDialog key={location.key} onClose={() => setOpen(false)} onApproved={onApproved} />}
+      {open && user && <ShareDialog key={location.key} onClose={() => setOpen(false)} onChange={onChange} />}
     </div>
   );
 }
 
-function ShareDialog({ onClose, onApproved }) {
+function ShareDialog({ onClose, onChange }) {
   const { t } = useLang();
   const { user } = useAuth();
   const [photo, setPhoto] = useState(null); // data URL after shrinking
@@ -71,6 +71,7 @@ function ShareDialog({ onClose, onApproved }) {
   const [error, setError] = useState('');
   const [done, setDone] = useState(null); // the sent photo
   const [mine, setMine] = useState([]);
+  const [removing, setRemoving] = useState('');
   const fileRef = useRef(null);
   const boxRef = useRef(null);
 
@@ -116,11 +117,27 @@ function ShareDialog({ onClose, onApproved }) {
     try {
       const sent = await api.sendGalleryPhoto({ data: photo, caption: caption.trim(), cat });
       setDone(sent);
-      if (sent.status === 'approved') onApproved?.();
+      if (sent.status === 'approved') onChange?.();
     } catch (err) {
       setError(err.message);
     } finally {
       setBusy(false);
+    }
+  };
+
+  // A member takes back one of their photos (waiting, or already in the gallery).
+  const remove = async (p) => {
+    if (!window.confirm(t('galleryAdd.removeConfirm'))) return;
+    setRemoving(p.id);
+    setError('');
+    try {
+      await api.deleteMyGalleryPhoto(p.id);
+      setMine((list) => list.filter((item) => item.id !== p.id));
+      if (p.status === 'approved') onChange?.();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setRemoving('');
     }
   };
 
@@ -181,9 +198,12 @@ function ShareDialog({ onClose, onApproved }) {
           <div className="share-dlg__mine">
             <h4>{t('galleryAdd.mine')}</h4>
             <ul>
-              {mine.slice(0, 12).map((p) => (
+              {mine.map((p) => (
                 <li key={p.id} title={p.caption}>
-                  <img src={p.url} alt={p.caption} loading="lazy" />
+                  <span className="share-dlg__thumb">
+                    <img src={p.url} alt={p.caption} loading="lazy" />
+                    <button type="button" className="share-dlg__remove" onClick={() => remove(p)} disabled={removing === p.id} aria-label={`${t('galleryAdd.remove')}: ${p.caption}`} title={t('galleryAdd.remove')}><Trash2 /></button>
+                  </span>
                   <span className={`share-dlg__status is-${p.status}`}>
                     {p.status === 'approved' ? <CheckCircle2 /> : <Clock />}
                     {t(p.status === 'approved' ? 'galleryAdd.approved' : 'galleryAdd.pending')}

@@ -84,9 +84,10 @@ function mongoCms() {
       return plain(await Media.create(value));
     },
     async readMedia(filename) {
-      const media = await Media.findOne({ filename }).select('+data').lean()
-        || await GalleryPhoto.findOne({ filename }).select('+data').lean();
-      return media?.data ? { data: media.data, mime: media.mime } : null;
+      const media = await Media.findOne({ filename }).select('+data').lean();
+      if (media?.data) return { data: media.data, mime: media.mime };
+      const photo = await GalleryPhoto.findOne({ filename }).select('+data').lean();
+      return photo?.data ? { data: photo.data, mime: photo.mime, gallery: { status: photo.status, userId: photo.userId } } : null;
     },
     async updateMedia(id, caption) {
       if (!mongoose.isValidObjectId(id)) return null;
@@ -150,6 +151,10 @@ function mongoCms() {
     async approveGalleryPhoto(id, reviewer) {
       if (!mongoose.isValidObjectId(id)) return null;
       return plain(await GalleryPhoto.findByIdAndUpdate(id, { $set: { status: 'approved', reviewedBy: reviewer, reviewedAt: new Date() } }, { new: true }).lean());
+    },
+    async updateGalleryPhoto(id, value) {
+      if (!mongoose.isValidObjectId(id)) return null;
+      return plain(await GalleryPhoto.findByIdAndUpdate(id, { $set: value }, { new: true, runValidators: true }).lean());
     },
     async deleteGalleryPhoto(id) {
       if (!mongoose.isValidObjectId(id)) return null;
@@ -235,11 +240,13 @@ function fileCms() {
       return item;
     },
     async readMedia(filename) {
-      const item = (await this.media()).find((entry) => entry.filename === filename)
-        || (await this.galleryPhotos()).find((entry) => entry.filename === filename);
+      const media = (await this.media()).find((entry) => entry.filename === filename);
+      const photo = media ? null : (await this.galleryPhotos()).find((entry) => entry.filename === filename);
+      const item = media || photo;
       if (!item) return null;
       try {
-        return { data: await fs.readFile(path.join(uploadDirectory, filename)), mime: item.mime };
+        const data = await fs.readFile(path.join(uploadDirectory, filename));
+        return photo ? { data, mime: item.mime, gallery: { status: photo.status, userId: photo.userId } } : { data, mime: item.mime };
       } catch (error) {
         if (error.code === 'ENOENT') return null;
         throw error;
@@ -327,6 +334,14 @@ function fileCms() {
       const item = items.find((entry) => entry.id === id);
       if (!item) return null;
       Object.assign(item, { status: 'approved', reviewedBy: reviewer, reviewedAt: now(), updatedAt: now() });
+      await set('cms-gallery.json', items);
+      return item;
+    },
+    async updateGalleryPhoto(id, value) {
+      const items = await get('cms-gallery.json', []);
+      const item = items.find((entry) => entry.id === id);
+      if (!item) return null;
+      Object.assign(item, value, { updatedAt: now() });
       await set('cms-gallery.json', items);
       return item;
     },

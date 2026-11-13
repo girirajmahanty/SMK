@@ -359,7 +359,7 @@ export default function Gallery({ items: ownItems }) {
         </div>
       )}
 
-      <GalleryShare onApproved={loadShared} />
+      <GalleryShare onChange={loadShared} />
 
       {/* Rendered at the end of <body> so it sits above the navbar (the section's light effects form their own layer). */}
       {current && createPortal(
