@@ -17,7 +17,45 @@ const original = {
   founded: village.founded,
   families: village.families,
   population: village.population,
+  mapQuery: village.mapQuery,
+  coords: village.coords,
+  mapLink: village.mapLink,
+  routes: JSON.parse(JSON.stringify(village.routes)),
 };
+
+// The village's own visit routes and map settings (the admin Visit page starts from these).
+export const originalVisit = { mapQuery: original.mapQuery, coords: original.coords, mapLink: original.mapLink, routes: original.routes, address: original.address };
+const STEP_MODES = ['bus', 'train', 'toto', 'walk'];
+const ROUTE_BY = ['bus', 'train', 'both'];
+const localized = (value, max = 300) => (value && typeof value.en === 'string' && typeof value.bn === 'string'
+  ? { en: value.en.slice(0, max), bn: value.bn.slice(0, max) } : null);
+
+// Routes saved by the admin Visit page (JSON under village.routes). Anything malformed is dropped.
+export function readRoutes(content) {
+  const raw = content?.['village.routes']?.en;
+  if (!raw) return null;
+  try {
+    const list = JSON.parse(raw);
+    if (!Array.isArray(list)) return null;
+    return list.slice(0, 20).flatMap((route) => {
+      const from = localized(route?.from, 80);
+      if (!from || !from.en) return [];
+      return [{
+        from,
+        query: typeof route.query === 'string' ? route.query.slice(0, 120) : from.en,
+        distance: localized(route.distance, 40) || { en: '', bn: '' },
+        time: localized(route.time, 40) || { en: '', bn: '' },
+        by: ROUTE_BY.includes(route.by) ? route.by : 'bus',
+        steps: (Array.isArray(route.steps) ? route.steps : []).slice(0, 12).flatMap((step) => (
+          typeof step?.en === 'string' && typeof step?.bn === 'string' && (step.en || step.bn)
+            ? [{ mode: STEP_MODES.includes(step.mode) ? step.mode : 'walk', en: step.en.slice(0, 200), bn: step.bn.slice(0, 200) }] : [])),
+      }];
+    });
+  } catch {
+    console.error('Invalid visit routes');
+    return null;
+  }
+}
 
 const localizedTargets = {
   'village.subtitle': () => village.subtitle,
@@ -57,6 +95,20 @@ export function applyVillageContent(content) {
   village.founded = original.founded;
   village.families = original.families;
   village.population = original.population;
+  village.mapQuery = original.mapQuery;
+  village.coords = original.coords;
+  village.mapLink = original.mapLink;
+  village.routes = JSON.parse(JSON.stringify(original.routes));
+
+  // map: place name, exact pin ("lat,long") and the "Open in Google Maps" link
+  const mapQuery = content?.['village.mapQuery']?.en?.trim();
+  if (mapQuery) village.mapQuery = mapQuery.slice(0, 120);
+  const coords = content?.['village.coords']?.en?.replace(/\s+/g, '');
+  if (coords && /^-?\d{1,2}(\.\d+)?,-?\d{1,3}(\.\d+)?$/.test(coords)) village.coords = coords;
+  const mapLink = content?.['village.mapLink']?.en?.trim();
+  if (mapLink && /^https:\/\/(www\.)?(google\.[a-z.]+\/maps|maps\.google\.[a-z.]+|maps\.app\.goo\.gl|goo\.gl\/maps)/i.test(mapLink)) village.mapLink = mapLink;
+  const routes = readRoutes(content);
+  if (routes) village.routes = routes;
 
   for (const [key, value] of Object.entries(content || {})) {
     if (!value || typeof value.en !== 'string' || typeof value.bn !== 'string') continue;

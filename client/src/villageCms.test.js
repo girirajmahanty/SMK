@@ -47,3 +47,29 @@ test('the admin can hide, reorder and re-categorise gallery photos', () => {
   applyVillageContent({});
   assert.equal(village.gallery[0].id, 'o:0');
 });
+
+test('the admin can change the map and the routes; bad values are ignored', () => {
+  const original = { link: village.mapLink, coords: village.coords, routes: village.routes.length };
+  applyVillageContent({
+    'village.mapQuery': { en: 'New Temple', bn: 'New Temple' },
+    'village.coords': { en: '23.1, 86.2', bn: '' },
+    'village.mapLink': { en: 'https://maps.app.goo.gl/abc123', bn: '' },
+    'village.routes': { en: JSON.stringify([
+      { from: { en: 'Town', bn: 'শহর' }, distance: { en: '5 km', bn: '৫ কিমি' }, time: { en: '10 min', bn: '১০ মিনিট' }, by: 'plane', steps: [{ mode: 'rocket', en: 'Walk', bn: 'হাঁটুন' }, { mode: 'bus', en: '', bn: '' }] },
+      { from: { en: '', bn: '' } },
+    ]), bn: '' },
+  });
+  assert.equal(village.mapQuery, 'New Temple');
+  assert.equal(village.coords, '23.1,86.2');
+  assert.equal(village.mapLink, 'https://maps.app.goo.gl/abc123');
+  assert.equal(village.routes.length, 1, 'a route without a starting place is dropped');
+  assert.equal(village.routes[0].by, 'bus', 'unknown travel type falls back to bus');
+  assert.deepEqual(village.routes[0].steps, [{ mode: 'walk', en: 'Walk', bn: 'হাঁটুন' }], 'empty steps dropped, unknown mode is walk');
+  assert.equal(village.routes[0].query, 'Town');
+
+  applyVillageContent({ 'village.mapLink': { en: 'https://evil.example/maps', bn: '' }, 'village.coords': { en: 'here', bn: '' }, 'village.routes': { en: '{oops', bn: '' } });
+  assert.equal(village.mapLink, original.link, 'only Google Maps links are used');
+  assert.equal(village.coords, original.coords);
+  assert.equal(village.routes.length, original.routes);
+  applyVillageContent({});
+});

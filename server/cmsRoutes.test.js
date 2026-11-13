@@ -467,3 +467,34 @@ test('signed-in users can change their password only with the current one', asyn
     await new Promise((resolve) => listener.close(resolve));
   }
 });
+
+test('changing the password signs out other logins and keeps this one signed in', async () => {
+  const versionStore = {
+    ...store,
+    async updateUser(id, value) { const user = [...users.values()].find((item) => item._id === id); Object.assign(user, value); return user; },
+  };
+  const versionApp = express();
+  versionApp.use(express.json());
+  versionApp.use(cookieParser());
+  versionApp.use(attachUser(() => versionStore));
+  versionApp.use('/api/auth', authRoutes(() => versionStore));
+  const listener = versionApp.listen(0, '127.0.0.1');
+  await new Promise((resolve) => listener.once('listening', resolve));
+  const base = `http://127.0.0.1:${listener.address().port}/api/auth`;
+  const me = async (cookie) => (await (await fetch(`${base}/me`, { headers: { Cookie: cookie } })).json()).user;
+  try {
+    const user = { _id: crypto.randomUUID(), name: 'Two Devices', email: 'two@example.test', role: 'member', passwordHash: await bcrypt.hash('OldPassword1', 4) };
+    users.set(user.email, user);
+    const phone = sessionFor(user);
+    const laptop = sessionFor(user);
+    assert.equal((await me(phone)).email, 'two@example.test');
+    const changed = await fetch(`${base}/password`, { method: 'POST', headers: { 'Content-Type': 'application/json', Cookie: laptop }, body: JSON.stringify({ current: 'OldPassword1', password: 'NewPassword2' }) });
+    assert.equal(changed.status, 200);
+    const fresh = changed.headers.get('set-cookie').split(';')[0];
+    assert.equal(await me(phone), null, 'the other device is signed out');
+    assert.equal(await me(laptop), null, 'the old cookie no longer works');
+    assert.equal((await me(fresh)).email, 'two@example.test', 'the new cookie works');
+  } finally {
+    await new Promise((resolve) => listener.close(resolve));
+  }
+});

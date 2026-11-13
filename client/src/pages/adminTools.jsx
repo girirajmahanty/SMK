@@ -1,14 +1,14 @@
 // Admin panel parts: photo picker (with upload), gallery manager, grouped website content, media library,
-// members, and password change. Admin.jsx wires them into the dashboard.
+// visit & map, members, and password change. Admin.jsx wires them into the dashboard.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  ArrowDown, ArrowUp, Check, ChevronDown, CircleAlert, Eye, EyeOff, FileText, ImagePlus, Images, KeyRound,
-  LoaderCircle, Pencil, Play, Plus, Search, ShieldCheck, ShieldOff, Trash2, Upload, UserRound, Users, X,
+  ArrowDown, ArrowUp, Check, ChevronDown, CircleAlert, ExternalLink, Eye, EyeOff, FileText, ImagePlus, Images, KeyRound,
+  LoaderCircle, MapPin, Pencil, Play, Plus, RotateCcw, Route, Search, ShieldCheck, ShieldOff, Trash2, Upload, UserRound, Users, X,
 } from 'lucide-react';
 import { api } from '../api.js';
 import { shrinkImage, isImageFile } from '../imageTools.js';
-import { originalGallery, readGalleryLayout } from '../villageCms.js';
+import { originalGallery, originalVisit, readGalleryLayout, readRoutes } from '../villageCms.js';
 
 const CAT_LABELS = { village: 'Village', temple: 'Temple', procession: 'Kali Puja' };
 const formatDate = (value) => (value ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(value)) : '—');
@@ -317,8 +317,8 @@ export function ContentWorkspace({ fields: allFields, records, media, sitePhotos
   const [query, setQuery] = useState('');
   const [pending, setPending] = useState({});
   const [openGroups, setOpenGroups] = useState(() => new Set(['announcement']));
-  // gallery photos and captions have their own page
-  const fields = allFields.filter((field) => !field.key.startsWith('village.gallery.'));
+  // gallery photos and captions, and the address, have their own pages
+  const fields = allFields.filter((field) => !field.key.startsWith('village.gallery.') && field.key !== 'village.address');
   const q = query.trim().toLowerCase();
   const matches = (field) => !q || `${field.key} ${titleOf(field)} ${(records[field.key] || field.value)?.en || ''} ${(records[field.key] || field.value)?.bn || ''}`.toLowerCase().includes(q);
   const groups = SECTIONS.map(([id, title, text]) => ({ id, title, text, fields: fields.filter((field) => sectionOf(field) === id && matches(field)) })).filter((group) => group.fields.length);
@@ -527,5 +527,147 @@ export function PasswordCard({ onToast }) {
       {error && <p className="admin-alert" role="alert"><CircleAlert /> {error}</p>}
       <button className="admin-button admin-button--primary" disabled={busy}>{busy ? <LoaderCircle className="admin-spin" /> : <Check />} Change password</button>
     </form>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Visit & map: the address, the map pin and link, and the "How to reach" routes with their steps.
+const VISIT_KEYS = ['village.address', 'village.mapQuery', 'village.coords', 'village.mapLink', 'village.routes'];
+const COORDS_RX = /^-?\d{1,2}(\.\d+)?,-?\d{1,3}(\.\d+)?$/;
+const MAP_LINK_RX = /^https:\/\/(www\.)?(google\.[a-z.]+\/maps|maps\.google\.[a-z.]+|maps\.app\.goo\.gl|goo\.gl\/maps)/i;
+const STEP_LABELS = { bus: 'Bus', train: 'Train', toto: 'Toto', walk: 'Walk' };
+const BY_LABELS = { bus: 'By bus', train: 'By train', both: 'Train or bus' };
+const emptyRoute = () => ({ from: { en: '', bn: '' }, query: '', distance: { en: '', bn: '' }, time: { en: '', bn: '' }, by: 'bus', steps: [{ mode: 'bus', en: '', bn: '' }] });
+const clone = (value) => JSON.parse(JSON.stringify(value));
+
+function visitForm(records) {
+  return {
+    address: records['village.address'] ? { en: records['village.address'].en, bn: records['village.address'].bn } : { ...originalVisit.address },
+    mapQuery: records['village.mapQuery']?.en || originalVisit.mapQuery,
+    coords: records['village.coords']?.en || originalVisit.coords,
+    mapLink: records['village.mapLink']?.en || originalVisit.mapLink,
+    routes: readRoutes(records) || clone(originalVisit.routes),
+  };
+}
+
+export function VisitWorkspace({ records, onSaveMany, onResetMany }) {
+  const [form, setForm] = useState(() => visitForm(records));
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const saved = useMemo(() => JSON.stringify(visitForm(records)), [records]);
+  useEffect(() => setForm(visitForm(records)), [saved]);
+  const dirty = JSON.stringify(form) !== saved;
+  const changed = VISIT_KEYS.some((key) => records[key]);
+
+  const setRoute = (index, value) => setForm((current) => ({ ...current, routes: current.routes.map((route, i) => (i === index ? { ...route, ...value } : route)) }));
+  const moveRoute = (index, step) => setForm((current) => {
+    const routes = [...current.routes];
+    [routes[index], routes[index + step]] = [routes[index + step], routes[index]];
+    return { ...current, routes };
+  });
+  const setStep = (routeIndex, stepIndex, value) => setRoute(routeIndex, { steps: form.routes[routeIndex].steps.map((step, i) => (i === stepIndex ? { ...step, ...value } : step)) });
+
+  const save = async () => {
+    setError('');
+    const coords = form.coords.replace(/\s+/g, '');
+    if (!COORDS_RX.test(coords)) return setError('The map pin must be "latitude,longitude", for example 23.0398938,86.2818169.');
+    if (form.mapLink.trim() && !MAP_LINK_RX.test(form.mapLink.trim())) return setError('The map link must be a Google Maps link (https://www.google.com/maps/… or https://maps.app.goo.gl/…).');
+    if (!form.mapQuery.trim()) return setError('Add the place name for the map.');
+    if (!form.address.en.trim() && !form.address.bn.trim()) return setError('Add the address.');
+    const both = (value) => ({ en: value.en.trim() || value.bn.trim(), bn: value.bn.trim() || value.en.trim() });
+    const routes = form.routes.map((route) => ({
+      ...route,
+      from: both(route.from),
+      distance: both(route.distance),
+      time: both(route.time),
+      query: route.query.trim() || route.from.en.trim() || route.from.bn.trim(),
+      steps: route.steps.filter((step) => step.en.trim() || step.bn.trim()).map((step) => ({ mode: step.mode, ...both(step) })),
+    }));
+    if (routes.some((route) => !route.from.en)) return setError('Every route needs a starting place.');
+    setSaving(true);
+    await onSaveMany([
+      ['village.address', both(form.address)],
+      ['village.mapQuery', { en: form.mapQuery.trim(), bn: form.mapQuery.trim() }],
+      ['village.coords', { en: coords, bn: coords }],
+      ['village.mapLink', { en: form.mapLink.trim(), bn: form.mapLink.trim() }],
+      ['village.routes', { en: JSON.stringify(routes), bn: '' }],
+    ], 'Visit details saved');
+    setSaving(false);
+  };
+  const restore = async () => {
+    if (!window.confirm('Restore the original address, map and routes? Your changes here will be removed.')) return;
+    await onResetMany(VISIT_KEYS.filter((key) => records[key]), 'Original visit details restored');
+  };
+
+  const testLink = form.mapLink.trim() || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(form.coords || form.mapQuery)}`;
+  const saveButton = <button className="admin-button admin-button--primary" disabled={!dirty || saving} onClick={save}>{saving ? <LoaderCircle className="admin-spin" /> : <Check />} Save changes</button>;
+  return (
+    <section className="admin-panel admin-visit">
+      <div className="admin-panel__heading"><div><p className="admin-kicker">PLAN YOUR VISIT</p><h2>Visit & map</h2><p>The address, the map and the “How to reach” routes in the website’s Visit section.</p></div>
+        <div className="admin-visit__save">{changed && <button className="admin-button" onClick={restore}><RotateCcw /> Restore original</button>}{saveButton}</div>
+      </div>
+      {error && <p className="admin-alert" role="alert"><CircleAlert /> {error}</p>}
+
+      <div className="admin-visit__block">
+        <h3><MapPin /> Address and map</h3>
+        <div className="admin-form">
+          <fieldset className="admin-localized">
+            <legend>Address</legend>
+            <label><span>English</span><textarea value={form.address.en} onChange={(event) => setForm({ ...form, address: { ...form.address, en: event.target.value } })} /></label>
+            <label><span>বাংলা</span><textarea lang="bn" value={form.address.bn} onChange={(event) => setForm({ ...form, address: { ...form.address, bn: event.target.value } })} /></label>
+          </fieldset>
+          <div className="admin-form-grid">
+            <label>Place name on the map<input value={form.mapQuery} maxLength={120} onChange={(event) => setForm({ ...form, mapQuery: event.target.value })} placeholder="Sidhagora Kali Mandir" /></label>
+            <label>Map pin (latitude,longitude)<input value={form.coords} maxLength={40} onChange={(event) => setForm({ ...form, coords: event.target.value })} placeholder="23.0398938,86.2818169" /></label>
+          </div>
+          <label>“Open in Google Maps” link<input value={form.mapLink} onChange={(event) => setForm({ ...form, mapLink: event.target.value })} placeholder="https://maps.app.goo.gl/…" /></label>
+          <p className="admin-hint">In Google Maps, open the place, press Share and copy the link. For the pin, right-click the place and click the numbers at the top of the menu. <a href={testLink} target="_blank" rel="noreferrer">Test the link <ExternalLink /></a></p>
+        </div>
+      </div>
+
+      <div className="admin-visit__block">
+        <div className="admin-visit__routes-head"><h3><Route /> How to reach ({form.routes.length})</h3><button className="admin-button admin-button--small" onClick={() => setForm({ ...form, routes: [...form.routes, emptyRoute()] })}><Plus /> Add route</button></div>
+        <div className="admin-routes">
+          {form.routes.map((route, index) => (
+            <article key={index} className="admin-route">
+              <header>
+                <strong>{index + 1}. {route.from.en || route.from.bn || 'New route'}</strong>
+                <div>
+                  <button className="admin-icon-button" disabled={index === 0} onClick={() => moveRoute(index, -1)} aria-label="Move up"><ArrowUp /></button>
+                  <button className="admin-icon-button" disabled={index === form.routes.length - 1} onClick={() => moveRoute(index, 1)} aria-label="Move down"><ArrowDown /></button>
+                  <button className="admin-icon-button admin-danger" onClick={() => { if (window.confirm(`Remove the route from ${route.from.en || 'here'}?`)) setForm({ ...form, routes: form.routes.filter((_, i) => i !== index) }); }} aria-label="Remove route"><Trash2 /></button>
+                </div>
+              </header>
+              <div className="admin-form">
+                <div className="admin-form-grid">
+                  <label>From (English)<input value={route.from.en} onChange={(event) => setRoute(index, { from: { ...route.from, en: event.target.value } })} placeholder="Barabazar" /></label>
+                  <label>From (বাংলা)<input lang="bn" value={route.from.bn} onChange={(event) => setRoute(index, { from: { ...route.from, bn: event.target.value } })} placeholder="বরাবাজার" /></label>
+                  <label>Distance (English)<input value={route.distance.en} onChange={(event) => setRoute(index, { distance: { ...route.distance, en: event.target.value } })} placeholder="12 km" /></label>
+                  <label>Distance (বাংলা)<input lang="bn" value={route.distance.bn} onChange={(event) => setRoute(index, { distance: { ...route.distance, bn: event.target.value } })} placeholder="১২ কিমি" /></label>
+                  <label>Time (English)<input value={route.time.en} onChange={(event) => setRoute(index, { time: { ...route.time, en: event.target.value } })} placeholder="about 30 min" /></label>
+                  <label>Time (বাংলা)<input lang="bn" value={route.time.bn} onChange={(event) => setRoute(index, { time: { ...route.time, bn: event.target.value } })} placeholder="প্রায় ৩০ মিনিট" /></label>
+                  <label>Travel by<select value={route.by} onChange={(event) => setRoute(index, { by: event.target.value })}>{Object.entries(BY_LABELS).map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></label>
+                  <label>Start place for Google Maps directions<input value={route.query} onChange={(event) => setRoute(index, { query: event.target.value })} placeholder="Barabazar, Purulia" /></label>
+                </div>
+                <div className="admin-steps">
+                  <span>Steps of the way</span>
+                  {route.steps.map((step, stepIndex) => (
+                    <div key={stepIndex} className="admin-step">
+                      <select aria-label="How" value={step.mode} onChange={(event) => setStep(index, stepIndex, { mode: event.target.value })}>{Object.entries(STEP_LABELS).map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select>
+                      <input aria-label="Step in English" value={step.en} onChange={(event) => setStep(index, stepIndex, { en: event.target.value })} placeholder="Take a bus to Beldi" />
+                      <input aria-label="Step in Bangla" lang="bn" value={step.bn} onChange={(event) => setStep(index, stepIndex, { bn: event.target.value })} placeholder="বাসে বেলডি" />
+                      <button className="admin-icon-button admin-danger" onClick={() => setRoute(index, { steps: route.steps.filter((_, i) => i !== stepIndex) })} aria-label="Remove step"><X /></button>
+                    </div>
+                  ))}
+                  <button className="admin-text-button" onClick={() => setRoute(index, { steps: [...route.steps, { mode: 'walk', en: '', bn: '' }] })}><Plus /> Add step</button>
+                </div>
+              </div>
+            </article>
+          ))}
+          {!form.routes.length && <div className="admin-empty admin-empty--compact"><Route /><h3>No routes</h3><p>The “How to reach” part is hidden on the website until you add one.</p></div>}
+        </div>
+      </div>
+      {dirty && <div className="admin-visit__sticky"><span>You have unsaved changes.</span><button className="admin-button" onClick={() => setForm(visitForm(records))}>Undo</button>{saveButton}</div>}
+    </section>
   );
 }

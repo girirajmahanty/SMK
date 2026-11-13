@@ -605,3 +605,53 @@
   .admin-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .admin-image-pick__preview { width: 120px; height: 80px; }
 }
+
+/* ---------- Visit & map ---------- */
+.admin-visit__save { display: flex; flex-wrap: wrap; gap: 8px; }
+.admin-visit__save svg, .admin-visit__sticky svg { width: 14px; }
+.admin-visit__block { margin-top: 18px; padding-top: 16px; border-top: 1px solid #eef0f2; }
+.admin-visit__block h3 { margin: 0 0 12px; display: flex; align-items: center; gap: 8px; color: #2f3740; font-size: 15px; }
+.admin-visit__block h3 svg { width: 17px; color: #916b40; }
+.admin-visit__block .admin-form { padding: 0; gap: 12px; }
+.admin-visit .admin-form label { display: grid; gap: 6px; color: #495361; font-size: 12px; font-weight: 650; }
+.admin-visit .admin-hint a { display: inline-flex; align-items: center; gap: 3px; color: #956c40; font-weight: 650; }
+.admin-visit .admin-hint a svg { width: 12px; }
+.admin-visit__routes-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.admin-visit__routes-head h3 { margin: 0; }
+.admin-visit__routes-head svg { width: 14px; }
+.admin-routes { display: grid; gap: 12px; }
+.admin-route { border: 1px solid #e9ebee; border-radius: 10px; overflow: hidden; }
+.admin-route > header { padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #fffbf5; border-bottom: 1px solid #f1e7d8; }
+.admin-route > header strong { color: #4a3520; font-size: 13px; }
+.admin-route > header div { display: flex; gap: 2px; }
+.admin-route .admin-form { padding: 12px; }
+.admin-steps { display: grid; gap: 8px; }
+.admin-steps > span { color: #495361; font-size: 12px; font-weight: 650; }
+.admin-step { display: grid; grid-template-columns: 100px minmax(0, 1fr) minmax(0, 1fr) 30px; gap: 8px; align-items: center; }
+.admin-steps .admin-text-button { justify-self: start; }
+.admin-steps .admin-text-button svg { width: 13px; }
+.admin-visit__sticky { position: sticky; bottom: 12px; z-index: 5; margin-top: 16px; padding: 10px 12px; border: 1px solid #e7c98f; border-radius: 10px; display: flex; align-items: center; gap: 8px; background: #fffaf0; box-shadow: 0 10px 30px -12px #4a352066; }
+.admin-visit__sticky span { flex: 1; color: #4a3520; font-size: 13px; font-weight: 650; }
+
+@media (max-width: 760px) {
+  .admin-step { grid-template-columns: 1fr 30px; }
+  .admin-step select { grid-column: 1; }
+  .admin-step input { grid-column: 1; }
+  .admin-step button { grid-column: 2; grid-row: 1; }
+  .admin-visit .admin-form-grid { grid-template-columns: 1fr; }
+  .admin-visit__sticky { flex-wrap: wrap; }
+  .admin-visit__sticky span { flex-basis: 100%; }
+
+  /* festival list: each festival as a card instead of a wide table */
+  .admin-table, .admin-table tbody { display: block; }
+  .admin-table thead { display: none; }
+  .admin-table tr { margin-bottom: 10px; padding: 12px; border: 1px solid #e9ebee; border-radius: 10px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+  .admin-table td { padding: 0; border: 0; font-size: 12px; white-space: normal; }
+  .admin-table td:nth-child(1) { grid-column: 1 / -1; }
+  .admin-table td:nth-child(2) { grid-column: 1; grid-row: 2; }
+  .admin-table td:nth-child(3) { grid-column: 1; grid-row: 3; }
+  .admin-table td:nth-child(4) { display: none; }
+  .admin-table td:nth-child(5) { grid-column: 2; grid-row: 2; justify-self: end; }
+  .admin-table td:nth-child(6) { grid-column: 2; grid-row: 3; justify-self: end; }
+  .admin-table-wrap { overflow: visible; }
+}

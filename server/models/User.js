@@ -6,6 +6,8 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     passwordHash: { type: String, required: true },
     role: { type: String, enum: ['member', 'admin'], default: 'member' },
+    // raised when the password changes, so older login cookies stop working
+    tokenVersion: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

@@ -3,8 +3,8 @@ import mongoose from 'mongoose';
 const cmsContentSchema = new mongoose.Schema(
   {
     key: { type: String, required: true, unique: true, trim: true },
-    en: { type: String, default: '', maxlength: 5000 },
-    bn: { type: String, default: '', maxlength: 5000 },
+    en: { type: String, default: '', maxlength: 20000 },
+    bn: { type: String, default: '', maxlength: 20000 },
   },
   { timestamps: true }
 );

@@ -47,9 +47,11 @@ export function attachUser(getStore) {
     const token = req.cookies?.[COOKIE];
     if (token) {
       try {
-        const { sub } = jwt.verify(token, secret);
+        const { sub, v = 0 } = jwt.verify(token, secret);
         const user = await getStore().findUserById(sub);
-        if (user) req.user = publicUser(user);
+        // a password change bumps tokenVersion, which signs out every older login
+        if (user && (user.tokenVersion || 0) === v) req.user = publicUser(user);
+        else if (user) res.clearCookie(COOKIE, { path: '/' });
       } catch {
         res.clearCookie(COOKIE, { path: '/' });
       }
@@ -104,7 +106,7 @@ export function authRoutes(getStore) {
 
   const signIn = (res, user) => {
     const lifetime = user.role === 'admin' ? 8 * 60 * 60 * 1000 : WEEK_MS;
-    res.cookie(COOKIE, jwt.sign({ sub: String(user._id) }, secret, { expiresIn: Math.floor(lifetime / 1000) }), { ...cookieOptions, maxAge: lifetime });
+    res.cookie(COOKIE, jwt.sign({ sub: String(user._id), v: user.tokenVersion || 0 }, secret, { expiresIn: Math.floor(lifetime / 1000) }), { ...cookieOptions, maxAge: lifetime });
     return res.json({ user: publicUser(user) });
   };
 
@@ -155,8 +157,10 @@ export function authRoutes(getStore) {
     if (next.length < 8 || next.length > 128 || !/[A-Za-z]/.test(next) || !/\d/.test(next)) {
       return res.status(400).json({ code: 'PASSWORD_WEAK', error: 'Password needs at least 8 characters, with letters and numbers.' });
     }
-    await store.updateUser(req.user.id, { passwordHash: await bcrypt.hash(next, 12) });
-    res.json({ ok: true });
+    // other devices are signed out; this one gets a fresh login cookie
+    const tokenVersion = (user.tokenVersion || 0) + 1;
+    await store.updateUser(req.user.id, { passwordHash: await bcrypt.hash(next, 12), tokenVersion });
+    signIn(res, { ...user, tokenVersion });
   }));
 
   // Returns { user: null } instead of 401 so a logged-out visitor doesn't produce console errors.

@@ -4,7 +4,7 @@ import {
   ArrowDown, ArrowLeft, ArrowUp, Check, ChevronRight, CircleAlert, Clock3, Eye, FileText,
   BookOpen, CloudRain, Drum, Flame, ImagePlus, Images, Landmark, LayoutDashboard, LoaderCircle, LogOut, Menu, MoonStar, Plus, Search,
   ShoppingBasket, Soup, Sprout, Sun, Sunrise, Swords, UtensilsCrossed, Wheat,
-  Settings2, ShieldCheck, Sparkles, Trash2, Upload, UserRound, X, Camera, Users, Eye as Visits, GalleryHorizontalEnd,
+  Settings2, ShieldCheck, Sparkles, Trash2, Upload, UserRound, X, Camera, Users, Eye as Visits, GalleryHorizontalEnd, MapPin,
 } from 'lucide-react';
 import { useAuth } from '../auth.jsx';
 import { useLang, publicTextDefaults } from '../i18n.jsx';
@@ -12,7 +12,7 @@ import { api } from '../api.js';
 import { village } from '../village.js';
 import { small } from '../responsive.js';
 import { shrinkImage } from '../imageTools.js';
-import { ContentWorkspace, GalleryWorkspace, ImageField, MediaWorkspace, MembersWorkspace, PasswordCard } from './adminTools.jsx';
+import { ContentWorkspace, GalleryWorkspace, ImageField, MediaWorkspace, MembersWorkspace, PasswordCard, VisitWorkspace } from './adminTools.jsx';
 import './admin.css';
 
 const VILLAGE_FIELDS = [
@@ -48,6 +48,7 @@ const NAV_ITEMS = [
   { id: 'festivals', label: 'Festivals', icon: Flame },
   { id: 'gallery', label: 'Gallery', icon: GalleryHorizontalEnd },
   { id: 'content', label: 'Website content', icon: FileText },
+  { id: 'visit', label: 'Visit & map', icon: MapPin },
   { id: 'media', label: 'Media library', icon: Images },
   { id: 'photos', label: 'Photo requests', icon: Camera },
   { id: 'members', label: 'Members', icon: Users },
@@ -494,6 +495,10 @@ function AdminDashboard() {
     for (const [key, value] of entries) await api.saveContent(key, value);
     await refreshCmsContent();
   }, message);
+  const resetMany = (keys, message) => perform(async () => {
+    for (const key of keys) await api.resetContent(key);
+    await refreshCmsContent();
+  }, message);
   const refreshMedia = async () => {
     const next = await api.adminMedia();
     setMedia(next);
@@ -538,6 +543,7 @@ function AdminDashboard() {
               {section === 'festivals' && <FestivalWorkspace festivals={festivals} media={media} onMediaChange={refreshMedia} onCreate={createFestival} onUpdate={updateFestival} onDelete={deleteFestival} onReorder={reorderFestival} />}
               {section === 'gallery' && <GalleryWorkspace records={content} media={media} sitePhotos={SITE_PHOTOS} onSaveMany={saveMany} onReset={resetContent} onMediaChange={refreshMedia} />}
               {section === 'content' && <ContentWorkspace fields={CONTENT_FIELDS} records={content} media={media} sitePhotos={SITE_PHOTOS} onSave={saveContent} onReset={resetContent} onMediaChange={refreshMedia} />}
+              {section === 'visit' && <VisitWorkspace records={content} onSaveMany={saveMany} onResetMany={resetMany} />}
               {section === 'media' && <MediaWorkspace media={media} onMediaChange={refreshMedia} onCaption={captionMedia} onDelete={removeMedia} onReplace={replaceMedia} onToast={setToast} />}
               {section === 'members' && <MembersWorkspace currentUser={user} onToast={setToast} onError={setError} />}
               {section === 'photos' && <PhotoRequestsWorkspace onChange={setPendingPhotos} onToast={setToast} onError={setError} />}

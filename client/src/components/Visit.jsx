@@ -11,12 +11,13 @@ import Wave from './Wave.jsx';
 import BgFx from './BgFx.jsx';
 
 // Red pin exactly on the coordinates, labelled with the place name
-const mapTarget = village.coords ? `${village.coords} (${village.mapQuery})` : village.mapQuery;
-const mapHref = village.mapLink || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapTarget)}`;
-const destination = encodeURIComponent(village.coords || village.mapQuery);
+// (functions, not constants: an admin can change the map settings after the page has loaded)
+const mapTarget = () => (village.coords ? `${village.coords} (${village.mapQuery})` : village.mapQuery);
+const mapHref = () => village.mapLink || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapTarget())}`;
+const destination = () => encodeURIComponent(village.coords || village.mapQuery);
 // Opens Google Maps with a route from the visitor's current location (or a given place) to the Kali Mandir.
-const directionsHref = `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
-const routeHref = (from) => `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(from)}&destination=${destination}`;
+const directionsHref = () => `https://www.google.com/maps/dir/?api=1&destination=${destination()}`;
+const routeHref = (from) => `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(from)}&destination=${destination()}`;
 
 const STEP_ICONS = { bus: Bus, train: TrainFront, toto: CarTaxiFront, walk: Footprints };
 
@@ -24,7 +25,7 @@ const STEP_ICONS = { bus: Bus, train: TrainFront, toto: CarTaxiFront, walk: Foot
 // The view switches between the map and the satellite picture.
 function VillageMap({ label, lang, satellite }) {
   const [loaded, setLoaded] = useState(false);
-  const src = `https://maps.google.com/maps?q=${encodeURIComponent(mapTarget)}&z=16&t=${satellite ? 'k' : 'm'}&hl=${lang}&output=embed`;
+  const src = `https://maps.google.com/maps?q=${encodeURIComponent(mapTarget())}&z=16&t=${satellite ? 'k' : 'm'}&hl=${lang}&output=embed`;
   useEffect(() => setLoaded(false), [src]);
   return (
     <div className={`vmap2 ${loaded ? 'is-loaded' : ''}`}>
@@ -63,7 +64,7 @@ function AddressPanel() {
         <p className="visit3__address-text">{pick(village.address)}</p>
       </div>
       <div className="visit3__address-actions">
-        <a className="visit3__directions" href={directionsHref} target="_blank" rel="noreferrer">
+        <a className="visit3__directions" href={directionsHref()} target="_blank" rel="noreferrer">
           <Navigation /> <span>{t('visit.directions')}</span>
         </a>
         <button className={`visit3__copy ${copied ? 'is-done' : ''}`} onClick={copy} title={t('visit.copy')}>
@@ -82,7 +83,8 @@ function Routes() {
   // Bar length on a log scale, so 12 km and 278 km both read well.
   const km = (r) => Math.max(2, parseFloat(r.distance.en) || 2);
   const max = Math.max(...village.routes.map(km));
-  const r = village.routes[pickIndex];
+  // the list can shrink if an admin removes a route while the page is open
+  const r = village.routes[Math.min(pickIndex, village.routes.length - 1)];
   return (
     <Reveal className="visit4__routes">
       <div className="visit4__routes-head">
@@ -238,7 +240,7 @@ export default function Visit() {
             </div>
           </div>
           <div className="visit3__cta-actions">
-            <a className="cta cta--gold" target="_blank" rel="noreferrer" href={mapHref}>
+            <a className="cta cta--gold" target="_blank" rel="noreferrer" href={mapHref()}>
               <span className="cta__icon"><MapPin /></span><span className="cta__label">{t('visit.map')}</span>
             </a>
             <a className="cta cta--glass" href="#gallery">

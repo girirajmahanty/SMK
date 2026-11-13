@@ -242,8 +242,9 @@ export function cmsRoutes(getStore) {
   admin.get('/content', wrap(async (_req, res) => res.json(await store().content())));
   admin.put('/content/:key', wrap(async (req, res) => {
     if (!KEY_PATTERN.test(req.params.key)) return res.status(400).json({ error: 'Invalid content key.' });
-    const en = text(req.body?.en);
-    const bn = text(req.body?.bn);
+    // structured values (gallery layout, visit routes) are JSON and can be longer than plain text
+    const en = text(req.body?.en, 20000);
+    const bn = text(req.body?.bn, 20000);
     if (typeof req.body?.en !== 'string' || typeof req.body?.bn !== 'string') {
       return res.status(400).json({ error: 'English and Bengali text are required.' });
     }
