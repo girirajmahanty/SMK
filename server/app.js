@@ -6,7 +6,7 @@ import cors from 'cors';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import { connectStore } from './store.js';
-import { authRoutes, attachUser, requireAdmin, requireLogin } from './auth.js';
+import { authRoutes, attachUser, memberRoutes, requireAdmin, requireLogin } from './auth.js';
 import { getFestivals } from './festivals.js';
 import { cmsRoutes } from './cmsRoutes.js';
 import { createRateLimit } from './rateLimit.js';
@@ -70,6 +70,14 @@ app.use(async (req, res, next) => {
 
 app.use(attachUser(() => store));
 app.use('/api/auth', authRoutes(() => store));
+// same-origin check for admin writes, as the CMS admin routes do
+app.use('/api/admin/members', (req, res, next) => {
+  const origin = req.get('origin');
+  if (!['GET', 'HEAD'].includes(req.method) && origin && origin !== `${req.protocol}://${req.get('host')}`) {
+    return res.status(403).json({ error: 'Cross-site admin requests are not allowed.' });
+  }
+  next();
+}, memberRoutes(() => store));
 app.use('/api', cmsRoutes(() => store));
 
 const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res)).catch(next);

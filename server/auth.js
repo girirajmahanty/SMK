@@ -38,6 +38,9 @@ const rateLimit = createRateLimit({
   error: 'Too many attempts. Please try again in a few minutes.',
 });
 
+// Password changes: at most 5 tries per account every 15 minutes, so a stolen session cannot guess the current password.
+const passwordLimit = createRateLimit({ windowMs: 15 * 60 * 1000, max: 5 });
+
 // Adds req.user when a valid login cookie is present.
 export function attachUser(getStore) {
   return async (req, res, next) => {
@@ -63,6 +66,36 @@ export function requireLogin(req, res, next) {
 export function requireAdmin(req, res, next) {
   if (req.user?.role === 'admin') return next();
   res.status(req.user ? 403 : 401).json({ code: 'FORBIDDEN', error: 'Only an admin can do this.' });
+}
+
+// Admin "Members" page: list accounts, make or remove admins, delete accounts.
+// An admin cannot demote or delete themself, so the site always keeps at least one admin.
+export function memberRoutes(getStore) {
+  const router = express.Router();
+  const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res)).catch(next);
+  const listed = (u) => ({ id: String(u._id), name: u.name, email: u.email, role: u.role, createdAt: u.createdAt || null });
+  router.use(requireAdmin);
+
+  router.get('/', wrap(async (_req, res) => {
+    res.set('Cache-Control', 'no-store').json((await getStore().listUsers()).map(listed));
+  }));
+  router.patch('/:id/role', wrap(async (req, res) => {
+    const role = req.body?.role;
+    if (!['member', 'admin'].includes(role)) return res.status(400).json({ error: 'Choose member or admin.' });
+    if (req.params.id === req.user.id) return res.status(400).json({ error: 'You cannot change your own role.' });
+    const user = await getStore().updateUser(req.params.id, { role });
+    if (!user) return res.status(404).json({ error: 'Account was not found.' });
+    await getStore().cms.activity(req.user.email, role === 'admin' ? 'Made admin' : 'Removed admin', user.email);
+    res.json(listed(user));
+  }));
+  router.delete('/:id', wrap(async (req, res) => {
+    if (req.params.id === req.user.id) return res.status(400).json({ error: 'You cannot delete your own account.' });
+    const user = await getStore().deleteUser(req.params.id);
+    if (!user) return res.status(404).json({ error: 'Account was not found.' });
+    await getStore().cms.activity(req.user.email, 'Deleted account', user.email);
+    res.json({ ok: true });
+  }));
+  return router;
 }
 
 export function authRoutes(getStore) {
@@ -109,6 +142,22 @@ export function authRoutes(getStore) {
     res.clearCookie(COOKIE, { path: '/' });
     res.json({ ok: true });
   });
+
+  // Change your own password: the current one is checked first.
+  router.post('/password', requireLogin, (req, res, next) => (passwordLimit.allow(req.user.id) ? next() : res.status(429).json({ code: 'TOO_MANY', error: 'Too many attempts. Please try again in a few minutes.' })), wrap(async (req, res) => {
+    const current = String(req.body?.current || '');
+    const next = String(req.body?.password || '');
+    const store = getStore();
+    const user = await store.findUserById(req.user.id);
+    if (!user || !(await bcrypt.compare(current, user.passwordHash))) {
+      return res.status(400).json({ code: 'WRONG_PASSWORD', error: 'Your current password is not correct.' });
+    }
+    if (next.length < 8 || next.length > 128 || !/[A-Za-z]/.test(next) || !/\d/.test(next)) {
+      return res.status(400).json({ code: 'PASSWORD_WEAK', error: 'Password needs at least 8 characters, with letters and numbers.' });
+    }
+    await store.updateUser(req.user.id, { passwordHash: await bcrypt.hash(next, 12) });
+    res.json({ ok: true });
+  }));
 
   // Returns { user: null } instead of 401 so a logged-out visitor doesn't produce console errors.
   router.get('/me', (req, res) => res.json({ user: req.user || null }));

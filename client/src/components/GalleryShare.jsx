@@ -5,35 +5,9 @@ import { ImagePlus, X, CheckCircle2, Clock, LogIn, Upload, Trash2 } from 'lucide
 import { useLang } from '../i18n.jsx';
 import { useAuth } from '../auth.jsx';
 import { api } from '../api.js';
+import { shrinkImage, isImageFile } from '../imageTools.js';
 
 const CATS = ['village', 'temple', 'procession'];
-const MAX_SIDE = 1600; // the server keeps photos at most this wide/tall anyway
-const MAX_BYTES = 2.8 * 1024 * 1024; // the server accepts up to 3 MB per photo
-
-// Phone photos are often 5–10 MB: shrink to MAX_SIDE and re-encode as JPEG in the browser,
-// so the upload is small, fast and under the server's limit.
-async function shrink(file) {
-  const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' }).catch(() => null);
-  const source = bitmap || await new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = URL.createObjectURL(file);
-  });
-  const w0 = source.width, h0 = source.height;
-  const scale = Math.min(1, MAX_SIDE / Math.max(w0, h0));
-  const canvas = document.createElement('canvas');
-  canvas.width = Math.round(w0 * scale);
-  canvas.height = Math.round(h0 * scale);
-  canvas.getContext('2d').drawImage(source, 0, 0, canvas.width, canvas.height);
-  bitmap?.close();
-  for (const quality of [0.88, 0.8, 0.7]) {
-    const dataUrl = canvas.toDataURL('image/jpeg', quality);
-    if (dataUrl.length * 0.75 < MAX_BYTES) return dataUrl;
-  }
-  return canvas.toDataURL('image/jpeg', 0.6);
-}
-
 // "Add your photo" under the gallery. Anyone may click it; visitors who are not signed in are sent to the login page
 // and brought back here. Signed-in members pick a photo, add a caption and category, and send it for an admin to approve.
 export default function GalleryShare({ onChange }) {
@@ -102,7 +76,7 @@ function ShareDialog({ onClose, onChange }) {
     setError('');
     if (!/^image\/(jpeg|png|webp|gif|heic|heif)$/i.test(file.type)) return setError(t('galleryAdd.notImage'));
     try {
-      setPhoto(await shrink(file));
+      setPhoto(await shrinkImage(file));
     } catch (err) {
       console.error('Could not read the chosen photo', err);
       setError(t('galleryAdd.readFail'));

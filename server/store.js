@@ -59,6 +59,21 @@ const mongoStore = {
   async createUser(data) {
     return (await User.create({ ...data, role: 'member' })).toObject();
   },
+  // Admin "Members" page. Password hashes never leave the store.
+  async listUsers() {
+    return User.find().select('-passwordHash').sort({ createdAt: -1 }).lean();
+  },
+  async updateUser(id, value) {
+    if (!mongoose.isValidObjectId(id)) return null;
+    return User.findByIdAndUpdate(id, { $set: value }, { new: true, runValidators: true }).lean();
+  },
+  async deleteUser(id) {
+    if (!mongoose.isValidObjectId(id)) return null;
+    return User.findByIdAndDelete(id).lean();
+  },
+  async countUsers() {
+    return User.countDocuments();
+  },
 };
 
 const fileStore = {
@@ -155,6 +170,26 @@ const fileStore = {
     this.users.push(u);
     this.saveUsers();
     return u;
+  },
+  async listUsers() {
+    return this.users.map(({ passwordHash, ...user }) => user).sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+  },
+  async updateUser(id, value) {
+    const user = this.users.find((u) => u._id === id);
+    if (!user) return null;
+    Object.assign(user, value, { updatedAt: new Date().toISOString() });
+    this.saveUsers();
+    return user;
+  },
+  async deleteUser(id) {
+    const i = this.users.findIndex((u) => u._id === id);
+    if (i === -1) return null;
+    const [user] = this.users.splice(i, 1);
+    this.saveUsers();
+    return user;
+  },
+  async countUsers() {
+    return this.users.length;
   },
 };
 

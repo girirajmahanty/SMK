@@ -231,8 +231,12 @@ export function cmsRoutes(getStore) {
   }));
 
   admin.get('/overview', wrap(async (_req, res) => {
-    const [stats, activities, photoRequests] = await Promise.all([store().stats(), store().activities(), store().galleryPhotos('pending')]);
-    res.json({ stats: { ...stats, photoRequests: photoRequests.length }, activities });
+    const [stats, activities, photoRequests, members, visits] = await Promise.all([
+      store().stats(), store().activities(), store().galleryPhotos('pending'),
+      // members and visits live in the main store (the test store has neither)
+      backend().countUsers?.() ?? null, backend().visit?.(0) ?? null,
+    ]);
+    res.json({ stats: { ...stats, photoRequests: photoRequests.length, members, visits }, activities });
   }));
 
   admin.get('/content', wrap(async (_req, res) => res.json(await store().content())));
@@ -343,11 +347,14 @@ export function cmsRoutes(getStore) {
       await fs.writeFile(path.join(store().mediaDirectory, filename), buffer, { flag: 'wx', mode: 0o644 });
     }
     try {
+      const { width: w, height: h } = await sharp(buffer, { animated: false }).metadata();
       const media = await store().createMedia({
         filename,
         url: `/uploads/${filename}`,
         mime: detected,
         size: buffer.length,
+        w,
+        h,
         caption: text(req.body.caption, 300),
         data: buffer,
       });
@@ -375,7 +382,8 @@ export function cmsRoutes(getStore) {
       await fs.writeFile(path.join(store().mediaDirectory, filename), buffer, { flag: 'wx', mode: 0o644 });
     }
     try {
-      const result = await store().replaceMedia(req.params.id, { filename, url: `/uploads/${filename}`, mime: detected, size: buffer.length, data: buffer });
+      const { width: w, height: h } = await sharp(buffer, { animated: false }).metadata();
+      const result = await store().replaceMedia(req.params.id, { filename, url: `/uploads/${filename}`, mime: detected, size: buffer.length, w, h, data: buffer });
       if (!result) {
         if (isJsonStorage()) await fs.unlink(path.join(store().mediaDirectory, filename));
         return res.status(404).json({ error: 'Image was not found.' });

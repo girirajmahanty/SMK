@@ -40,4 +40,8 @@ export const api = {
   deleteGalleryPhoto: (id) => request(`/admin/gallery/photos/${encodeURIComponent(id)}`, { method: 'DELETE' }),
   updateGalleryPhoto: (id, body) => request(`/admin/gallery/photos/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(body) }),
   deleteMyGalleryPhoto: (id) => request(`/gallery/photos/mine/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  changePassword: (body) => request('/auth/password', { method: 'POST', body: JSON.stringify(body) }),
+  adminMembers: () => request('/admin/members'),
+  setMemberRole: (id, role) => request(`/admin/members/${encodeURIComponent(id)}/role`, { method: 'PATCH', body: JSON.stringify({ role }) }),
+  deleteMember: (id) => request(`/admin/members/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 };

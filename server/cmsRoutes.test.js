@@ -15,7 +15,7 @@ process.env.JWT_SECRET = 'cms-route-test-secret-with-at-least-32-characters';
 
 const temporaryUploads = await fs.mkdtemp(path.join(os.tmpdir(), 'sidhagora-cms-test-'));
 process.env.UPLOAD_DIR = temporaryUploads;
-const { attachUser, authRoutes } = await import('./auth.js');
+const { attachUser, authRoutes, memberRoutes } = await import('./auth.js');
 const { cmsRoutes } = await import('./cmsRoutes.js');
 const { uploadAccess } = await import('./app.js');
 
@@ -390,4 +390,80 @@ test('a waiting gallery photo file is private and never cached; approved ones ar
   assert.equal(uploadAccess({ gallery: { status: 'pending' } }, undefined), null);
   assert.match(uploadAccess({ gallery: { status: 'approved', userId: 'u1' } }, undefined).cacheControl, /max-age=3600\b/);
   assert.match(uploadAccess({}, undefined).cacheControl, /immutable/);
+});
+
+test('admins can list members, change roles and delete accounts, but never their own', async () => {
+  const members = new Map();
+  const memberStore = {
+    ...store,
+    async listUsers() { return [...users.values()].map(({ passwordHash, ...user }) => user); },
+    async updateUser(id, value) { const user = [...users.values()].find((item) => item._id === id); if (!user) return null; Object.assign(user, value); return user; },
+    async deleteUser(id) { const user = [...users.values()].find((item) => item._id === id); if (!user) return null; users.delete(user.email); return user; },
+  };
+  const memberApp = express();
+  memberApp.use(express.json());
+  memberApp.use(cookieParser());
+  memberApp.use(attachUser(() => memberStore));
+  memberApp.use('/api/auth', authRoutes(() => memberStore));
+  memberApp.use('/api/admin/members', memberRoutes(() => memberStore));
+  const listener = memberApp.listen(0, '127.0.0.1');
+  await new Promise((resolve) => listener.once('listening', resolve));
+  const base = `http://127.0.0.1:${listener.address().port}`;
+  const call = async (route, { method = 'GET', body, cookie } = {}) => {
+    const response = await fetch(base + route, { method, headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...(cookie ? { Cookie: cookie } : {}) }, body: body ? JSON.stringify(body) : undefined });
+    return { response, data: await response.json() };
+  };
+  try {
+    const adminUser = [...users.values()].find((item) => item.email === admin.email);
+    const adminCookie = sessionFor(adminUser);
+    const memberCookie = memberNamed('Plain Member', 'plain@example.test');
+    const plain = users.get('plain@example.test');
+    members.set('plain', plain);
+
+    assert.equal((await call('/api/admin/members')).response.status, 401);
+    assert.equal((await call('/api/admin/members', { cookie: memberCookie })).response.status, 403);
+    const list = await call('/api/admin/members', { cookie: adminCookie });
+    assert.equal(list.response.status, 200);
+    assert.ok(list.data.some((item) => item.email === 'plain@example.test'));
+    assert.ok(list.data.every((item) => !('passwordHash' in item)), 'password hashes are never sent');
+
+    assert.equal((await call(`/api/admin/members/${adminUser._id}/role`, { method: 'PATCH', cookie: adminCookie, body: { role: 'member' } })).response.status, 400, 'cannot demote yourself');
+    assert.equal((await call(`/api/admin/members/${adminUser._id}`, { method: 'DELETE', cookie: adminCookie })).response.status, 400, 'cannot delete yourself');
+    assert.equal((await call(`/api/admin/members/${plain._id}/role`, { method: 'PATCH', cookie: adminCookie, body: { role: 'owner' } })).response.status, 400);
+    const promoted = await call(`/api/admin/members/${plain._id}/role`, { method: 'PATCH', cookie: adminCookie, body: { role: 'admin' } });
+    assert.equal(promoted.data.role, 'admin');
+    assert.equal((await call('/api/admin/members', { cookie: memberCookie })).response.status, 200, 'the new admin has access at once');
+    assert.equal((await call(`/api/admin/members/${plain._id}`, { method: 'DELETE', cookie: adminCookie })).response.status, 200);
+    assert.equal((await call('/api/admin/members', { cookie: memberCookie })).response.status, 401, 'a deleted account is signed out');
+  } finally {
+    await new Promise((resolve) => listener.close(resolve));
+  }
+});
+
+test('signed-in users can change their password only with the current one', async () => {
+  const passwordStore = {
+    ...store,
+    async updateUser(id, value) { const user = [...users.values()].find((item) => item._id === id); Object.assign(user, value); return user; },
+  };
+  const passwordApp = express();
+  passwordApp.use(express.json());
+  passwordApp.use(cookieParser());
+  passwordApp.use(attachUser(() => passwordStore));
+  passwordApp.use('/api/auth', authRoutes(() => passwordStore));
+  const listener = passwordApp.listen(0, '127.0.0.1');
+  await new Promise((resolve) => listener.once('listening', resolve));
+  const base = `http://127.0.0.1:${listener.address().port}/api/auth/password`;
+  const send = (body, cookie) => fetch(base, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(cookie ? { Cookie: cookie } : {}) }, body: JSON.stringify(body) });
+  try {
+    const user = { _id: crypto.randomUUID(), name: 'Pw', email: 'pw@example.test', role: 'member', passwordHash: await bcrypt.hash('OldPassword1', 4) };
+    users.set(user.email, user);
+    const cookie = sessionFor(user);
+    assert.equal((await send({ current: 'x', password: 'NewPassword2' })).status, 401);
+    assert.equal((await send({ current: 'wrong', password: 'NewPassword2' }, cookie)).status, 400);
+    assert.equal((await send({ current: 'OldPassword1', password: 'short' }, cookie)).status, 400);
+    assert.equal((await send({ current: 'OldPassword1', password: 'NewPassword2' }, cookie)).status, 200);
+    assert.ok(await bcrypt.compare('NewPassword2', user.passwordHash));
+  } finally {
+    await new Promise((resolve) => listener.close(resolve));
+  }
 });

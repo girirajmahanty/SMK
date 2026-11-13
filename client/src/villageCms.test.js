@@ -27,3 +27,23 @@ test('published CMS village overrides update public content and reset to source 
   assert.equal(village.heroLine.en, originalHero);
   assert.equal(village.gallery.length, originalGalleryLength);
 });
+
+test('the admin can hide, reorder and re-categorise gallery photos', () => {
+  const first = village.gallery[0].src || village.gallery[0].video;
+  const total = village.gallery.length;
+  applyVillageContent({
+    'village.gallery.custom.new': { en: JSON.stringify({ src: '/uploads/new.webp', cat: 'village', w: 1200, h: 800, caption: { en: 'New', bn: 'নতুন' } }), bn: '' },
+    'village.gallery.layout': { en: JSON.stringify({ order: ['c:new', 'o:2'], hidden: ['o:0'] }), bn: '' },
+    'village.gallery.1.cat': { en: 'temple', bn: 'temple' },
+  });
+  assert.equal(village.gallery.length, total, 'one added, one hidden');
+  assert.equal(village.gallery[0].src, '/uploads/new.webp', 'ordered photos come first');
+  assert.equal(village.gallery[1].id, 'o:2');
+  assert.ok(!village.gallery.some((item) => (item.src || item.video) === first), 'hidden photo is gone');
+  assert.equal(village.gallery.find((item) => item.id === 'o:1').cat, 'temple');
+
+  applyVillageContent({ 'village.gallery.layout': { en: 'not json', bn: '' } });
+  assert.equal(village.gallery.length, total, 'a broken layout is ignored');
+  applyVillageContent({});
+  assert.equal(village.gallery[0].id, 'o:0');
+});

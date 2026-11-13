@@ -4,13 +4,15 @@ import {
   ArrowDown, ArrowLeft, ArrowUp, Check, ChevronRight, CircleAlert, Clock3, Eye, FileText,
   BookOpen, CloudRain, Drum, Flame, ImagePlus, Images, Landmark, LayoutDashboard, LoaderCircle, LogOut, Menu, MoonStar, Plus, Search,
   ShoppingBasket, Soup, Sprout, Sun, Sunrise, Swords, UtensilsCrossed, Wheat,
-  Settings2, ShieldCheck, Sparkles, Trash2, Upload, UserRound, X, Camera,
+  Settings2, ShieldCheck, Sparkles, Trash2, Upload, UserRound, X, Camera, Users, Eye as Visits, GalleryHorizontalEnd,
 } from 'lucide-react';
 import { useAuth } from '../auth.jsx';
 import { useLang, publicTextDefaults } from '../i18n.jsx';
 import { api } from '../api.js';
 import { village } from '../village.js';
 import { small } from '../responsive.js';
+import { shrinkImage } from '../imageTools.js';
+import { ContentWorkspace, GalleryWorkspace, ImageField, MediaWorkspace, MembersWorkspace, PasswordCard } from './adminTools.jsx';
 import './admin.css';
 
 const VILLAGE_FIELDS = [
@@ -44,9 +46,11 @@ const CONTENT_FIELDS = [
 const NAV_ITEMS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
   { id: 'festivals', label: 'Festivals', icon: Flame },
+  { id: 'gallery', label: 'Gallery', icon: GalleryHorizontalEnd },
   { id: 'content', label: 'Website content', icon: FileText },
   { id: 'media', label: 'Media library', icon: Images },
   { id: 'photos', label: 'Photo requests', icon: Camera },
+  { id: 'members', label: 'Members', icon: Users },
   { id: 'activity', label: 'Activity', icon: Clock3 },
   { id: 'settings', label: 'Settings', icon: Settings2 },
 ];
@@ -157,7 +161,7 @@ function LocalizedPair({ label, value = {}, onChange, multiline = false }) {
   );
 }
 
-function FestivalEditor({ festival, media, onClose, onSave }) {
+function FestivalEditor({ festival, media, onClose, onSave, onMediaChange }) {
   const [form, setForm] = useState(() => ({ ...EMPTY_FESTIVAL, ...(festival || {}), name: { ...EMPTY_FESTIVAL.name, ...festival?.name }, date: { ...EMPTY_FESTIVAL.date, ...festival?.date }, text: { ...EMPTY_FESTIVAL.text, ...festival?.text } }));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -203,12 +207,10 @@ function FestivalEditor({ festival, media, onClose, onSave }) {
             <label>First day<input type="date" value={form.startDate || ''} onChange={(event) => change('startDate', event.target.value)} /></label>
             <label>Last day<input type="date" value={form.endDate || ''} min={form.startDate || undefined} onChange={(event) => change('endDate', event.target.value)} /></label>
             <label>Festival symbol<select value={form.icon || 'Flame'} onChange={(event) => change('icon', event.target.value)}>{['Flame', 'Wheat', 'Landmark', 'Drum', 'Soup', 'ShoppingBasket', 'Sun', 'Swords', 'UtensilsCrossed', 'CloudRain', 'Sprout', 'MoonStar', 'Sunrise', 'BookOpen'].map((icon) => <option key={icon}>{icon}</option>)}</select></label>
-            <label>Festival image<select value={form.img || ''} onChange={(event) => change('img', event.target.value)}>
-              <option value="">{defaultFestivalPhoto(form) ? 'Default: this festival’s website photo' : 'Use the existing card artwork'}</option>
-              {!!SITE_PHOTOS.length && <optgroup label="Website photos">{SITE_PHOTOS.map((item) => <option value={item.url} key={item.url}>{item.label}</option>)}</optgroup>}
-              {!!media.length && <optgroup label="Uploaded images">{media.map((item) => <option value={item.url} key={item.id}>{item.caption || item.filename}</option>)}</optgroup>}
-              {form.img && !SITE_PHOTOS.some((item) => item.url === form.img) && !media.some((item) => item.url === form.img) && <option value={form.img}>Current image</option>}
-            </select></label>
+          </div>
+          <div className="admin-field"><span>Festival photo</span>
+            <ImageField value={form.img || ''} onChange={(url) => change('img', url)} media={media} sitePhotos={SITE_PHOTOS} onMediaChange={onMediaChange}
+              fallback={defaultFestivalPhoto(form)?.img || ''} emptyLabel={defaultFestivalPhoto(form) ? 'This festival’s website photo' : 'Card artwork'} />
           </div>
           <FocusPicker src={form.img || defaultFestivalPhoto(form)?.img || ''} value={form.position || (form.img ? '' : defaultFestivalPhoto(form)?.position) || ''} onChange={(value) => change('position', value)} />
           <div className="admin-form-grid admin-form-grid--flags">
@@ -259,99 +261,7 @@ function FocusPicker({ src, value, onChange }) {
   );
 }
 
-function ContentWorkspace({ records, media, onSave, onReset }) {
-  const [query, setQuery] = useState('');
-  const [category, setCategory] = useState('all');
-  const [pending, setPending] = useState({});
-  const fields = useMemo(() => CONTENT_FIELDS.filter((field) => {
-    const matchesText = `${field.key} ${field.label}`.toLowerCase().includes(query.toLowerCase());
-    const group = prettyKey(field.key);
-    return matchesText && (category === 'all' || group.startsWith(category));
-  }), [query, category]);
-
-  return (
-    <>
-    <GalleryManager records={records} media={media} onSave={onSave} onDelete={onReset} />
-    <section className="admin-panel">
-      <div className="admin-panel__heading"><div><p className="admin-kicker">PUBLISHED WEBSITE COPY</p><h2>Website content</h2><p>Update bilingual copy and key village information without editing source files.</p></div><span className="admin-count">{fields.length} fields</span></div>
-      <div className="admin-toolbar"><label className="admin-search"><Search /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search headings, paragraphs, labels…" /></label><select aria-label="Filter content group" value={category} onChange={(event) => setCategory(event.target.value)}><option value="all">All sections</option>{['announcement', 'hero', 'story', 'life', 'gallery', 'fest', 'visit', 'footer', 'nav', 'village'].map((item) => <option value={item} key={item}>{item === 'village' ? 'Village information' : item === 'announcement' ? 'Announcements' : item.charAt(0).toUpperCase() + item.slice(1)}</option>)}</select></div>
-      <div className="admin-content-list">
-        {fields.map((field) => {
-          const current = records[field.key] || field.value;
-          const hasCustom = !!records[field.key];
-          const editing = pending[field.key] || current;
-          return (
-            <article className="admin-content-row" key={field.key}>
-              <div className="admin-content-row__title"><span>{field.kind === 'image' ? <Images /> : <FileText />}</span><div><strong>{field.label}</strong><small>{field.key}{hasCustom && <em> · Published override</em>}</small></div></div>
-              {field.kind === 'image' ? (
-                <div className="admin-image-field">
-                  <select value={editing.en || ''} onChange={(event) => setPending((state) => ({ ...state, [field.key]: { en: event.target.value, bn: event.target.value } }))}><option value="">Use the original website image</option>{media.map((item) => <option key={item.id} value={item.url}>{item.caption || item.filename}</option>)}{editing.en && !media.some((item) => item.url === editing.en) && <option value={editing.en}>Current image</option>}</select>
-                  {editing.en && <img src={editing.en} alt="" />}
-                </div>
-              ) : field.kind === 'number' ? (
-                <div className="admin-content-row__inputs"><label><span>Year / count</span><input type="number" min="1" value={editing.en || ''} onChange={(event) => setPending((state) => ({ ...state, [field.key]: { en: event.target.value, bn: event.target.value } }))} /></label></div>
-              ) : (
-                <div className="admin-content-row__inputs">
-                  <label><span>English</span><textarea value={editing.en || ''} onChange={(event) => setPending((state) => ({ ...state, [field.key]: { ...editing, en: event.target.value } }))} /></label>
-                  <label><span>বাংলা</span><textarea lang="bn" value={editing.bn || ''} onChange={(event) => setPending((state) => ({ ...state, [field.key]: { ...editing, bn: event.target.value } }))} /></label>
-                </div>
-              )}
-              <div className="admin-content-row__actions">
-                <button className="admin-button admin-button--small admin-button--primary" onClick={async () => { const result = await onSave(field.key, editing); if (result) setPending((state) => { const next = { ...state }; delete next[field.key]; return next; }); }}>Save changes</button>
-                {hasCustom && <button className="admin-button admin-button--small" onClick={async () => { if (window.confirm(`Restore the original text for "${field.label}"?`)) await onReset(field.key); }} aria-label={`Restore default ${field.label}`}>Restore default</button>}
-              </div>
-            </article>
-          );
-        })}
-        {!fields.length && <div className="admin-empty"><Search /><h3>No matching content</h3><p>Try a different search or section filter.</p></div>}
-      </div>
-    </section>
-    </>
-  );
-}
-
-function GalleryManager({ records, media, onSave, onDelete }) {
-  const [form, setForm] = useState({ src: '', cat: 'village', caption: { en: '', bn: '' } });
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  const items = Object.entries(records)
-    .filter(([key]) => key.startsWith('village.gallery.custom.'))
-    .map(([key, value]) => {
-      try { return { key, item: JSON.parse(value.en) }; } catch { return null; }
-    }).filter(Boolean);
-
-  const addPhoto = async (event) => {
-    event.preventDefault();
-    if (!form.src || !form.caption.en.trim() || !form.caption.bn.trim()) {
-      setError('Choose an image and add captions in both languages.');
-      return;
-    }
-    setBusy(true);
-    setError('');
-    try {
-      const key = `village.gallery.custom.${crypto.randomUUID()}`;
-      const success = await onSave(key, { en: JSON.stringify({ ...form, w: 768, h: 1024 }), bn: '' });
-      if (success) setForm({ src: '', cat: 'village', caption: { en: '', bn: '' } });
-      else setError('The photo could not be added. Please try again.');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return <section className="admin-panel admin-gallery-manager">
-    <div className="admin-panel__heading"><div><p className="admin-kicker">GALLERY COLLECTION</p><h2>Manage gallery photos</h2><p>Add a photo to the existing public gallery design, or remove a CMS-added photo.</p></div><span className="admin-count">{items.length} added</span></div>
-    <form className="admin-gallery-form" onSubmit={addPhoto}>
-      <label>Photo from media library<select value={form.src} onChange={(event) => setForm((current) => ({ ...current, src: event.target.value }))} required><option value="">Choose an uploaded image</option>{media.map((item) => <option key={item.id} value={item.url}>{item.caption || item.filename}</option>)}</select></label>
-      <label>Gallery category<select value={form.cat} onChange={(event) => setForm((current) => ({ ...current, cat: event.target.value }))}><option value="village">Village</option><option value="temple">Temple</option><option value="procession">Kali Puja</option></select></label>
-      <LocalizedPair label="Photo caption" value={form.caption} onChange={(caption) => setForm((current) => ({ ...current, caption }))} />
-      {error && <p className="admin-alert" role="alert"><CircleAlert />{error}</p>}
-      <button className="admin-button admin-button--primary" disabled={busy || !media.length}>{busy ? <LoaderCircle className="admin-spin" /> : <Plus />} Add to gallery</button>
-    </form>
-    {!!items.length && <div className="admin-gallery-added">{items.map(({ key, item }) => <article key={key}><img src={item.src} alt="" /><div><strong>{item.caption.en}</strong><small lang="bn">{item.caption.bn}</small></div><button className="admin-icon-button admin-danger" onClick={() => { if (window.confirm(`Remove "${item.caption.en}" from the gallery?`)) onDelete(key); }} aria-label={`Remove ${item.caption.en}`}><Trash2 /></button></article>)}</div>}
-  </section>;
-}
-
-function FestivalWorkspace({ festivals, media, onCreate, onUpdate, onDelete, onReorder }) {
+function FestivalWorkspace({ festivals, media, onCreate, onUpdate, onDelete, onReorder, onMediaChange }) {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all');
   const [editing, setEditing] = useState(undefined);
@@ -371,57 +281,7 @@ function FestivalWorkspace({ festivals, media, onCreate, onUpdate, onDelete, onR
         })}
       </tbody></table>
       {!shown.length && <div className="admin-empty"><Flame /><h3>No festivals found</h3><p>Add a festival or adjust your filters.</p></div>}</div>
-      {editing !== undefined && <FestivalEditor festival={editing || undefined} media={media} onClose={() => setEditing(undefined)} onSave={(form) => editing ? onUpdate(editing.id, form) : onCreate(form)} />}
-    </section>
-  );
-}
-
-function MediaWorkspace({ media, onUpload, onCaption, onDelete, onReplace }) {
-  const [caption, setCaption] = useState('');
-  const [file, setFile] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState('');
-  const upload = async (event) => {
-    event.preventDefault();
-    setError('');
-    if (!file) return setError('Choose an image to upload.');
-    if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type) || file.size > 3 * 1024 * 1024) {
-      return setError('Choose a PNG, JPG, GIF, or WebP image smaller than 3 MB.');
-    }
-    setUploading(true);
-    try {
-      const data = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => reject(new Error('The image could not be read.'));
-        reader.readAsDataURL(file);
-      });
-      const uploaded = await onUpload({ data, caption });
-      if (!uploaded) {
-        setError('The upload could not be completed. Please review the dashboard alert and try again.');
-        return;
-      }
-      setCaption('');
-      setFile(null);
-      event.target.reset();
-    } catch (reason) {
-      setError(reason.message || 'Image upload failed.');
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  return (
-    <section className="admin-panel">
-      <div className="admin-panel__heading"><div><p className="admin-kicker">IMAGE COLLECTION</p><h2>Media library</h2><p>Validated images are stored on the server and can be used by festival and homepage content.</p></div><span className="admin-count">{media.length} images</span></div>
-      <form className="admin-upload" onSubmit={upload}>
-        <div className="admin-upload__icon"><ImagePlus /></div><div className="admin-upload__copy"><strong>Add an image</strong><span>PNG, JPG, GIF, or WebP · up to 3 MB</span></div>
-        <label className="admin-file"><Upload /> Choose image<input type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={(event) => setFile(event.target.files?.[0] || null)} />{file && <span>{file.name}</span>}</label>
-        <input className="admin-caption-input" aria-label="Image caption" placeholder="Optional caption" value={caption} onChange={(event) => setCaption(event.target.value)} />
-        <button className="admin-button admin-button--primary" disabled={uploading}>{uploading ? <LoaderCircle className="admin-spin" /> : <Plus />} Upload</button>
-        {error && <p className="admin-alert" role="alert"><CircleAlert /> {error}</p>}
-      </form>
-      {!media.length ? <div className="admin-empty"><Images /><h3>Your media library is ready</h3><p>Upload an image to use it on the website.</p></div> : <div className="admin-media-grid">{media.map((item) => <MediaCard key={item.id} item={item} onCaption={onCaption} onDelete={onDelete} onReplace={onReplace} />)}</div>}
+      {editing !== undefined && <FestivalEditor festival={editing || undefined} media={media} onMediaChange={onMediaChange} onClose={() => setEditing(undefined)} onSave={(form) => editing ? onUpdate(editing.id, form) : onCreate(form)} />}
     </section>
   );
 }
@@ -533,18 +393,6 @@ function PhotoRequestsWorkspace({ onChange, onToast, onError }) {
   );
 }
 
-function MediaCard({ item, onCaption, onDelete, onReplace }) {
-  const [caption, setCaption] = useState(item.caption || '');
-  const [replacing, setReplacing] = useState(false);
-  return (
-    <article className="admin-media-card">
-      <div className="admin-media-card__image"><img src={item.url} alt={item.caption || ''} loading="lazy" /><span>{Math.max(1, Math.round(item.size / 1024))} KB</span></div>
-      <label>Caption<input value={caption} onChange={(event) => setCaption(event.target.value)} maxLength={300} /></label>
-      <div className="admin-media-card__actions"><button className="admin-button admin-button--small" onClick={() => onCaption(item, caption)}>Save caption</button><label className="admin-button admin-button--small admin-file--replace">{replacing ? 'Replace…' : 'Replace'}<input type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={async (event) => { const nextFile = event.target.files?.[0]; if (!nextFile) return; setReplacing(true); try { await onReplace(item, nextFile); } finally { setReplacing(false); event.target.value = ''; } }} /></label><button className="admin-icon-button admin-danger" onClick={() => { if (window.confirm('Delete this image permanently? Images currently used by content cannot be deleted.')) onDelete(item); }} aria-label={`Delete ${item.filename}`}><Trash2 /></button></div>
-    </article>
-  );
-}
-
 function AdminDashboard() {
   const { user, logout } = useAuth();
   const { refreshCmsContent } = useLang();
@@ -641,20 +489,26 @@ function AdminDashboard() {
     [reordered[index], reordered[next]] = [reordered[next], reordered[index]];
     await api.reorderFestivals(reordered.map((item) => item.id));
   }, 'Festival order updated');
-  const uploadMedia = (value) => perform(async () => { await api.uploadMedia(value); }, 'Image uploaded');
+  // Several content keys in one go (a gallery photo's caption, category and photo), then one reload.
+  const saveMany = (entries, message) => perform(async () => {
+    for (const [key, value] of entries) await api.saveContent(key, value);
+    await refreshCmsContent();
+  }, message);
+  const refreshMedia = async () => {
+    const next = await api.adminMedia();
+    setMedia(next);
+    return next;
+  };
   const captionMedia = (item, caption) => perform(async () => { await api.updateMedia(item.id, caption); }, 'Image caption updated');
   const removeMedia = (item) => perform(async () => { await api.deleteMedia(item.id); }, 'Image deleted');
   const replaceMedia = async (item, file) => {
-    if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type) || file.size > 3 * 1024 * 1024) {
-      setError('Choose a PNG, JPG, GIF, or WebP image smaller than 3 MB.');
+    let data;
+    try {
+      data = await shrinkImage(file);
+    } catch (reason) {
+      setError(reason.message || 'The image could not be read.');
       return;
     }
-    const data = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = () => reject(new Error('The image could not be read.'));
-      reader.readAsDataURL(file);
-    });
     const replaced = await perform(async () => { await api.replaceMedia(item.id, { data }); }, 'Image replaced');
     if (replaced) await refreshCmsContent();
   };
@@ -681,12 +535,14 @@ function AdminDashboard() {
           {loading ? <div className="admin-loading"><LoaderCircle className="admin-spin" /><span>Loading your workspace…</span></div> : (
             <>
               {section === 'overview' && <Overview stats={overview.stats || {}} activities={activities} navigate={setSection} pendingPhotos={pendingPhotos} />}
-              {section === 'festivals' && <FestivalWorkspace festivals={festivals} media={media} onCreate={createFestival} onUpdate={updateFestival} onDelete={deleteFestival} onReorder={reorderFestival} />}
-              {section === 'content' && <ContentWorkspace records={content} media={media} onSave={saveContent} onReset={resetContent} />}
-              {section === 'media' && <MediaWorkspace media={media} onUpload={uploadMedia} onCaption={captionMedia} onDelete={removeMedia} onReplace={replaceMedia} />}
+              {section === 'festivals' && <FestivalWorkspace festivals={festivals} media={media} onMediaChange={refreshMedia} onCreate={createFestival} onUpdate={updateFestival} onDelete={deleteFestival} onReorder={reorderFestival} />}
+              {section === 'gallery' && <GalleryWorkspace records={content} media={media} sitePhotos={SITE_PHOTOS} onSaveMany={saveMany} onReset={resetContent} onMediaChange={refreshMedia} />}
+              {section === 'content' && <ContentWorkspace fields={CONTENT_FIELDS} records={content} media={media} sitePhotos={SITE_PHOTOS} onSave={saveContent} onReset={resetContent} onMediaChange={refreshMedia} />}
+              {section === 'media' && <MediaWorkspace media={media} onMediaChange={refreshMedia} onCaption={captionMedia} onDelete={removeMedia} onReplace={replaceMedia} onToast={setToast} />}
+              {section === 'members' && <MembersWorkspace currentUser={user} onToast={setToast} onError={setError} />}
               {section === 'photos' && <PhotoRequestsWorkspace onChange={setPendingPhotos} onToast={setToast} onError={setError} />}
               {section === 'activity' && <ActivityWorkspace activities={activities} />}
-              {section === 'settings' && <SettingsWorkspace user={user} onLogout={signOut} />}
+              {section === 'settings' && <SettingsWorkspace user={user} onLogout={signOut} onToast={setToast} />}
             </>
           )}
         </main>
@@ -704,7 +560,9 @@ function Overview({ stats, activities, navigate, pendingPhotos }) {
   const quickActions = [
     { title: 'Add a festival', text: 'Create a new festival card', section: 'festivals', icon: Flame },
     { title: 'Edit website copy', text: 'Update Bengali or English text', section: 'content', icon: FileText },
-    { title: 'Upload an image', text: 'Add a photo to your media library', section: 'media', icon: ImagePlus },
+    { title: 'Upload photos', text: 'Add photos to your media library', section: 'media', icon: ImagePlus },
+    { title: 'Manage the gallery', text: 'Add, hide or reorder gallery photos', section: 'gallery', icon: GalleryHorizontalEnd },
+    { title: 'Members', text: 'See accounts and choose admins', section: 'members', icon: Users },
   ];
   return <>
     {pendingPhotos > 0 && <button className="admin-photo-alert" onClick={() => navigate('photos')}>
@@ -716,7 +574,9 @@ function Overview({ stats, activities, navigate, pendingPhotos }) {
       <StatCard icon={Flame} label="Festival cards" value={stats.festivals ?? 0} detail="Published and draft cards" accent="gold" />
       <StatCard icon={FileText} label="Content overrides" value={stats.content ?? 0} detail="Bilingual website fields saved" accent="blue" />
       <StatCard icon={Images} label="Library images" value={stats.media ?? 0} detail="Validated server uploads" accent="green" />
-      <StatCard icon={Clock3} label="Recent actions" value={activities.length} detail="Latest admin events available" accent="plum" />
+      <StatCard icon={Users} label="Members" value={stats.members ?? '—'} detail="Accounts on the website" accent="plum" />
+      <StatCard icon={Visits} label="Visits" value={stats.visits ?? '—'} detail="Times the website was opened" accent="gold" />
+      <StatCard icon={Camera} label="Photo requests" value={stats.photoRequests ?? 0} detail="Visitor photos waiting" accent="blue" />
     </div>
     <section className="admin-panel admin-quick"><div className="admin-panel__heading"><div><p className="admin-kicker">MAKE SOMETHING HAPPEN</p><h2>Quick actions</h2></div></div><div className="admin-quick-grid">{quickActions.map(({ title, text, section, icon: Icon }) => <button key={title} onClick={() => navigate(section)}><span><Icon /></span><strong>{title}</strong><small>{text}</small><ChevronRight /></button>)}</div></section>
     <div className="admin-overview-grid">
@@ -744,6 +604,6 @@ function ActivityWorkspace({ activities }) {
   return <section className="admin-panel"><div className="admin-panel__heading"><div><p className="admin-kicker">ADMINISTRATIVE HISTORY</p><h2>Activity history</h2><p>Recent content and media changes made by administrators.</p></div><span className="admin-count">{activities.length} events</span></div><ActivityList items={activities} /></section>;
 }
 
-function SettingsWorkspace({ user, onLogout }) {
-  return <section className="admin-panel admin-settings"><div className="admin-panel__heading"><div><p className="admin-kicker">ACCOUNT & SECURITY</p><h2>Administrator settings</h2><p>Review your current session and account details.</p></div></div><div className="admin-profile-card"><span>{(user?.name || 'A').slice(0, 1).toUpperCase()}</span><div><p>ADMINISTRATOR ACCOUNT</p><h3>{user?.name}</h3><small>{user?.email}</small></div><ShieldCheck /></div><div className="admin-security-note"><ShieldCheck /><div><strong>Protected administrator session</strong><p>Authentication is verified by the server on each protected request. Sessions expire automatically after eight hours.</p></div></div><button className="admin-button admin-button--danger" onClick={onLogout}><LogOut /> Sign out of this account</button></section>;
+function SettingsWorkspace({ user, onLogout, onToast }) {
+  return <section className="admin-panel admin-settings"><div className="admin-panel__heading"><div><p className="admin-kicker">ACCOUNT & SECURITY</p><h2>Administrator settings</h2><p>Review your current session and account details.</p></div></div><div className="admin-profile-card"><span>{(user?.name || 'A').slice(0, 1).toUpperCase()}</span><div><p>ADMINISTRATOR ACCOUNT</p><h3>{user?.name}</h3><small>{user?.email}</small></div><ShieldCheck /></div><div className="admin-security-note"><ShieldCheck /><div><strong>Protected administrator session</strong><p>Authentication is verified by the server on each protected request. Sessions expire automatically after eight hours.</p></div></div><PasswordCard onToast={onToast} /><button className="admin-button admin-button--danger" onClick={onLogout}><LogOut /> Sign out of this account</button></section>;
 }

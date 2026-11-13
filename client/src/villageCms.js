@@ -26,6 +26,22 @@ const localizedTargets = {
   'village.address': () => village.address,
 };
 
+// The village's own gallery photos as written in village.js, before any admin changes (the admin Gallery page lists them).
+export const originalGallery = original.gallery;
+const GALLERY_CATS = ['temple', 'procession', 'village'];
+
+// { order: [ids], hidden: [ids] } saved by the admin Gallery page under village.gallery.layout
+export function readGalleryLayout(content) {
+  try {
+    const value = JSON.parse(content?.['village.gallery.layout']?.en || '{}');
+    const ids = (list) => (Array.isArray(list) ? list.filter((id) => typeof id === 'string').slice(0, 500) : []);
+    return { order: ids(value.order), hidden: ids(value.hidden) };
+  } catch {
+    console.error('Invalid gallery layout');
+    return { order: [], hidden: [] };
+  }
+}
+
 export function applyVillageContent(content) {
   for (const key of Object.keys(localizedTargets)) {
     Object.assign(localizedTargets[key](), original[key.slice('village.'.length)]);
@@ -33,7 +49,8 @@ export function applyVillageContent(content) {
   village.story.forEach((item, index) => Object.assign(item, original.story[index]));
   Object.assign(village.storyImages.main, original.storyImages.main);
   Object.assign(village.storyImages.side, original.storyImages.side);
-  village.gallery.splice(0, village.gallery.length, ...original.gallery.map((item) => ({ ...item, caption: { ...item.caption } })));
+  // each photo gets an id the admin Gallery page uses to hide or order it: o:<index> for the village's own, c:<id> for added ones
+  village.gallery.splice(0, village.gallery.length, ...original.gallery.map((item, index) => ({ ...item, caption: { ...item.caption }, id: `o:${index}` })));
   village.life.forEach((item, index) => Object.assign(item, original.life[index]));
   village.heroImage = original.heroImage;
   village.established = original.established;
@@ -49,8 +66,9 @@ export function applyVillageContent(content) {
         if (typeof item.src === 'string' && item.src.startsWith('/')
           && item.caption && typeof item.caption.en === 'string' && typeof item.caption.bn === 'string') {
           village.gallery.push({
+            id: `c:${key.slice('village.gallery.custom.'.length)}`,
             src: item.src,
-            cat: ['temple', 'procession', 'village'].includes(item.cat) ? item.cat : 'village',
+            cat: GALLERY_CATS.includes(item.cat) ? item.cat : 'village',
             w: Number.isSafeInteger(item.w) ? item.w : 768,
             h: Number.isSafeInteger(item.h) ? item.h : 1024,
             caption: { en: item.caption.en.slice(0, 300), bn: item.caption.bn.slice(0, 300) },
@@ -98,5 +116,22 @@ export function applyVillageContent(content) {
   for (const key of ['established', 'founded', 'families', 'population']) {
     const value = Number(content?.[`village.${key}`]?.en);
     if (Number.isSafeInteger(value) && value > 0) village[key] = value;
+  }
+
+  // category of one of the village's own photos
+  original.gallery.forEach((_, index) => {
+    const cat = content?.[`village.gallery.${index}.cat`]?.en;
+    if (GALLERY_CATS.includes(cat)) village.gallery[index].cat = cat;
+  });
+  // order and hidden photos come last, so the index-based keys above still point at the right photos
+  const layout = readGalleryLayout(content);
+  if (layout.hidden.length || layout.order.length) {
+    const rank = new Map(layout.order.map((id, position) => [id, position]));
+    // photos missing from the saved order (e.g. added later) go after the ordered ones, in their usual order
+    const sorted = village.gallery.filter((item) => !layout.hidden.includes(item.id))
+      .map((item, position) => ({ item, rank: rank.has(item.id) ? rank.get(item.id) : layout.order.length + position }))
+      .sort((a, b) => a.rank - b.rank)
+      .map(({ item }) => item);
+    village.gallery.splice(0, village.gallery.length, ...sorted);
   }
 }
