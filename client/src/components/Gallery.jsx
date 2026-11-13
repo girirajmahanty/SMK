@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { Camera, Maximize2, X, ChevronLeft, ChevronRight, Play, Pause, Share2, Landmark, Flame, Trees, LayoutGrid, ChevronDown } from 'lucide-react';
 import { useLang } from '../i18n.jsx';
 import { pic, small } from '../responsive.js';
+import { api } from '../api.js';
+import GalleryShare from './GalleryShare.jsx';
 
 const FILTERS = [
   { id: 'all', Icon: LayoutGrid },
@@ -191,8 +193,15 @@ function Tile({ item, index, place, onOpen }) {
 }
 
 // Masonry photo/video gallery with category tabs, "show all", and a full-screen viewer.
-export default function Gallery({ items }) {
+export default function Gallery({ items: ownItems }) {
   const { t, pick } = useLang();
+  // Photos visitors sent and an admin approved, newest first, after the village's own photos.
+  const [shared, setShared] = useState([]);
+  const loadShared = () => api.galleryPhotos()
+    .then((list) => setShared(list.map((p) => ({ src: p.url, cat: p.cat, w: p.w, h: p.h, caption: { en: p.caption, bn: p.caption }, by: p.by }))))
+    .catch((err) => console.error('Could not load shared gallery photos', err));
+  useEffect(() => { loadShared(); }, []);
+  const items = useMemo(() => [...ownItems, ...shared], [ownItems, shared]);
   const [filter, setFilter] = useState(() => pendingFilter || 'all');
   const [expanded, setExpanded] = useState(false);
   const [open, setOpen] = useState(null);
@@ -350,6 +359,8 @@ export default function Gallery({ items }) {
         </div>
       )}
 
+      <GalleryShare onApproved={loadShared} />
+
       {/* Rendered at the end of <body> so it sits above the navbar (the section's light effects form their own layer). */}
       {current && createPortal(
         <div className="lightbox lightbox--rich" onClick={() => setOpen(null)} role="dialog" aria-modal="true" aria-label={pick(current.caption)}>
@@ -376,6 +387,7 @@ export default function Gallery({ items }) {
             <figcaption>
               <span className="lightbox__cat">{t(`gallery.${current.cat}`)}</span>
               <span>{pick(current.caption)}</span>
+              {current.by && <span className="lightbox__by"><Camera /> {t('galleryAdd.by')} {current.by}</span>}
               {current.credit && (
                 <a href={current.credit.url} target="_blank" rel="noreferrer"><Camera /> {current.credit.name} · Unsplash</a>
               )}

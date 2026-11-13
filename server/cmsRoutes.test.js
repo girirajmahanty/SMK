@@ -23,7 +23,7 @@ const admin = {
   role: 'admin', passwordHash: await bcrypt.hash('StrongTestPassword123!', 4),
 };
 users.set(admin.email, admin);
-const cmsData = { content: [], festivals: [], media: [], activities: [], initialized: false };
+const cmsData = { content: [], festivals: [], media: [], activities: [], gallery: [], initialized: false };
 const cms = {
   async content() { return cmsData.content; },
   async putContent(key, value) {
@@ -84,6 +84,27 @@ const cms = {
   async stats() { return { festivals: cmsData.festivals.length, content: cmsData.content.length, media: cmsData.media.length }; },
   async activity(actor, action, target = '') { cmsData.activities.unshift({ id: crypto.randomUUID(), actor, action, target }); },
   async activities() { return cmsData.activities; },
+  async galleryPhotos(status) { return cmsData.gallery.filter((item) => !status || item.status === status).map(({ data, ...item }) => item); },
+  async createGalleryPhoto(value) {
+    const item = { ...value, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
+    cmsData.gallery.push(item);
+    const { data, ...rest } = item;
+    return rest;
+  },
+  async approveGalleryPhoto(id, reviewer) {
+    const item = cmsData.gallery.find((entry) => entry.id === id);
+    if (!item) return null;
+    Object.assign(item, { status: 'approved', reviewedBy: reviewer });
+    const { data, ...rest } = item;
+    return rest;
+  },
+  async deleteGalleryPhoto(id) {
+    const index = cmsData.gallery.findIndex((item) => item.id === id);
+    return index < 0 ? null : cmsData.gallery.splice(index, 1)[0];
+  },
+  async countGalleryPhotosSince(userId, since) {
+    return cmsData.gallery.filter((item) => item.userId === userId && new Date(item.createdAt) >= since).length;
+  },
   mediaDirectory: temporaryUploads,
 };
 const store = {
@@ -259,4 +280,55 @@ test('festival photo focus points are kept only in the "X% Y%" form', async () =
   const bad = await request(`/api/admin/festivals/${created.data.id}`, { method: 'PUT', cookie, body: { ...base, position: '150% 10%; color: red' } });
   assert.equal(bad.response.status, 200);
   assert.equal(bad.data.position, '');
+});
+
+test('signed-in visitors can send gallery photos; they appear only after an admin approves them', async () => {
+  const photo = (await sharp({ create: { width: 1200, height: 800, channels: 3, background: { r: 120, g: 160, b: 90 } } }).jpeg().toBuffer()).toString('base64');
+  const body = { data: `data:image/jpeg;base64,${photo}`, caption: 'Evening at the pond', cat: 'village' };
+
+  const anonymous = await request('/api/gallery/photos', { method: 'POST', body });
+  assert.equal(anonymous.response.status, 401);
+
+  const signup = await request('/api/auth/register', { method: 'POST', body: { name: 'Photo Member', email: 'photos@example.test', password: 'StrongMember123!' } });
+  const member = signup.response.headers.get('set-cookie').split(';')[0];
+  const noCaption = await request('/api/gallery/photos', { method: 'POST', cookie: member, body: { ...body, caption: ' ' } });
+  assert.equal(noCaption.response.status, 400);
+
+  const sent = await request('/api/gallery/photos', { method: 'POST', cookie: member, body });
+  assert.equal(sent.response.status, 201, sent.data.error);
+  assert.equal(sent.data.status, 'pending');
+  assert.equal(sent.data.by, 'Photo Member');
+  assert.deepEqual([sent.data.w, sent.data.h], [1200, 800]);
+  assert.match(sent.data.url, /^\/uploads\/[a-f0-9-]+\.webp$/);
+  assert.equal((await request('/api/gallery/photos')).data.length, 0, 'pending photos are not public');
+  assert.equal((await request('/api/gallery/photos/mine', { cookie: member })).data[0].status, 'pending');
+
+  const forbidden = await request(`/api/admin/gallery/photos/${sent.data.id}/approve`, { method: 'POST', cookie: member });
+  assert.equal(forbidden.response.status, 403);
+
+  const login = await request('/api/auth/login', { method: 'POST', body: { email: admin.email, password: 'StrongTestPassword123!' } });
+  const adminCookie = login.response.headers.get('set-cookie').split(';')[0];
+  const pending = await request('/api/admin/gallery/photos', { cookie: adminCookie });
+  assert.equal(pending.data.length, 1);
+  const approved = await request(`/api/admin/gallery/photos/${sent.data.id}/approve`, { method: 'POST', cookie: adminCookie });
+  assert.equal(approved.response.status, 200);
+  const publicList = (await request('/api/gallery/photos')).data;
+  assert.equal(publicList.length, 1);
+  assert.equal(publicList[0].caption, 'Evening at the pond');
+
+  const second = await request('/api/gallery/photos', { method: 'POST', cookie: member, body: { ...body, caption: 'Not for the site' } });
+  const rejected = await request(`/api/admin/gallery/photos/${second.data.id}`, { method: 'DELETE', cookie: adminCookie });
+  assert.equal(rejected.response.status, 200);
+  assert.equal(cmsData.gallery.length, 1, 'a rejected photo is deleted');
+  assert.equal((await request('/api/gallery/photos')).data.length, 1);
+});
+
+test('a visitor can send at most ten gallery photos a day', async () => {
+  const photo = (await sharp({ create: { width: 40, height: 30, channels: 3, background: { r: 10, g: 20, b: 30 } } }).png().toBuffer()).toString('base64');
+  const signup = await request('/api/auth/register', { method: 'POST', body: { name: 'Busy Member', email: 'busy@example.test', password: 'StrongMember123!' } });
+  const member = signup.response.headers.get('set-cookie').split(';')[0];
+  const user = [...users.values()].find((item) => item.email === 'busy@example.test');
+  for (let i = 0; i < 10; i += 1) cmsData.gallery.push({ id: `seed-${i}`, userId: String(user._id), status: 'pending', caption: 'x', createdAt: new Date().toISOString() });
+  const tooMany = await request('/api/gallery/photos', { method: 'POST', cookie: member, body: { data: `data:image/png;base64,${photo}`, caption: 'One more' } });
+  assert.equal(tooMany.response.status, 429);
 });

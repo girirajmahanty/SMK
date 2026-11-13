@@ -4,7 +4,7 @@ import {
   ArrowDown, ArrowLeft, ArrowUp, Check, ChevronRight, CircleAlert, Clock3, Eye, FileText,
   BookOpen, CloudRain, Drum, Flame, ImagePlus, Images, Landmark, LayoutDashboard, LoaderCircle, LogOut, Menu, MoonStar, Plus, Search,
   ShoppingBasket, Soup, Sprout, Sun, Sunrise, Swords, UtensilsCrossed, Wheat,
-  Settings2, ShieldCheck, Sparkles, Trash2, Upload, X,
+  Settings2, ShieldCheck, Sparkles, Trash2, Upload, UserRound, X, Camera,
 } from 'lucide-react';
 import { useAuth } from '../auth.jsx';
 import { useLang, publicTextDefaults } from '../i18n.jsx';
@@ -46,6 +46,7 @@ const NAV_ITEMS = [
   { id: 'festivals', label: 'Festivals', icon: Flame },
   { id: 'content', label: 'Website content', icon: FileText },
   { id: 'media', label: 'Media library', icon: Images },
+  { id: 'photos', label: 'Photo requests', icon: Camera },
   { id: 'activity', label: 'Activity', icon: Clock3 },
   { id: 'settings', label: 'Settings', icon: Settings2 },
 ];
@@ -425,6 +426,84 @@ function MediaWorkspace({ media, onUpload, onCaption, onDelete, onReplace }) {
   );
 }
 
+// Photos visitors sent from the website's gallery. Pending ones wait here until approved (shown on the site) or
+// rejected (deleted). The "In the gallery" tab lists approved ones so they can be taken down later.
+function PhotoRequestsWorkspace({ onChange, onToast, onError }) {
+  const [tab, setTab] = useState('pending');
+  const [items, setItems] = useState(null);
+  const [busyId, setBusyId] = useState('');
+  const [viewing, setViewing] = useState(null);
+
+  const load = async (status) => {
+    try {
+      const list = await api.adminGalleryPhotos(status);
+      setItems(list);
+      if (status === 'pending') onChange(list.length);
+    } catch (reason) {
+      setItems([]);
+      onError(reason.message || 'Photo requests could not be loaded.');
+    }
+  };
+  useEffect(() => { setItems(null); load(tab); }, [tab]);
+  useEffect(() => {
+    if (!viewing) return undefined;
+    const onKey = (event) => { if (event.key === 'Escape') setViewing(null); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [viewing]);
+
+  const act = async (item, approve) => {
+    if (!approve && !window.confirm(item.status === 'approved' ? 'Remove this photo from the website gallery? It will be deleted.' : 'Reject this photo? It will be deleted.')) return;
+    setBusyId(item.id);
+    try {
+      if (approve) await api.approveGalleryPhoto(item.id);
+      else await api.deleteGalleryPhoto(item.id);
+      setViewing(null);
+      onToast(approve ? 'Photo approved and added to the gallery' : item.status === 'approved' ? 'Photo removed from the gallery' : 'Photo rejected');
+      await load(tab);
+    } catch (reason) {
+      onError(reason.message || 'That change could not be saved.');
+    } finally {
+      setBusyId('');
+    }
+  };
+
+  const catLabel = { village: 'Village', temple: 'Temple', procession: 'Kali Puja' };
+  const actions = (item, small) => (
+    <div className="admin-media-card__actions">
+      {item.status === 'pending' && <button className={`admin-button admin-button--primary ${small ? 'admin-button--small' : ''}`} disabled={busyId === item.id} onClick={() => act(item, true)}>{busyId === item.id ? <LoaderCircle className="admin-spin" /> : <Check />} Approve</button>}
+      <button className={`admin-button admin-photo-reject ${small ? 'admin-button--small' : ''}`} disabled={busyId === item.id} onClick={() => act(item, false)}><Trash2 /> {item.status === 'pending' ? 'Reject' : 'Remove'}</button>
+    </div>
+  );
+  return (
+    <section className="admin-panel">
+      <div className="admin-panel__heading"><div><p className="admin-kicker">FROM VISITORS</p><h2>Photo requests</h2><p>Signed-in visitors can send photos from the website's gallery. They appear on the site only after you approve them.</p></div><span className="admin-count">{items ? items.length : '…'} {tab === 'pending' ? 'waiting' : 'in gallery'}</span></div>
+      <div className="admin-photo-tabs" role="tablist">
+        <button role="tab" aria-selected={tab === 'pending'} className={tab === 'pending' ? 'is-active' : ''} onClick={() => setTab('pending')}><Clock3 /> Waiting for approval</button>
+        <button role="tab" aria-selected={tab === 'approved'} className={tab === 'approved' ? 'is-active' : ''} onClick={() => setTab('approved')}><Check /> In the gallery</button>
+      </div>
+      {!items ? <div className="admin-loading"><LoaderCircle className="admin-spin" /><span>Loading photos…</span></div>
+        : !items.length ? <div className="admin-empty"><Camera /><h3>{tab === 'pending' ? 'No photos waiting' : 'No visitor photos in the gallery yet'}</h3><p>{tab === 'pending' ? 'New photos from visitors will show up here.' : 'Photos you approve are listed here.'}</p></div>
+        : <div className="admin-media-grid">{items.map((item) => (
+          <article key={item.id} className="admin-media-card admin-photo-card">
+            <button className="admin-media-card__image admin-photo-card__image" onClick={() => setViewing(item)} aria-label={`View photo: ${item.caption}`}><img src={item.url} alt={item.caption} loading="lazy" /><span>{catLabel[item.cat] || item.cat}</span></button>
+            <p className="admin-photo-card__caption">{item.caption}</p>
+            <p className="admin-photo-card__meta"><UserRound /> {item.by || 'Visitor'} · {formatDate(item.createdAt)}</p>
+            {actions(item, true)}
+          </article>
+        ))}</div>}
+      {viewing && <div className="admin-photo-view" role="dialog" aria-modal="true" aria-label={viewing.caption} onClick={() => setViewing(null)}>
+        <figure onClick={(event) => event.stopPropagation()}>
+          <button className="admin-icon-button admin-photo-view__close" onClick={() => setViewing(null)} aria-label="Close" autoFocus><X /></button>
+          <img src={viewing.url} alt={viewing.caption} />
+          <figcaption><strong>{viewing.caption}</strong><span>{viewing.by || 'Visitor'} · {catLabel[viewing.cat] || viewing.cat} · {viewing.w}×{viewing.h}</span></figcaption>
+          {actions(viewing, false)}
+        </figure>
+      </div>}
+    </section>
+  );
+}
+
 function MediaCard({ item, onCaption, onDelete, onReplace }) {
   const [caption, setCaption] = useState(item.caption || '');
   const [replacing, setReplacing] = useState(false);
@@ -450,6 +529,8 @@ function AdminDashboard() {
   const [festivals, setFestivals] = useState([]);
   const [content, setContent] = useState({});
   const [media, setMedia] = useState([]);
+  const [pendingPhotos, setPendingPhotos] = useState(0);
+  const countPendingPhotos = () => api.adminGalleryPhotos('pending').then((list) => setPendingPhotos(list.length)).catch((reason) => console.error('Could not count photo requests', reason));
 
   const reload = async () => {
     setError('');
@@ -485,7 +566,7 @@ function AdminDashboard() {
     }
   };
 
-  useEffect(() => { reload(); }, []);
+  useEffect(() => { reload(); countPendingPhotos(); }, []);
   useEffect(() => {
     if (!toast) return undefined;
     const timer = setTimeout(() => setToast(''), 3200);
@@ -559,7 +640,7 @@ function AdminDashboard() {
       <aside className={`admin-sidebar ${mobileNav ? 'is-open' : ''}`}>
         <Link className="admin-logo" to="/"><span>SG</span><div><strong>Sidhagora</strong><small>CONTENT STUDIO</small></div></Link>
         <p className="admin-side-label">WORKSPACE</p>
-        <nav aria-label="Admin navigation">{NAV_ITEMS.map(({ id, label, icon: Icon }) => <button key={id} className={section === id ? 'is-active' : ''} onClick={() => { setSection(id); setMobileNav(false); }}><Icon /><span>{label}</span>{id === 'festivals' && <small>{overview.stats?.festivals || ''}</small>}</button>)}</nav>
+        <nav aria-label="Admin navigation">{NAV_ITEMS.map(({ id, label, icon: Icon }) => <button key={id} className={section === id ? 'is-active' : ''} onClick={() => { setSection(id); setMobileNav(false); }}><Icon /><span>{label}</span>{id === 'festivals' && <small>{overview.stats?.festivals || ''}</small>}{id === 'photos' && pendingPhotos > 0 && <small className="admin-nav-badge">{pendingPhotos}</small>}</button>)}</nav>
         <div className="admin-sidebar__bottom"><div className="admin-account"><span>{(user?.name || 'A').slice(0, 1).toUpperCase()}</span><div><strong>{user?.name}</strong><small>Administrator</small></div></div><button className="admin-side-logout" onClick={signOut}><LogOut /> Sign out</button></div>
       </aside>
       <div className="admin-main">
@@ -573,6 +654,7 @@ function AdminDashboard() {
               {section === 'festivals' && <FestivalWorkspace festivals={festivals} media={media} onCreate={createFestival} onUpdate={updateFestival} onDelete={deleteFestival} onReorder={reorderFestival} />}
               {section === 'content' && <ContentWorkspace records={content} media={media} onSave={saveContent} onReset={resetContent} />}
               {section === 'media' && <MediaWorkspace media={media} onUpload={uploadMedia} onCaption={captionMedia} onDelete={removeMedia} onReplace={replaceMedia} />}
+              {section === 'photos' && <PhotoRequestsWorkspace onChange={setPendingPhotos} onToast={setToast} onError={setError} />}
               {section === 'activity' && <ActivityWorkspace activities={activities} />}
               {section === 'settings' && <SettingsWorkspace user={user} onLogout={signOut} />}
             </>

@@ -54,7 +54,8 @@ app.use((req, res, next) => {
 if (!isProd) app.use(cors());
 app.use(express.json({
   limit: '50kb',
-  type: (req) => req.is('application/json') && !req.path.startsWith('/api/admin/media'),
+  // image uploads (admin media, visitors' gallery photos) parse their own, larger bodies
+  type: (req) => req.is('application/json') && !req.path.startsWith('/api/admin/media') && req.path !== '/api/gallery/photos',
 }));
 app.use(cookieParser());
 app.use(async (req, res, next) => {

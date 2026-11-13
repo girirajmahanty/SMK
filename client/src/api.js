@@ -32,4 +32,10 @@ export const api = {
   updateMedia: (id, caption) => request(`/admin/media/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ caption }) }),
   replaceMedia: (id, body) => request(`/admin/media/${encodeURIComponent(id)}/replace`, { method: 'PUT', body: JSON.stringify(body) }),
   deleteMedia: (id) => request(`/admin/media/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  galleryPhotos: () => request('/gallery/photos'),
+  myGalleryPhotos: () => request('/gallery/photos/mine'),
+  sendGalleryPhoto: (body) => request('/gallery/photos', { method: 'POST', body: JSON.stringify(body) }),
+  adminGalleryPhotos: (status = 'pending') => request(`/admin/gallery/photos?status=${status}`),
+  approveGalleryPhoto: (id) => request(`/admin/gallery/photos/${encodeURIComponent(id)}/approve`, { method: 'POST' }),
+  deleteGalleryPhoto: (id) => request(`/admin/gallery/photos/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 };

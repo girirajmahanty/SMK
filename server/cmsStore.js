@@ -7,6 +7,7 @@ import CmsContent from './models/CmsContent.js';
 import Festival from './models/Festival.js';
 import Media from './models/Media.js';
 import AdminActivity from './models/AdminActivity.js';
+import GalleryPhoto from './models/GalleryPhoto.js';
 import User from './models/User.js';
 
 const serverDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -83,7 +84,8 @@ function mongoCms() {
       return plain(await Media.create(value));
     },
     async readMedia(filename) {
-      const media = await Media.findOne({ filename }).select('+data').lean();
+      const media = await Media.findOne({ filename }).select('+data').lean()
+        || await GalleryPhoto.findOne({ filename }).select('+data').lean();
       return media?.data ? { data: media.data, mime: media.mime } : null;
     },
     async updateMedia(id, caption) {
@@ -137,6 +139,24 @@ function mongoCms() {
         CmsContent.findOne().sort({ updatedAt: -1 }).select('key updatedAt').lean(),
       ]);
       return { festivals, content, media, recent: latest.filter(Boolean).map(plain) };
+    },
+    // Photos visitors send for the gallery (see models/GalleryPhoto.js).
+    async galleryPhotos(status) {
+      return (await GalleryPhoto.find(status ? { status } : {}).sort({ createdAt: -1 }).lean()).map(plain);
+    },
+    async createGalleryPhoto(value) {
+      return plain(await GalleryPhoto.create(value));
+    },
+    async approveGalleryPhoto(id, reviewer) {
+      if (!mongoose.isValidObjectId(id)) return null;
+      return plain(await GalleryPhoto.findByIdAndUpdate(id, { $set: { status: 'approved', reviewedBy: reviewer, reviewedAt: new Date() } }, { new: true }).lean());
+    },
+    async deleteGalleryPhoto(id) {
+      if (!mongoose.isValidObjectId(id)) return null;
+      return plain(await GalleryPhoto.findByIdAndDelete(id).lean());
+    },
+    async countGalleryPhotosSince(userId, since) {
+      return GalleryPhoto.countDocuments({ userId, createdAt: { $gte: since } });
     },
     async seedAdmin(email, passwordHash, name) {
       const user = await User.findOneAndUpdate(
@@ -215,7 +235,8 @@ function fileCms() {
       return item;
     },
     async readMedia(filename) {
-      const item = (await this.media()).find((entry) => entry.filename === filename);
+      const item = (await this.media()).find((entry) => entry.filename === filename)
+        || (await this.galleryPhotos()).find((entry) => entry.filename === filename);
       if (!item) return null;
       try {
         return { data: await fs.readFile(path.join(uploadDirectory, filename)), mime: item.mime };
@@ -285,6 +306,41 @@ function fileCms() {
       const recent = [...festivals.map((item) => ({ name: item.name, updatedAt: item.updatedAt })), ...content.map((item) => ({ key: item.key, updatedAt: item.updatedAt }))]
         .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)).slice(0, 5);
       return { festivals: festivals.length, content: content.length, media: media.length, recent };
+    },
+    // Photos visitors send for the gallery: records in cms-gallery.json, image files in the upload folder.
+    async galleryPhotos(status) {
+      const items = await get('cms-gallery.json', []);
+      return items.filter((item) => !status || item.status === status).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    },
+    async createGalleryPhoto(value) {
+      const items = await get('cms-gallery.json', []);
+      const { data, ...metadata } = value;
+      await fs.mkdir(uploadDirectory, { recursive: true });
+      await fs.writeFile(path.join(uploadDirectory, metadata.filename), data, { flag: 'wx', mode: 0o644 });
+      const item = { ...metadata, id: crypto.randomUUID(), createdAt: now(), updatedAt: now() };
+      items.push(item);
+      await set('cms-gallery.json', items);
+      return item;
+    },
+    async approveGalleryPhoto(id, reviewer) {
+      const items = await get('cms-gallery.json', []);
+      const item = items.find((entry) => entry.id === id);
+      if (!item) return null;
+      Object.assign(item, { status: 'approved', reviewedBy: reviewer, reviewedAt: now(), updatedAt: now() });
+      await set('cms-gallery.json', items);
+      return item;
+    },
+    async deleteGalleryPhoto(id) {
+      const items = await get('cms-gallery.json', []);
+      const index = items.findIndex((entry) => entry.id === id);
+      if (index < 0) return null;
+      const [item] = items.splice(index, 1);
+      await set('cms-gallery.json', items);
+      await fs.unlink(path.join(uploadDirectory, item.filename)).catch((error) => { if (error.code !== 'ENOENT') throw error; });
+      return item;
+    },
+    async countGalleryPhotosSince(userId, since) {
+      return (await get('cms-gallery.json', [])).filter((item) => item.userId === userId && new Date(item.createdAt) >= since).length;
     },
     async seedAdmin(email, passwordHash, name) {
       const users = await readJson('users.json', []);

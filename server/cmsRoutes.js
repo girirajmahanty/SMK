@@ -3,13 +3,17 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import express from 'express';
 import sharp from 'sharp';
-import { requireAdmin } from './auth.js';
+import { requireAdmin, requireLogin } from './auth.js';
+import { createRateLimit } from './rateLimit.js';
 
 const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const KEY_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,119}$/;
 // 3 MB: as base64 JSON that is ~4 MB, under the 4.5 MB request limit of Vercel functions.
 const MAX_IMAGE_BYTES = 3 * 1024 * 1024;
 const MAX_FESTIVALS = 100;
+// Visitors' gallery photos: at most this many per account a day, plus a per-IP brake against scripted floods.
+const MAX_GALLERY_PHOTOS_PER_DAY = 10;
+const gallerySubmitLimit = createRateLimit({ windowMs: 60 * 60 * 1000, max: 20, error: 'Too many photos sent. Please try again later.' });
 const FESTIVAL_ICONS = new Set([
   'Flame', 'Wheat', 'Landmark', 'Drum', 'Soup', 'ShoppingBasket', 'Sun',
   'Swords', 'UtensilsCrossed', 'CloudRain', 'Sprout', 'MoonStar', 'Sunrise', 'BookOpen',
@@ -135,8 +139,8 @@ export function cmsRoutes(getStore) {
     });
   }));
 
-  admin.use(requireAdmin);
-  admin.use((req, res, next) => {
+  // Changes must come from this website itself (another site cannot submit them with a visitor's cookie).
+  const sameOrigin = (req, res, next) => {
     if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
       const origin = req.get('origin');
       if (origin) {
@@ -151,10 +155,63 @@ export function cmsRoutes(getStore) {
       }
     }
     next();
-  });
-  admin.use('/media', express.json({ limit: '4.5mb' }));
+  };
 
   const log = (req, action, target = '') => store().activity(req.user.email, action, target);
+  const GALLERY_CATS = new Set(['village', 'temple', 'procession']);
+  const publicPhoto = ({ id, url, cat, w, h, caption, userName, createdAt }) => ({ id, url, cat, w, h, caption, by: userName, createdAt });
+
+  // ---- Photos from visitors: anyone signed in can send one; it appears in the gallery once an admin approves it.
+  router.get('/gallery/photos', wrap(async (_req, res) => {
+    res.set('Cache-Control', 'no-store').json((await store().galleryPhotos('approved')).map(publicPhoto));
+  }));
+  router.get('/gallery/photos/mine', requireLogin, wrap(async (req, res) => {
+    const mine = (await store().galleryPhotos()).filter((item) => item.userId === req.user.id);
+    res.set('Cache-Control', 'no-store').json(mine.map((item) => ({ ...publicPhoto(item), status: item.status })));
+  }));
+  router.post('/gallery/photos', requireLogin, sameOrigin, gallerySubmitLimit, express.json({ limit: '4.5mb' }), wrap(async (req, res) => {
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    if (req.user.role !== 'admin' && await store().countGalleryPhotosSince(req.user.id, since) >= MAX_GALLERY_PHOTOS_PER_DAY) {
+      return res.status(429).json({ code: 'TOO_MANY', error: `You can send up to ${MAX_GALLERY_PHOTOS_PER_DAY} photos a day. Please try again tomorrow.` });
+    }
+    const caption = text(req.body?.caption, 200);
+    if (!caption) return res.status(400).json({ code: 'CAPTION_REQUIRED', error: 'Please add a short caption.' });
+    const upload = await prepareUpload(req.body?.data);
+    if (upload.error) return res.status(400).json({ error: upload.error });
+    const { width: w, height: h } = await sharp(upload.buffer, { animated: false }).metadata();
+    const filename = `${crypto.randomUUID()}.${upload.extension}`;
+    // an admin's own photo needs no review
+    const approved = req.user.role === 'admin';
+    const photo = await store().createGalleryPhoto({
+      filename, url: `/uploads/${filename}`, mime: upload.mime, size: upload.buffer.length, w, h,
+      caption, cat: GALLERY_CATS.has(req.body?.cat) ? req.body.cat : 'village',
+      status: approved ? 'approved' : 'pending', userId: req.user.id, userName: req.user.name,
+      ...(approved && { reviewedBy: req.user.email, reviewedAt: new Date().toISOString() }),
+      data: upload.buffer,
+    });
+    res.status(201).json({ ...publicPhoto(photo), status: photo.status });
+  }));
+
+  admin.use(requireAdmin);
+  admin.use(sameOrigin);
+  admin.use('/media', express.json({ limit: '4.5mb' }));
+
+  admin.get('/gallery/photos', wrap(async (req, res) => {
+    const status = req.query.status === 'approved' ? 'approved' : 'pending';
+    res.set('Cache-Control', 'no-store').json((await store().galleryPhotos(status)).map((item) => ({ ...publicPhoto(item), status: item.status, size: item.size })));
+  }));
+  admin.post('/gallery/photos/:id/approve', wrap(async (req, res) => {
+    const photo = await store().approveGalleryPhoto(req.params.id, req.user.email);
+    if (!photo) return res.status(404).json({ error: 'Photo was not found.' });
+    await log(req, 'Approved gallery photo', `${photo.caption.slice(0, 60)} · by ${photo.userName}`);
+    res.json({ ...publicPhoto(photo), status: photo.status });
+  }));
+  admin.delete('/gallery/photos/:id', wrap(async (req, res) => {
+    const photo = await store().deleteGalleryPhoto(req.params.id);
+    if (!photo) return res.status(404).json({ error: 'Photo was not found.' });
+    await log(req, photo.status === 'approved' ? 'Removed gallery photo' : 'Rejected gallery photo', `${photo.caption.slice(0, 60)} · by ${photo.userName}`);
+    res.json({ ok: true });
+  }));
 
   admin.get('/overview', wrap(async (_req, res) => {
     const [stats, activities] = await Promise.all([store().stats(), store().activities()]);
